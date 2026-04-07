@@ -1,0 +1,63 @@
+.layout{
+ display:flex;
+ height:100vh;
+}
+
+.sidebar{
+ width:220px;
+ background:#2c3e50;
+ color:white;
+ padding:20px;
+}
+
+.sidebar ul{
+ list-style:none;
+ padding:0;
+}
+
+.sidebar li{
+ margin:15px 0;
+}
+
+.sidebar a{
+ color:white;
+ text-decoration:none;
+}
+
+.sidebar a:hover{
+ text-decoration:underline;
+}
+
+.content{
+ flex:1;
+ padding:30px;
+}
+.sidebar ul{
+  list-style:none;
+  padding:0;
+}
+
+.sidebar ul li{
+  padding:10px;
+}
+
+.sidebar ul li a{
+  text-decoration:none;
+  color:black;
+}
+
+/* dropdown */
+
+.dropdown-menu{
+  display:none;
+  padding-left:15px;
+}
+
+.dropdown:hover .dropdown-menu{
+  display:block;
+}
+
+.dropdown-title{
+  cursor:pointer;
+  font-weight:500;
+}

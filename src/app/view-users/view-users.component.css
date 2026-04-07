@@ -1,0 +1,39 @@
+.container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+}
+
+input {
+  padding: 8px;
+  width: 200px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  margin-left: 5px;
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

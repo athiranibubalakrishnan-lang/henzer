@@ -1,0 +1,43 @@
+<div class="layout">
+
+  <div class="sidebar">
+    <h2>Product Admin</h2>
+
+    <ul>
+
+      <li>
+        <a routerLink="/dashboard/products">Product List</a>
+      </li>
+
+      <!-- Dropdown -->
+      <li class="dropdown">
+        <span class="dropdown-title">Add Product ▾</span>
+
+        <ul class="dropdown-menu">
+          <li><a routerLink="/dashboard/add-product">Add Laptop</a></li>
+          <li><a routerLink="/dashboard/add-product">Add Mobile</a></li>
+          <li><a routerLink="/dashboard/add-product">Add Accessory</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a routerLink="/dashboard/add-category">Add Category</a>
+      </li>
+
+      <li>
+        <a routerLink="/dashboard/about">About</a>
+      </li>
+
+      <li>
+        <a routerLink="/dashboard/contact">Contact</a>
+      </li>
+
+    </ul>
+
+  </div>
+
+  <div class="content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

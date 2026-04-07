@@ -1,0 +1,38 @@
+.footer{
+  background:#f5f5f5;
+  padding:40px 80px;
+}
+
+.footer-container{
+  display:flex;
+  justify-content:space-between;
+}
+
+.footer-col{
+  width:25%;
+}
+
+.footer-col h4{
+  margin-bottom:15px;
+}
+
+.footer-col ul{
+  list-style:none;
+  padding:0;
+}
+
+.footer-col li{
+  margin-bottom:8px;
+}
+
+.logo{
+  font-size:28px;
+  font-weight:bold;
+}
+
+.copyright{
+  border-top:1px solid #ddd;
+  margin-top:30px;
+  padding-top:15px;
+  font-size:14px;
+}

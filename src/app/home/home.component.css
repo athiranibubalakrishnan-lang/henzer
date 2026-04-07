@@ -1,0 +1,213 @@
+.home {
+  padding: 20px;
+  font-family: Arial;
+}
+
+/* 🔍 Search */
+.search-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.search-bar input {
+  width: 400px;
+  padding: 10px;
+}
+
+.search-bar button {
+  padding: 10px 20px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+/* 🎞️ Slider */
+.slider {
+  position: relative;
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+.slider img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.prev, .next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: black;
+  color: white;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.prev { left: 10px; }
+.next { right: 10px; }
+
+/* 🧾 Section Title */
+.section-title {
+  border-bottom: 2px solid #f0c000;
+  margin: 20px 0;
+  padding-bottom: 5px;
+}
+
+/* ⭐ Scrollable Top Products */
+.scroll-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.scroll-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+  scroll-behavior: smooth;
+  padding-bottom: 10px;
+}
+
+.scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-card {
+  min-width: 200px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 8px;
+  background: white;
+}
+
+.scroll-btn {
+  position: absolute;
+  top: 40%;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.scroll-btn.left { left: 0; }
+.scroll-btn.right { right: 0; }
+
+/* 🎯 Banner Section */
+.banner-section {
+  position: relative;
+  width: 100%;
+  margin: 30px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 400px;
+}
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block; /* ensure it shows */
+}
+
+/* Optional overlay to make text visible */
+/* .banner-section::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 1;
+} */
+
+.banner-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #fff;
+  z-index: 2;
+  padding: 0 20px;
+}
+
+.banner-content h2,
+.banner-content p {
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+}
+
+.banner-btn {
+  background-color: #ff5722; /* 🔥 Changed button color */
+  color: #fff;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  animation: bounce 2s infinite;
+  transition: transform 0.3s;
+}
+
+.banner-btn:hover {
+  transform: scale(1.1);
+}
+
+@keyframes fadeInDown {
+  0% { opacity: 0; transform: translateY(-30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 🛍️ Browse All Products */
+.products.two-column {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.card {
+  border-bottom: 1px solid #ccc;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.brand {
+  font-size: 12px;
+  color: gray;
+  text-transform: uppercase;
+}
+
+.product-name {
+  color: #1976d2;
+  font-size: 14px;
+}
+
+.sku {
+  font-size: 12px;
+  color: gray;
+}
+
+.price {
+  font-weight: bold;
+}
+
+.cart-btn {
+  background: purple;
+  color: white;
+  border-radius: 50%;
+  height: 40px;
+  width: 40px;
+}

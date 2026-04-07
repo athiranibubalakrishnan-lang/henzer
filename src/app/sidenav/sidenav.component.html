@@ -1,0 +1,16 @@
+<!-- Overlay -->
+<div class="overlay" *ngIf="isOpen" (click)="closeMenu()"></div>
+
+<!-- Sidebar -->
+<div class="sidenav" [class.open]="isOpen">
+
+  <h3 class="title">Menu</h3>
+
+  <ul>
+    <li *ngFor="let item of menuItems">
+      <span class="icon">{{ item.icon }}</span>
+      <span>{{ item.name }}</span>
+    </li>
+  </ul>
+
+</div>

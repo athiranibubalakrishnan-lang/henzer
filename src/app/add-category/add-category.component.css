@@ -1,0 +1,22 @@
+.container {
+  max-width: 600px;
+  margin: 30px auto;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  gap: 10px;
+}
+
+.form-control {
+  flex: 1;
+  padding: 8px;
+}
+
+button {
+  padding: 8px 16px;
+}

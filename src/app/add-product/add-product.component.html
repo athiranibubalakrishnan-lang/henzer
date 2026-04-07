@@ -1,0 +1,54 @@
+<div class="product-page">
+
+  <h2>Add Product</h2>
+
+  <!-- FORM SECTION -->
+  <div class="form-section">
+    <form (ngSubmit)="addProduct()">
+
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" [(ngModel)]="productName" name="productName" required>
+      </div>
+
+      <div class="form-group">
+        <label>Model</label>
+        <input type="text" [(ngModel)]="model" name="model" required>
+      </div>
+
+      <div class="form-group">
+        <label>Brand</label>
+        <input type="text" [(ngModel)]="brand" name="brand" required>
+      </div>
+
+      <div class="form-group">
+        <label>Spec / Description</label>
+        <input type="text" [(ngModel)]="spec" name="spec">
+      </div>
+
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" [(ngModel)]="quantity" name="quantity" min="1">
+      </div>
+
+      <div class="form-group">
+        <label>SKU</label>
+        <input type="text" [(ngModel)]="sku" name="sku">
+      </div>
+
+      <div class="form-group">
+        <label>Price</label>
+        <input type="number" [(ngModel)]="price" name="price" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>Active</label>
+        <input type="checkbox" [(ngModel)]="active" name="active">
+      </div>
+
+      <button type="submit">Add Product</button>
+
+    </form>
+  </div>
+
+</div>

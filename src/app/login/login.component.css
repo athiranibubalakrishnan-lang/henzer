@@ -1,0 +1,98 @@
+.account-page{
+  padding:60px 0;
+  background:#f8f8f8;
+  min-height:100vh;
+}
+
+.account-container{
+  width:900px;
+  margin:auto;
+  display:flex;
+  gap:40px;
+}
+
+.login-box,
+.register-box{
+  flex:1;
+  background:white;
+  padding:30px;
+  border:1px solid #eee;
+}
+
+h2{
+  margin-bottom:20px;
+}
+
+label{
+  display:block;
+  margin-top:15px;
+  font-size:14px;
+}
+
+input{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border:1px solid #ccc;
+}
+
+button{
+  margin-top:20px;
+  width:100%;
+  padding:12px;
+  background:black;
+  color:white;
+  border:none;
+}
+
+.note{
+  font-size:13px;
+  margin-top:10px;
+  color:#555;
+}
+
+.lost-password{
+  display:block;
+  margin-top:15px;
+  font-size:13px;
+}
+
+/* Full page flex container */
+.account-page {
+  display: flex;
+  flex-direction: column; /* logo at top, forms below */
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+/* Logo at top center */
+.login-logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-logo img {
+  width: 120px; /* adjust as needed */
+  height: auto;
+}
+
+/* Container for login & register forms */
+.account-container {
+  display: flex;
+  gap: 40px; /* spacing between login and register boxes */
+  flex-wrap: wrap; /* makes it responsive on small screens */
+}
+
+/* Login / Register boxes styling */
+.login-box,
+.register-box {
+  background-color: #fff;
+  padding: 30px 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  width: 300px; /* adjust as needed */
+}
+

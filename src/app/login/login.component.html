@@ -1,0 +1,55 @@
+<div class="account-page">
+
+  <!-- Centered logo at top -->
+  <div class="login-logo">
+    <img src="assets/logo.png" alt="Logo" />
+  </div>
+
+  <div class="account-container">
+
+    <!-- Login Box -->
+    <div class="login-box">
+      <h2>Login</h2>
+
+      <label>Username or email address</label>
+      <input 
+        type="text"
+        [(ngModel)]="email"
+        placeholder="Enter email"
+      >
+
+      <label>Password</label>
+      <input 
+        type="password"
+        [(ngModel)]="password"
+        placeholder="Enter password"
+      >
+
+      <div class="login-options">
+        <label>
+          <input type="checkbox"> Remember me
+        </label>
+      </div>
+
+      <button (click)="login()">Log in</button>
+
+      <a class="lost-password">Lost your password?</a>
+    </div>
+
+    <!-- Register Box -->
+    <div class="register-box">
+      <h2>Register</h2>
+
+      <label>Email address</label>
+      <input type="email">
+
+      <p class="note">
+        A link to set a new password will be sent to your email address.
+      </p>
+
+      <button>Register</button>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,106 @@
+<div class="container">
+  <div class="card">
+    <h2>Add User</h2>
+
+    <form #userForm="ngForm" (ngSubmit)="addUser(userForm)">
+
+      <!-- Username -->
+      <div class="form-group">
+        <label>User Name</label>
+        <input 
+          type="text" 
+          [(ngModel)]="user.userName" 
+          name="userName" 
+          #userName="ngModel"
+          required 
+          minlength="3"
+          placeholder="Enter username">
+
+        <div class="error" *ngIf="userName.invalid && (userName.touched || userForm.submitted)">
+          <small *ngIf="userName.errors?.['required']">Username is required</small>
+          <small *ngIf="userName.errors?.['minlength']">Minimum 3 characters</small>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label>Email</label>
+        <input 
+          type="email" 
+          [(ngModel)]="user.email" 
+          name="email" 
+          #email="ngModel"
+          required 
+          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+          placeholder="Enter valid email">
+
+        <div class="error" *ngIf="email.invalid && (email.touched || userForm.submitted)">
+          <small *ngIf="email.errors?.['required']">Email is required</small>
+          <small *ngIf="email.errors?.['email'] || email.errors?.['pattern']">Invalid email format</small>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label>Password</label>
+        <input 
+          type="password" 
+          [(ngModel)]="user.password" 
+          name="password" 
+          #password="ngModel"
+          required 
+          minlength="6"
+          placeholder="Enter password">
+
+        <div class="error" *ngIf="password.invalid && (password.touched || userForm.submitted)">
+          <small *ngIf="password.errors?.['required']">Password is required</small>
+          <small *ngIf="password.errors?.['minlength']">Minimum 6 characters</small>
+        </div>
+      </div>
+
+      <!-- Role Dropdown -->
+   <!-- Role Dropdown -->
+<div class="form-group">
+  <label>Role</label>
+  <select 
+    [(ngModel)]="user.role" 
+    name="role" 
+    #role="ngModel"
+    required>
+    <option value="" disabled selected>Select Role</option> <!-- default placeholder -->
+    <option value="DEALER">DEALER</option>
+    <option value="PRIVILEGE_USER">PRIVILEGE USER</option>
+  </select>
+
+  <div class="error" *ngIf="role.invalid && (role.touched || userForm.submitted)">
+    <small>Role is required</small>
+  </div>
+</div>
+
+<!-- Status Dropdown -->
+<div class="form-group">
+  <label>Status</label>
+  <select 
+    [(ngModel)]="user.status" 
+    name="status" 
+    #status="ngModel"
+    required>
+    <option value="" disabled selected>Select Status</option> <!-- default placeholder -->
+    <option value="ACTIVE">ACTIVE</option>
+    <option value="INACTIVE">INACTIVE</option>
+  </select>
+
+  <div class="error" *ngIf="status.invalid && (status.touched || userForm.submitted)">
+    <small>Status is required</small>
+  </div>
+</div>
+
+
+      <!-- Submit Button -->
+      <button type="submit">
+        Add User
+      </button>
+
+    </form>
+  </div>
+</div>

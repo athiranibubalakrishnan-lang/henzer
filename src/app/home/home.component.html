@@ -1,0 +1,58 @@
+<div class="home">
+
+  <!-- 🔍 Search -->
+  <div class="search-bar">
+    <input type="text" placeholder="Search for products...">
+    <button>Search</button>
+  </div>
+
+  <!-- 🎞️ Slider -->
+  <div class="slider">
+    <img [src]="images[currentIndex]" />
+    <button class="prev" (click)="prevSlide()">❮</button>
+    <button class="next" (click)="nextSlide()">❯</button>
+  </div>
+
+  <!-- ⭐ TOP RATED (Scrollable) -->
+  <h2 class="section-title">Top Rated Products</h2>
+
+  <div class="scroll-wrapper">
+    <button class="scroll-btn left" (click)="scrollLeft()">❮</button>
+
+    <div class="scroll-container" #scrollContainer>
+      <div class="scroll-card" *ngFor="let p of topRatedProducts">
+        <p class="brand">{{ p.brand }}</p>
+        <p class="product-name">{{ p.name }}</p>
+        <p class="price">₹{{ p.price }}</p>
+      </div>
+    </div>
+
+    <button class="scroll-btn right" (click)="scrollRight()">❯</button>
+  </div>
+
+  <!-- 🎯 Banner Section -->
+  <div class="banner-section">
+    <img src="assets/slider.png" alt="Banner" class="banner-img">
+    <div class="banner-content">
+      <h2>Discover Amazing Deals!</h2>
+      <p>Get the latest gadgets and offers at unbeatable prices.</p>
+      <button class="banner-btn">Shop Now</button>
+    </div>
+  </div>
+
+  <!-- 🛍️ BROWSE ALL (2 per row) -->
+  <h2 class="section-title">Browse All Products</h2>
+
+  <div class="products two-column">
+    <div class="card browse-card" *ngFor="let p of browseAllProducts">
+      <div>
+        <p class="brand">{{ p.brand }}</p>
+        <p class="product-name">{{ p.name }}</p>
+        <p class="sku">SKU: SAMPLE123</p>
+        <p class="price">₹{{ p.price }}</p>
+      </div>
+      <button class="cart-btn">🛒</button>
+    </div>
+  </div>
+
+</div>

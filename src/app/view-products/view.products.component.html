@@ -1,0 +1,41 @@
+<div class="container">
+
+  <h2 class="title">View Products</h2>
+
+  <div class="top-bar">
+    <input
+      type="text"
+      placeholder="Search by brand, product or model"
+      [(ngModel)]="searchText"
+    />
+    <button class="search-btn">Search</button>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Model</th>
+          <th>Brand</th>
+          <th>Spec</th>
+          <th>Qty</th>
+          <th>SKU</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of filteredProducts">
+          <td>{{p.product}}</td>
+          <td>{{p.model}}</td>
+          <td>{{p.brand}}</td>
+          <td>{{p.spec}}</td>
+          <td>{{p.quantity}}</td>
+          <td>{{p.sku}}</td>
+          <td>₹{{p.price}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
