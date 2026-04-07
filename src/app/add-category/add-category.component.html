@@ -1,41 +1,38 @@
-<div class="container">
-  <h2>Add Category</h2>
+<div class="page-wrapper">
 
-  <div class="form-group">
-    <input
-      type="text"
-      class="form-control"
-      placeholder="Enter Category Name"
-      [(ngModel)]="categoryName"
-    />
-
-    <button class="btn btn-primary mt-2" (click)="addCategory()">
-      Add Category
-    </button>
+  <div class="page-header">
+    <h2>Manage Categories</h2>
+    <p>Categories added here will appear in the product form</p>
   </div>
 
-  <hr />
+  <div class="card">
 
-  <h3>Existing Categories</h3>
+    <div class="input-row">
+      <input
+        type="text"
+        [(ngModel)]="categoryName"
+        placeholder="Enter category name (e.g. Mobile, Laptop)"
+        (keyup.enter)="addCategory()"
+      />
+      <button class="btn-primary" (click)="addCategory()">+ Add</button>
+    </div>
 
-  <table class="table table-bordered" *ngIf="categories.length > 0">
-    <thead>
-      <tr>
-        <th>Category Name</th>
-        <th width="120">Action</th>
-      </tr>
-    </thead>
+    @if (categories.length > 0) {
+      <div class="category-list">
+        @for (cat of categories; track cat; let i = $index) {
+          <div class="category-chip">
+            <span>{{ cat }}</span>
+            <button class="delete-btn" (click)="deleteCategory(i)" title="Remove">✕</button>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <span>🗂️</span>
+        <p>No categories added yet</p>
+      </div>
+    }
 
-    <tbody>
-      <tr *ngFor="let category of categories; let i = index">
-        <td>{{ category }}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" (click)="deleteCategory(i)">
-            Delete
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  </div>
 
 </div>

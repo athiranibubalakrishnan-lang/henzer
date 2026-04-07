@@ -1,37 +1,51 @@
-<div class="container">
-
-  <h2 class="title">View Users</h2>
-
-  <!-- Search -->
-  <div class="top-bar">
-    <input type="text" placeholder="Search by username, email or role" [(ngModel)]="searchText">
-    <button class="search-btn">Search</button>
+<div class="page-wrapper">
+  <div class="page-header">
+    <h2>View Users</h2>
+    <p>Search for a user by their email address</p>
   </div>
 
-  <!-- Table -->
-  <div class="table-wrapper">
-    <table class="product-table">
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let u of filteredUsers; let i = index">
-          <td>{{ u.userName }}</td>
-          <td>{{ u.email }}</td>
-          <td>{{ u.role }}</td>
-          <td>{{ u.status }}</td>
-          <td>
-            <button (click)="deleteUser(i)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <div class="card">
+    <div class="search-row">
+      <input type="text" [(ngModel)]="searchEmail" placeholder="Enter email address"
+        (keyup.enter)="search()" />
+      <button class="btn-primary" (click)="search()">Search</button>
+      <button class="btn-secondary" (click)="clear()">Clear</button>
+    </div>
 
+    @if (loading) {
+      <p class="status-msg">Searching...</p>
+    }
+
+    @if (notFound) {
+      <p class="status-msg error">No user found for "{{ searchEmail }}"</p>
+    }
+
+    @if (user) {
+      <div class="table-wrapper" style="margin-top: 24px">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ user.userName }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.role }}</td>
+              <td>
+                <span class="badge" [class.active]="user.status === 'ACTIVE'"
+                  [class.inactive]="user.status !== 'ACTIVE'">
+                  {{ user.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 </div>

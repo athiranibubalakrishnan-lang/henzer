@@ -1,98 +1,156 @@
-.account-page{
-  padding:60px 0;
-  background:#f8f8f8;
-  min-height:100vh;
-}
-
-.account-container{
-  width:900px;
-  margin:auto;
-  display:flex;
-  gap:40px;
-}
-
-.login-box,
-.register-box{
-  flex:1;
-  background:white;
-  padding:30px;
-  border:1px solid #eee;
-}
-
-h2{
-  margin-bottom:20px;
-}
-
-label{
-  display:block;
-  margin-top:15px;
-  font-size:14px;
-}
-
-input{
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  border:1px solid #ccc;
-}
-
-button{
-  margin-top:20px;
-  width:100%;
-  padding:12px;
-  background:black;
-  color:white;
-  border:none;
-}
-
-.note{
-  font-size:13px;
-  margin-top:10px;
-  color:#555;
-}
-
-.lost-password{
-  display:block;
-  margin-top:15px;
-  font-size:13px;
-}
-
-/* Full page flex container */
-.account-page {
-  display: flex;
-  flex-direction: column; /* logo at top, forms below */
-  justify-content: center;
-  align-items: center;
+.login-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 40px 20px;
 }
 
-/* Logo at top center */
 .login-logo {
-  text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .login-logo img {
-  width: 120px; /* adjust as needed */
-  height: auto;
+  height: 56px;
+  width: auto;
 }
 
-/* Container for login & register forms */
-.account-container {
+.login-cards {
   display: flex;
-  gap: 40px; /* spacing between login and register boxes */
-  flex-wrap: wrap; /* makes it responsive on small screens */
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-/* Login / Register boxes styling */
-.login-box,
-.register-box {
-  background-color: #fff;
-  padding: 30px 25px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  width: 300px; /* adjust as needed */
+.login-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: 360px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
+.card-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 18px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin-badge {
+  background: #6a1b9a;
+  color: #fff;
+}
+
+.dealer-badge {
+  background: #0f3460;
+  color: #fff;
+}
+
+h2 {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 8px 0 4px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin: 0 0 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 11px 40px 11px 38px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.input-wrapper input:focus {
+  border-color: #6a1b9a;
+  box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.12);
+  background: #fff;
+}
+
+.toggle-eye {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 13px;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s, transform 0.1s;
+  letter-spacing: 0.3px;
+}
+
+.admin-btn {
+  background: linear-gradient(135deg, #6a1b9a, #4a148c);
+}
+
+.dealer-btn {
+  background: linear-gradient(135deg, #0f3460, #1a237e);
+}
+
+.login-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

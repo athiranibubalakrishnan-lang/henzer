@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UserService, User } from '../user.service';
+import { UserService } from '../user.service';
 
 @Component({
   selector: 'app-view-users',
@@ -12,24 +12,42 @@ import { UserService, User } from '../user.service';
 })
 export class ViewUsersComponent {
 
-  searchText = '';
-  users: User[] = [];
+  searchEmail = '';
+  user: any = null;
+  notFound = false;
+  loading = false;
+  toast = '';
 
-  constructor(private userService: UserService) {
-    this.users = this.userService.getUsers();
+  constructor(private userService: UserService) {}
+
+  showToast(msg: string) {
+    this.toast = msg;
+    setTimeout(() => this.toast = '', 3000);
   }
 
-  deleteUser(i: number) {
-    this.userService.deleteUser(i);
-    this.users = this.userService.getUsers();
+  search() {
+    if (!this.searchEmail.trim()) return;
+    this.loading = true;
+    this.user = null;
+    this.notFound = false;
+
+    this.userService.getByEmail(this.searchEmail.trim()).subscribe({
+      next: (data) => {
+        this.loading = false;
+        // handle both array and object responses
+        this.user = Array.isArray(data) ? data[0] : data;
+        if (!this.user) this.notFound = true;
+      },
+      error: () => {
+        this.loading = false;
+        this.notFound = true;
+      }
+    });
   }
 
-  get filteredUsers(): User[] {
-    return this.users.filter(u =>
-      !this.searchText ||
-      u.userName.toLowerCase().includes(this.searchText.toLowerCase()) ||
-      u.email.toLowerCase().includes(this.searchText.toLowerCase()) ||
-      u.role.toLowerCase().includes(this.searchText.toLowerCase())
-    );
+  clear() {
+    this.searchEmail = '';
+    this.user = null;
+    this.notFound = false;
   }
 }

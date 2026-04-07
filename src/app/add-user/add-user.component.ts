@@ -12,34 +12,39 @@ import { UserService, User } from '../user.service';
 })
 export class AddUserComponent {
 
-  user: User = {
-    userName: '',
-    email: '',
-    role: 'ADMIN',
-    status: 'ACTIVE'
-  };
+  user: User = { userName: '', email: '', role: '', status: 'ACTIVE', password: '' };
+  loading = false;
+  toast = '';
 
   constructor(private userService: UserService) {}
+
+  showToast(msg: string) {
+    this.toast = msg;
+    setTimeout(() => this.toast = '', 3000);
+  }
 
   addUser(form: NgForm) {
     if (form.invalid) {
       form.control.markAllAsTouched();
       return;
     }
-
-    // Add to in-memory UserService
-    this.userService.addUser({ ...this.user });
-    alert('User added successfully!');
-    this.resetForm(form);
+    this.loading = true;
+    this.userService.create(this.user).subscribe({
+      next: () => {
+        this.loading = false;
+        this.showToast('User created successfully!');
+        this.resetForm(form);
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error(err);
+        this.showToast('Failed to create user');
+      }
+    });
   }
 
   resetForm(form?: NgForm) {
-    this.user = {
-      userName: '',
-      email: '',
-      role: 'ADMIN',
-      status: 'ACTIVE'
-    };
+    this.user = { userName: '', email: '', role: '', status: 'ACTIVE', password: '' };
     form?.resetForm(this.user);
   }
 }

@@ -2,40 +2,80 @@
 
   <h2 class="title">View Products</h2>
 
+  @if (toast) {
+    <div class="toast">{{ toast }}</div>
+  }
+
   <div class="top-bar">
-    <input
-      type="text"
-      placeholder="Search by brand, product or model"
-      [(ngModel)]="searchText"
-    />
-    <button class="search-btn">Search</button>
+    <input type="text" placeholder="Search by name, SKU or model" [(ngModel)]="searchText" />
+    <button class="search-btn" (click)="loadProducts()">Refresh</button>
   </div>
 
-  <div class="table-wrapper">
-    <table class="product-table">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Model</th>
-          <th>Brand</th>
-          <th>Spec</th>
-          <th>Qty</th>
-          <th>SKU</th>
-          <th>Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of filteredProducts">
-          <td>{{p.product}}</td>
-          <td>{{p.model}}</td>
-          <td>{{p.brand}}</td>
-          <td>{{p.spec}}</td>
-          <td>{{p.quantity}}</td>
-          <td>{{p.sku}}</td>
-          <td>₹{{p.price}}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  @if (loading) {
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading products...</p>
+    </div>
+  } @else {
+    @for (cat of categories; track cat) {
+      <h3 class="category-heading">{{ cat }}</h3>
+      <div class="table-wrapper">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Model</th>
+              <th>SKU</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Dealer Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of getProductsByCategory(cat); track p.productCode) {
+              <tr [class.editing-row]="editingId === p.productCode">
+                <td>{{ p.productName }}</td>
+                <td>{{ p.model }}</td>
+                <td>{{ p.sku }}</td>
+                <td>
+                  @if (editingId === p.productCode) {
+                    <input class="inline-input" type="number" [(ngModel)]="editQuantity" min="0" />
+                  } @else { {{ p.quantity }} }
+                </td>
+                <td>
+                  @if (editingId === p.productCode) {
+                    <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
+                  } @else { Rs{{ p.price }} }
+                </td>
+                <td>
+                  @if (editingId === p.productCode) {
+                    <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
+                  } @else { Rs{{ p.dealerPrice }} }
+                </td>
+                <td>
+                  <span class="badge" [class.approved]="p.status === 'APPROVED'" [class.pending]="p.status === 'PENDING'" [class.rejected]="p.status === 'REJECTED'">
+                    {{ p.status }}
+                  </span>
+                </td>
+                <td class="actions">
+                  @if (editingId === p.productCode) {
+                    <button class="btn-save" (click)="saveEdit(p)">Save</button>
+                    <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+                  } @else {
+                    <button class="btn-edit" (click)="startEdit(p)">Edit</button>
+                    <button class="btn-delete" (click)="deleteProduct(p)">Delete</button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="empty-row">No products found.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
 
 </div>

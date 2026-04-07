@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProductService, Product } from '../product.service';
+import { ProductService } from '../product.service';
+import { CategoryService } from '../services/category.service';
 
 @Component({
   selector: 'app-add-product',
@@ -14,39 +15,77 @@ export class AddProductComponent {
 
   productName = '';
   model = '';
-  brand = '';
-  spec = '';
-  quantity = 1;
+  quality = '';
   sku = '';
+  spec = '';
   price = 0;
+  dealerPrice = 0;
+  quantity = 0;
+  status = 'APPROVED';
+  selectedCategory = '';
+  loading = false;
+  toast = '';
+
   active = true;
+  brand = 'Henzer';
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    public categoryService: CategoryService
+  ) {}
 
-  addProduct() {
-    const newProduct: Product = {
-      product: this.productName,
-      model: this.model,
-      brand: this.brand,
-      spec: this.spec,
-      quantity: this.quantity,
-      sku: this.sku,
-      price: this.price,
-      active: this.active
-    };
-
-    this.productService.addProduct(newProduct);
-    alert('Product added successfully');
-
-    // Reset form
-    this.productName = '';
-    this.model = '';
-    this.brand = '';
-    this.spec = '';
-    this.quantity = 1;
-    this.sku = '';
-    this.price = 0;
-    this.active = true;
+  get categories(): string[] {
+    return this.categoryService.getCategories();
   }
 
+  showToast(msg: string) {
+    this.toast = msg;
+    setTimeout(() => this.toast = '', 3000);
+  }
+
+  addProduct() {
+    if (!this.selectedCategory) {
+      this.showToast('Please select a category');
+      return;
+    }
+    const payload = {
+      productName: this.productName,
+      model: this.model,
+      quality: this.quality,
+      sku: this.sku,
+      price: this.price,
+      dealerPrice: this.dealerPrice,
+      quantity: this.quantity,
+      status: this.status,
+      category: this.selectedCategory,
+      active: this.active,
+      brand: this.brand
+    };
+    this.loading = true;
+    this.productService.create(payload).subscribe({
+      next: () => {
+        this.loading = false;
+        this.showToast('Product added successfully');
+        this.resetForm();
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error(err);
+        this.showToast('Failed to add product');
+      }
+    });
+  }
+
+  resetForm() {
+    this.productName = '';
+    this.model = '';
+    this.quality = '';
+    this.sku = '';
+    this.spec = '';
+    this.price = 0;
+    this.dealerPrice = 0;
+    this.quantity = 0;
+    this.status = 'APPROVED';
+    this.selectedCategory = '';
+  }
 }

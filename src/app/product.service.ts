@@ -1,53 +1,41 @@
-// src/app/product.service.ts
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Product {
-  product: string;
+  id?: number;
+  productName: string;
   model: string;
-  brand: string;
-  spec: string;
-  quantity: number;
+  quality: string;
   sku: string;
   price: number;
+  dealerPrice: number;
+  quantity: number;
+  status: string;
+  category: string;
   active: boolean;
+  brand: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ProductService {
-  private products: Product[] = [
-    {
-      product: 'IPHONE',
-      model: '11 PROMAX',
-      brand: 'HENZER',
-      spec: 'HARD OLED Change IC',
-      quantity: 10,
-      sku: 'IP11-001',
-      price: 165,
-      active: true
-    },
-    {
-      product: 'IPHONE',
-      model: '12 PRO',
-      brand: 'HENZER',
-      spec: 'HARD OLED Change IC',
-      quantity: 10,
-      sku: 'IP12-002',
-      price: 158,
-      active: true
-    }
-  ];
+  private base = 'http://localhost:8080/api/products';
 
-  getProducts(): Product[] {
-    return this.products;
+  constructor(private http: HttpClient) {}
+
+  create(payload: Partial<Product>): Observable<any> {
+    return this.http.post(`${this.base}/create`, payload);
   }
 
-  addProduct(p: Product) {
-    this.products.push(p);
+  getAll(): Observable<any[]> {
+    return this.http.get<any[]>(this.base);
   }
 
-  deleteProduct(index: number) {
-    this.products.splice(index, 1);
+  update(productCode: string, payload: any): Observable<any> {
+    return this.http.put(`${this.base}/${productCode}`, payload, { responseType: 'text' });
+  }
+
+  delete(productCode: string): Observable<any> {
+    return this.http.delete(`${this.base}/${productCode}`, { responseType: 'text' });
   }
 }

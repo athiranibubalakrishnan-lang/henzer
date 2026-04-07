@@ -1,25 +1,41 @@
 <header class="header">
+
   <div class="left-section">
-    <img src="assets/menu-icon.png" class="menu-icon" (click)="toggleMenu()" />
-    <img src="assets/logo.png" class="logo" />
+    <div class="menu-btn" (click)="toggleMenu($event)">
+      <span></span><span></span><span></span>
+    </div>
+    <img src="assets/logo.png" class="logo" alt="Logo" />
   </div>
 
   <nav class="nav-links">
     <a routerLink="/home" routerLinkActive="active-link">Home</a>
     <a routerLink="/about" routerLinkActive="active-link">About</a>
 
-    <div class="dropdown">
-      <span class="dropdown-title" (click)="toggleDropdown($event)">Add Products ▾</span>
-      <div class="dropdown-menu">
-        <a routerLink="/add-product">HENZER</a>
-        <a routerLink="/add-product">Silica</a>
-        <a routerLink="/add-product">Silica Lite</a>
+    <div class="dropdown" (click)="toggleDropdown($event)">
+      <span class="dropdown-title">Products ▾</span>
+      <div class="dropdown-menu" [class.show]="showDropdown">
+        <a routerLink="/add-product">Add Product</a>
+        <a routerLink="/add-category">Add Category</a>
+        <a routerLink="/view-products">View Products</a>
       </div>
     </div>
 
-    <a routerLink="/view-products" routerLinkActive="active-link">View Products</a>
-    <a routerLink="/add-user" routerLinkActive="active-link">Create User</a>
-    <a routerLink="/view-users" routerLinkActive="active-link">View Users</a>
+    <ng-container *ngIf="isAdmin">
+      <a routerLink="/add-user" routerLinkActive="active-link">Create User</a>
+      <a routerLink="/view-users" routerLinkActive="active-link">View Users</a>
+    </ng-container>
+
     <a routerLink="/contact" routerLinkActive="active-link">Contact</a>
   </nav>
+
+  <div class="right-section">
+    <div class="user-info">
+      <span class="avatar">{{ userInitial }}</span>
+      <span class="username">{{ userName }}</span>
+    </div>
+    <button class="logout-btn" (click)="logout()">
+      <span>⏻</span> Logout
+    </button>
+  </div>
+
 </header>

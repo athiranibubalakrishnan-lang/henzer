@@ -16,16 +16,21 @@ export class AppComponent {
 
   menuOpen = false;
   isLoading = false;
-  showHeader = true; // new flag to control header/sidenav visibility
+  showHeader = true;
 
   constructor(private router: Router) {
+
+    // ✅ FIX: Handle initial page load
+    this.showHeader = !this.router.url.startsWith('/login');
+
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.isLoading = true;
-      } else if (event instanceof NavigationEnd) {
+      } 
+      else if (event instanceof NavigationEnd) {
         this.isLoading = false;
 
-        // Hide header and sidenav on login page
+        // ✅ FIX: use urlAfterRedirects
         this.showHeader = !event.url.includes('/login');
       }
     });

@@ -1,31 +1,26 @@
-// src/app/user.service.ts
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface User {
   userName: string;
   email: string;
   role: string;
   status: string;
-  password?: string; // optional
+  password?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class UserService {
-  private users: User[] = [
-    { userName: 'admin', email: 'admin@example.com', role: 'ADMIN', status: 'ACTIVE' }
-  ];
+  private base = 'http://localhost:8080/api/users';
 
-  getUsers(): User[] {
-    return this.users;
+  constructor(private http: HttpClient) {}
+
+  create(user: User): Observable<any> {
+    return this.http.post(this.base, user, { responseType: 'text' });
   }
 
-  addUser(user: User) {
-    this.users.push(user);
-  }
-
-  deleteUser(index: number) {
-    this.users.splice(index, 1);
+  getByEmail(email: string): Observable<any> {
+    return this.http.get(`${this.base}/${email}`);
   }
 }

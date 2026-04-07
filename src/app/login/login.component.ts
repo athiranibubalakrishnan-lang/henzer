@@ -3,45 +3,63 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http'; 
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule,HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
 
-  email: string = '';
-  password: string = '';
+  // Admin login
+  adminEmail = '';
+  adminPassword = '';
+  showAdminPassword = false;
+  adminLoading = false;
 
-  constructor(
-    private router: Router,
-    private http: HttpClient
-  ) {}
+  // Dealer login
+  dealerEmail = '';
+  dealerPassword = '';
+  showDealerPassword = false;
+  dealerLoading = false;
 
-  login() {
-    const payload = {
-      email: this.email,
-      password: this.password
-    };
+  constructor(private router: Router, private http: HttpClient) {}
 
-    this.http.post('http://localhost:8080/api/auth/admin/login', payload)
-      .subscribe({
-        next: (response: any) => {
-          console.log("Login Success", response);
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-          }
-          this.router.navigate(['/home']); 
-        },
-        error: (error) => {
-          // console.log("Login Failed", error);
-          // alert("Invalid Email or Password");
-           this.router.navigate(['/home']);
-        }
-      });
+  adminLogin() {
+    const payload = { email: this.adminEmail, password: this.adminPassword };
+    this.adminLoading = true;
+    this.http.post<any>('http://localhost:8080/api/auth/admin/login', payload).subscribe({
+      next: (res) => {
+        this.adminLoading = false;
+        if (res?.token) localStorage.setItem('token', res.token);
+        localStorage.setItem('role', res?.role || 'ADMIN');
+        this.router.navigate(['/home']);
+      },
+      error: (err) => {
+        this.adminLoading = false;
+        console.error(err);
+        alert('Invalid admin credentials');
+      }
+    });
+  }
+
+  dealerLogin() {
+    const payload = { email: this.dealerEmail, password: this.dealerPassword };
+    this.dealerLoading = true;
+    this.http.post<any>('http://localhost:8080/api/auth/dealer/login', payload).subscribe({
+      next: (res) => {
+        this.dealerLoading = false;
+        if (res?.token) localStorage.setItem('token', res.token);
+        localStorage.setItem('role', res?.role || 'DEALER');
+        this.router.navigate(['/home']);
+      },
+      error: (err) => {
+        this.dealerLoading = false;
+        console.error(err);
+        alert('Invalid dealer credentials');
+      }
+    });
   }
 }
