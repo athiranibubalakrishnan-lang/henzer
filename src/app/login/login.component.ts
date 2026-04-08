@@ -14,8 +14,8 @@ import { CommonModule } from '@angular/common';
 export class LoginComponent {
 
   // Admin login
-  adminEmail = '';
-  adminPassword = '';
+  adminEmail = 'anibubalakrishnan@gmail.com';
+  adminPassword = 'Asdfgh@098';
   showAdminPassword = false;
   adminLoading = false;
 

@@ -9,13 +9,13 @@
     <p>Fill in the details below to create a new user</p>
   </div>
   <div class="card">
-    <form #userForm="ngForm" (ngSubmit)="addUser(userForm)">
+    <form #userForm="ngForm" (ngSubmit)="addUser(userForm)" autocomplete="off">
       <div class="form-grid">
 
         <div class="form-group">
           <label>User Name <span class="required">*</span></label>
           <input type="text" [(ngModel)]="user.userName" name="userName" #userName="ngModel"
-            required minlength="3" placeholder="Enter username" />
+            required minlength="3" placeholder="Enter username" autocomplete="off" />
           @if (userName.invalid && (userName.touched || userForm.submitted)) {
             <span class="hint error">
               @if (userName.errors?.["required"]) { Username is required }
@@ -36,7 +36,7 @@
         <div class="form-group">
           <label>Password <span class="required">*</span></label>
           <input type="password" [(ngModel)]="user.password" name="password" #password="ngModel"
-            required minlength="6" placeholder="Enter password" />
+            required minlength="6" placeholder="Enter password" autocomplete="new-password" />
           @if (password.invalid && (password.touched || userForm.submitted)) {
             <span class="hint error">
               @if (password.errors?.["required"]) { Password is required }
@@ -60,7 +60,7 @@
       </div>
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
-        <button type="submit" class="btn-primary" [disabled]="loading">
+        <button type="submit" class="btn-primary" [disabled]="loading" (click)="$event.stopPropagation()">
           {{ loading ? "Creating..." : "Create User" }}
         </button>
       </div>

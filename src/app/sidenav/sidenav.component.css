@@ -84,3 +84,39 @@ li:hover {
   width: 24px;
   text-align: center;
 }
+
+.sidenav-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(229,57,53,0.15);
+  color: #ef9a9a;
+  border: 1px solid rgba(229,57,53,0.3);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.logout-btn:hover {
+  background: #e53935;
+  color: #fff;
+  border-color: #e53935;
+}
+
+.active-item {
+  background: rgba(106, 27, 154, 0.4) !important;
+  color: #fff !important;
+}

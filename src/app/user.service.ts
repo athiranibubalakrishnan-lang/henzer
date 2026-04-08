@@ -20,6 +20,10 @@ export class UserService {
     return this.http.post(this.base, user, { responseType: 'text' });
   }
 
+  getAll(): Observable<any[]> {
+    return this.http.get<any[]>(this.base);
+  }
+
   getByEmail(email: string): Observable<any> {
     return this.http.get(`${this.base}/${email}`);
   }

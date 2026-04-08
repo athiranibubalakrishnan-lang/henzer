@@ -1,5 +1,6 @@
-import { Component, Input,Output,EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-sidenav',
@@ -10,19 +11,28 @@ import { CommonModule } from '@angular/common';
 })
 export class SidenavComponent {
 
-  @Input() isOpen: boolean = false;
-   @Output() close = new EventEmitter<void>();
+  @Input() isOpen = false;
+  @Output() close = new EventEmitter<void>();
 
-  menuItems = [
-    { name: 'Dashboard', icon: '🏠' },
-    { name: 'Products', icon: '📦' },
-    { name: 'Orders', icon: '🧾' },
-    { name: 'Customers', icon: '👥' },
-    { name: 'Reports', icon: '📊' },
-    { name: 'Settings', icon: '⚙️' }
-  ];
+  constructor(private router: Router) {}
 
- closeMenu() {
+  get isAdmin(): boolean {
+    return localStorage.getItem('role') === 'ADMIN';
+  }
+
+  navigate(path: string) {
+    this.closeMenu();
+    this.router.navigate([path]);
+  }
+
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    this.closeMenu();
+    this.router.navigate(['/login']);
+  }
+
+  closeMenu() {
     this.close.emit();
   }
 }

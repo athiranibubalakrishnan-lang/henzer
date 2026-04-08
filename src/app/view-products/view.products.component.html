@@ -8,7 +8,7 @@
 
   <div class="top-bar">
     <input type="text" placeholder="Search by name, SKU or model" [(ngModel)]="searchText" />
-    <button class="search-btn" (click)="loadProducts()">Refresh</button>
+    <button class="search-btn" (click)="refresh()">Refresh</button>
   </div>
 
   @if (loading) {
@@ -29,7 +29,9 @@
               <th>Qty</th>
               <th>Price</th>
               <th>Dealer Price</th>
-              <th>Status</th>
+              @if (!isDealer) {
+                <th>Status</th>
+              }
               <th>Actions</th>
             </tr>
           </thead>
@@ -39,38 +41,61 @@
                 <td>{{ p.productName }}</td>
                 <td>{{ p.model }}</td>
                 <td>{{ p.sku }}</td>
+
+                <!-- Qty: editable only for admin -->
                 <td>
-                  @if (editingId === p.productCode) {
+                  @if (editingId === p.productCode && !isDealer) {
                     <input class="inline-input" type="number" [(ngModel)]="editQuantity" min="0" />
-                  } @else { {{ p.quantity }} }
+                  } @else {
+                    {{ p.quantity }}
+                  }
                 </td>
+
+                <!-- Price: editable for both -->
                 <td>
                   @if (editingId === p.productCode) {
                     <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
-                  } @else { Rs{{ p.price }} }
+                  } @else {
+                    Rs{{ p.price }}
+                  }
                 </td>
+
+                <!-- Dealer Price: editable for both -->
                 <td>
                   @if (editingId === p.productCode) {
                     <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
-                  } @else { Rs{{ p.dealerPrice }} }
+                  } @else {
+                    Rs{{ p.dealerPrice }}
+                  }
                 </td>
-                <td>
-                  <span class="badge" [class.approved]="p.status === 'APPROVED'" [class.pending]="p.status === 'PENDING'" [class.rejected]="p.status === 'REJECTED'">
-                    {{ p.status }}
-                  </span>
-                </td>
+
+                @if (!isDealer) {
+                  <td>
+                    <span class="badge"
+                      [class.approved]="p.status === 'APPROVED'"
+                      [class.pending]="p.status === 'PENDING'"
+                      [class.rejected]="p.status === 'REJECTED'">
+                      {{ p.status }}
+                    </span>
+                  </td>
+                }
+
                 <td class="actions">
                   @if (editingId === p.productCode) {
-                    <button class="btn-save" (click)="saveEdit(p)">Save</button>
-                    <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+                    <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Save</button>
+                    <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
                   } @else {
-                    <button class="btn-edit" (click)="startEdit(p)">Edit</button>
-                    <button class="btn-delete" (click)="deleteProduct(p)">Delete</button>
+                    <button class="btn-edit" (click)="startEdit(p); $event.stopPropagation()">Edit</button>
+                    @if (!isDealer) {
+                      <button class="btn-delete" (click)="deleteProduct(p); $event.stopPropagation()">Delete</button>
+                    }
                   }
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="8" class="empty-row">No products found.</td></tr>
+              <tr>
+                <td [attr.colspan]="isDealer ? 7 : 8" class="empty-row">No products found.</td>
+              </tr>
             }
           </tbody>
         </table>

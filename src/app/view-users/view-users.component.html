@@ -1,27 +1,22 @@
 <div class="page-wrapper">
   <div class="page-header">
     <h2>View Users</h2>
-    <p>Search for a user by their email address</p>
+    <p>All registered users</p>
   </div>
 
   <div class="card">
     <div class="search-row">
-      <input type="text" [(ngModel)]="searchEmail" placeholder="Enter email address"
-        (keyup.enter)="search()" />
-      <button class="btn-primary" (click)="search()">Search</button>
-      <button class="btn-secondary" (click)="clear()">Clear</button>
+      <input type="text" [(ngModel)]="searchText" placeholder="Search by name, email or role" />
+      <button class="btn-primary" (click)="refresh($event)">Refresh</button>
     </div>
 
     @if (loading) {
-      <p class="status-msg">Searching...</p>
-    }
-
-    @if (notFound) {
-      <p class="status-msg error">No user found for "{{ searchEmail }}"</p>
-    }
-
-    @if (user) {
-      <div class="table-wrapper" style="margin-top: 24px">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <p>Loading users...</p>
+      </div>
+    } @else {
+      <div class="table-wrapper" style="margin-top: 20px">
         <table class="product-table">
           <thead>
             <tr>
@@ -32,17 +27,22 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{{ user.userName }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.role }}</td>
-              <td>
-                <span class="badge" [class.active]="user.status === 'ACTIVE'"
-                  [class.inactive]="user.status !== 'ACTIVE'">
-                  {{ user.status }}
-                </span>
-              </td>
-            </tr>
+            @for (u of filteredUsers; track u.email) {
+              <tr>
+                <td>{{ u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.role }}</td>
+                <td>
+                  <span class="badge"
+                    [class.active]="u.status === 'ACTIVE'"
+                    [class.inactive]="u.status !== 'ACTIVE'">
+                    {{ u.status }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="empty-row">No users found.</td></tr>
+            }
           </tbody>
         </table>
       </div>

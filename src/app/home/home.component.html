@@ -20,7 +20,7 @@
     <button class="scroll-btn left" (click)="scrollLeft()">❮</button>
 
     <div class="scroll-container" #scrollContainer>
-      <div class="scroll-card" *ngFor="let p of topRatedProducts">
+      <div class="scroll-card" *ngFor="let p of topRatedProducts" (click)="goToAddProduct(p)" style="cursor:pointer">
         <p class="brand">{{ p.brand }}</p>
         <p class="product-name">{{ p.name }}</p>
         <p class="price">₹{{ p.price }}</p>
@@ -44,14 +44,13 @@
   <h2 class="section-title">Browse All Products</h2>
 
   <div class="products two-column">
-    <div class="card browse-card" *ngFor="let p of browseAllProducts">
+    <div class="card browse-card" *ngFor="let p of browseAllProducts" (click)="goToAddProduct(p)" style="cursor:pointer">
       <div>
         <p class="brand">{{ p.brand }}</p>
         <p class="product-name">{{ p.name }}</p>
         <p class="sku">SKU: SAMPLE123</p>
         <p class="price">₹{{ p.price }}</p>
       </div>
-      <button class="cart-btn">🛒</button>
     </div>
   </div>
 

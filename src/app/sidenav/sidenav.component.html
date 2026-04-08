@@ -8,10 +8,36 @@
   </div>
 
   <ul>
-    <li *ngFor="let item of menuItems">
-      <span class="icon">{{ item.icon }}</span>
-      <span>{{ item.name }}</span>
+    <li (click)="navigate('/home')">
+      <span class="icon">🏠</span> Home
+    </li>
+    <li (click)="navigate('/about')">
+      <span class="icon">ℹ️</span> About
+    </li>
+    <li (click)="navigate('/add-product')">
+      <span class="icon">➕</span> Add Product
+    </li>
+    <li (click)="navigate('/add-category')">
+      <span class="icon">🗂️</span> Add Category
+    </li>
+    <li (click)="navigate('/view-products')">
+      <span class="icon">📦</span> View Products
+    </li>
+    <li *ngIf="isAdmin" (click)="navigate('/add-user')">
+      <span class="icon">👤</span> Create User
+    </li>
+    <li *ngIf="isAdmin" (click)="navigate('/view-users')">
+      <span class="icon">👥</span> View Users
+    </li>
+    <li (click)="navigate('/contact')">
+      <span class="icon">✉️</span> Contact
     </li>
   </ul>
+
+  <div class="sidenav-footer">
+    <button class="logout-btn" (click)="logout()">
+      <span>⏻</span> Logout
+    </button>
+  </div>
 
 </div>

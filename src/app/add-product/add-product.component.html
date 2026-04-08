@@ -1,5 +1,8 @@
-<div class="page-wrapper">
+@if (toast) {
+  <div class="toast">{{ toast }}</div>
+}
 
+<div class="page-wrapper">
   <div class="page-header">
     <h2>Add Product</h2>
     <p>Fill in the details below to add a new product</p>
@@ -7,13 +10,11 @@
 
   <div class="card">
     <form (ngSubmit)="addProduct()" #productForm="ngForm">
-
       <div class="form-grid">
 
         <div class="form-group full-width">
           <label>Category <span class="required">*</span></label>
-          <select [(ngModel)]="selectedCategory" name="selectedCategory" required
-            [class.invalid]="categories.length === 0">
+          <select [(ngModel)]="selectedCategory" name="selectedCategory" required [class.invalid]="categories.length === 0">
             <option value="" disabled selected>-- Select a Category --</option>
             @for (cat of categories; track cat) {
               <option [value]="cat">{{ cat }}</option>
@@ -26,35 +27,33 @@
 
         <div class="form-group">
           <label>Product Name <span class="required">*</span></label>
-          <input type="text" [(ngModel)]="productName" name="productName"
-            placeholder="e.g. Cordset" required />
+          <input type="text" [(ngModel)]="productName" name="productName" placeholder="e.g. Cordset" required />
         </div>
 
         <div class="form-group">
           <label>Model</label>
-          <input type="text" [(ngModel)]="model" name="model"
-            placeholder="e.g. Black stylish cotton cordset" />
+          <input type="text" [(ngModel)]="model" name="model" placeholder="e.g. Black stylish cotton cordset" />
         </div>
 
         <div class="form-group">
           <label>SKU</label>
-          <input type="text" [(ngModel)]="sku" name="sku"
-            placeholder="e.g. 12" />
+          <input type="text" [(ngModel)]="sku" name="sku" placeholder="e.g. 12" />
         </div>
 
-        <div class="form-group">
-          <label>Quality / Sizes</label>
-          <input type="text" [(ngModel)]="quality" name="quality"
-            placeholder="e.g. size:M,L,S" />
-        </div>
+        @if (!isDealer) {
+          <div class="form-group">
+            <label>Quality / Sizes</label>
+            <input type="text" [(ngModel)]="quality" name="quality" placeholder="e.g. size:M,L,S" />
+          </div>
+        }
 
         <div class="form-group">
-          <label>Price (₹)</label>
+          <label>Price (Rs)</label>
           <input type="number" [(ngModel)]="price" name="price" min="0" placeholder="0.00" />
         </div>
 
         <div class="form-group">
-          <label>Dealer Price (₹)</label>
+          <label>Dealer Price (Rs)</label>
           <input type="number" [(ngModel)]="dealerPrice" name="dealerPrice" min="0" placeholder="0.00" />
         </div>
 
@@ -63,25 +62,24 @@
           <input type="number" [(ngModel)]="quantity" name="quantity" min="0" />
         </div>
 
-        <div class="form-group">
-          <label>Status</label>
-          <select [(ngModel)]="status" name="status">
-            <option value="APPROVED">APPROVED</option>
-            <option value="PENDING">PENDING</option>
-            <option value="REJECTED">REJECTED</option>
-          </select>
-        </div>
+        @if (!isDealer) {
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="status" name="status">
+              <option value="APPROVED">APPROVED</option>
+              <option value="PENDING">PENDING</option>
+              <option value="REJECTED">REJECTED</option>
+            </select>
+          </div>
+        }
 
       </div>
-
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
         <button type="submit" class="btn-primary" [disabled]="loading || categories.length === 0">
           {{ loading ? 'Saving...' : 'Add Product' }}
         </button>
       </div>
-
     </form>
   </div>
-
 </div>

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ProductService } from '../product.service';
 import { CategoryService } from '../services/category.service';
 
@@ -31,8 +32,20 @@ export class AddProductComponent {
 
   constructor(
     private productService: ProductService,
-    public categoryService: CategoryService
-  ) {}
+    public categoryService: CategoryService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    this.route.queryParams.subscribe(params => {
+      if (params['name']) this.productName = params['name'];
+      if (params['brand']) this.brand = params['brand'];
+      if (params['price']) this.price = +params['price'];
+    });
+  }
+
+  get isDealer(): boolean {
+    return localStorage.getItem('role') === 'DEALER';
+  }
 
   get categories(): string[] {
     return this.categoryService.getCategories();
@@ -67,6 +80,7 @@ export class AddProductComponent {
         this.loading = false;
         this.showToast('Product added successfully');
         this.resetForm();
+        setTimeout(() => this.router.navigate(['/view-products']), 1500);
       },
       error: (err) => {
         this.loading = false;

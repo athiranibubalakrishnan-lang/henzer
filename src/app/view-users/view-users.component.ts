@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../user.service';
@@ -10,44 +10,48 @@ import { UserService } from '../user.service';
   templateUrl: './view-users.component.html',
   styleUrls: ['./view-users.component.css']
 })
-export class ViewUsersComponent {
+export class ViewUsersComponent implements OnInit {
 
-  searchEmail = '';
-  user: any = null;
-  notFound = false;
+  searchText = '';
+  users: any[] = [];
   loading = false;
   toast = '';
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService, private zone: NgZone) {}
 
-  showToast(msg: string) {
-    this.toast = msg;
-    setTimeout(() => this.toast = '', 3000);
-  }
+  ngOnInit() { this.loadUsers(); }
 
-  search() {
-    if (!this.searchEmail.trim()) return;
+  loadUsers() {
     this.loading = true;
-    this.user = null;
-    this.notFound = false;
-
-    this.userService.getByEmail(this.searchEmail.trim()).subscribe({
+    this.userService.getAll().subscribe({
       next: (data) => {
-        this.loading = false;
-        // handle both array and object responses
-        this.user = Array.isArray(data) ? data[0] : data;
-        if (!this.user) this.notFound = true;
+        this.zone.run(() => {
+          this.loading = false;
+          this.users = Array.isArray(data) ? data : [];
+        });
       },
-      error: () => {
-        this.loading = false;
-        this.notFound = true;
+      error: (err) => {
+        this.zone.run(() => {
+          this.loading = false;
+          console.error('Failed to load users', err);
+        });
       }
     });
   }
 
-  clear() {
-    this.searchEmail = '';
-    this.user = null;
-    this.notFound = false;
+  get filteredUsers(): any[] {
+    if (!this.searchText.trim()) return this.users;
+    const q = this.searchText.toLowerCase();
+    return this.users.filter(u =>
+      u.username?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.role?.toLowerCase().includes(q)
+    );
+  }
+
+  refresh(event?: Event) {
+    if (event) event.stopPropagation();
+    this.searchText = '';
+    this.loadUsers();
   }
 }

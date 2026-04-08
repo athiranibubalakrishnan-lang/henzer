@@ -1,7 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, ElementRef, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ViewChild, ElementRef } from '@angular/core';
-// import { HttpClient } from '@angular/common/http'; // 🔌 API (for future)
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -10,36 +9,27 @@ import { ViewChild, ElementRef } from '@angular/core';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent {
+export class HomeComponent implements OnDestroy {
 
-  // constructor(private http: HttpClient) {} // 🔌 enable later
+  private slideInterval: any;
+
+  constructor(private router: Router, private zone: NgZone) {}
 
   images = [
-    'assets/banner1.jpg',
-    'assets/banner2.jpg',
-    'assets/banner3.jpg'
+    'assets/quality-banner.png',
+    'assets/quality-banner2.jpg'
   ];
 
   currentIndex = 0;
 
   ngOnInit() {
-    setInterval(() => {
-      this.nextSlide();
+    this.slideInterval = setInterval(() => {
+      this.zone.run(() => this.nextSlide());
     }, 3000);
+  }
 
-    // 🔌 API CALLS (COMMENTED FOR NOW)
-
-    /*
-    this.http.get('http://localhost:8080/api/products/top-rated')
-      .subscribe((data: any) => {
-        this.topRatedProducts = data;
-      });
-
-    this.http.get('http://localhost:8080/api/products/all')
-      .subscribe((data: any) => {
-        this.browseAllProducts = data;
-      });
-    */
+  ngOnDestroy() {
+    clearInterval(this.slideInterval);
   }
 
   nextSlide() {
@@ -47,11 +37,9 @@ export class HomeComponent {
   }
 
   prevSlide() {
-    this.currentIndex =
-      (this.currentIndex - 1 + this.images.length) % this.images.length;
+    this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
   }
 
-  // ⭐ TOP RATED (Dummy)
   topRatedProducts = [
     { brand: 'HENZER', name: 'Huawei P20 Lite Org', price: 54.00 },
     { brand: 'HENZER', name: 'Samsung G570', price: 48.00 },
@@ -60,29 +48,28 @@ export class HomeComponent {
     { brand: 'SILICA', name: 'iPhone XR FHD', price: 71.00 }
   ];
 
-  // 🛍️ BROWSE ALL (Dummy)
   browseAllProducts = [
     { brand: 'HENZER', name: 'iPhone XR FOG', price: 107.00 },
     { brand: 'HENZER', name: 'iPhone XS MAX OLED', price: 217.00 },
     { brand: 'HENZER', name: 'iPhone XS OLED', price: 161.00 },
     { brand: 'SILICA', name: 'iPhone XR FHD', price: 71.00 }
   ];
-  @ViewChild('scrollContainer', { static: false })
-scrollContainer!: ElementRef;
 
-scrollLeft() {
-  this.scrollContainer.nativeElement.scrollBy({
-    left: -200,
-    behavior: 'smooth'
-  });
-}
+  @ViewChild('scrollContainer', { static: false }) scrollContainer!: ElementRef;
 
-scrollRight() {
-  this.scrollContainer.nativeElement.scrollBy({
-    left: 200,
-    behavior: 'smooth'
-  });
-}
+  scrollLeft() {
+    this.scrollContainer.nativeElement.scrollBy({ left: -200, behavior: 'smooth' });
+  }
+
+  scrollRight() {
+    this.scrollContainer.nativeElement.scrollBy({ left: 200, behavior: 'smooth' });
+  }
+
+  goToAddProduct(p: any) {
+    this.router.navigate(['/add-product'], {
+      queryParams: { name: p.name, brand: p.brand, price: p.price }
+    });
+  }
 }
 
 

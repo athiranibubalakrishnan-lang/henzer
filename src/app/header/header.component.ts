@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, HostListener } from '@angular/core';
+import { Component, EventEmitter, Output, HostListener, NgZone } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
@@ -16,7 +16,7 @@ export class HeaderComponent {
   isMenuOpen = false;
   showDropdown = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private zone: NgZone) {}
 
   get isAdmin(): boolean {
     return localStorage.getItem('role') === 'ADMIN';
@@ -28,7 +28,11 @@ export class HeaderComponent {
   }
 
   get userName(): string {
-    return localStorage.getItem('role') || 'Admin';
+    const role = localStorage.getItem('role') || '';
+    if (role === 'ADMIN') return 'Admin';
+    if (role === 'DEALER') return 'Dealer';
+    if (role === 'PRIVILEGE_USER') return 'User';
+    return role;
   }
 
   toggleMenu(event: Event) {
@@ -50,6 +54,8 @@ export class HeaderComponent {
 
   @HostListener('document:click')
   closeAll() {
-    this.showDropdown = false;
+    this.zone.run(() => {
+      this.showDropdown = false;
+    });
   }
 }

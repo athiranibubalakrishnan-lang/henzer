@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { UserService, User } from '../user.service';
 
 @Component({
@@ -16,7 +17,7 @@ export class AddUserComponent {
   loading = false;
   toast = '';
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService, private router: Router) {}
 
   showToast(msg: string) {
     this.toast = msg;
@@ -34,6 +35,7 @@ export class AddUserComponent {
         this.loading = false;
         this.showToast('User created successfully!');
         this.resetForm(form);
+        setTimeout(() => this.router.navigate(['/view-users']), 1500);
       },
       error: (err) => {
         this.loading = false;

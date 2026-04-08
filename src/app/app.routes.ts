@@ -7,6 +7,7 @@ import { AddCategoryComponent } from './add-category/add-category.component';
 import { ViewProductsComponent } from './view-products/view.products.component';
 import { AboutComponent } from './about/about.component';
 import { ViewUsersComponent } from './view-users/view-users.component';
+import { ContactComponent } from './contact/contact';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -18,5 +19,6 @@ export const routes: Routes = [
   { path: 'view-products', component: ViewProductsComponent },
   { path: 'about', component: AboutComponent },
   { path: 'view-users', component: ViewUsersComponent },
+  { path: 'contact', component: ContactComponent },
   { path: '**', redirectTo: 'login' }
 ];
