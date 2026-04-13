@@ -1,0 +1,43 @@
+@if (toast) {
+  <div class="toast">{{ toast }}</div>
+}
+
+<div class="shop-page">
+
+  <div class="shop-header">
+    <h2>Browse Products</h2>
+    <input type="text" [(ngModel)]="searchText" placeholder="Search by name, brand or model..." class="search-input" />
+  </div>
+
+  @if (loading) {
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading products...</p>
+    </div>
+  } @else {
+    <div class="product-grid">
+      @for (p of filtered; track p.productCode) {
+        <div class="product-card">
+          <div class="card-body">
+            <p class="brand">{{ p.brand }}</p>
+            <p class="name">{{ p.productName }}</p>
+            <p class="model">{{ p.model }}</p>
+            <p class="price">¥{{ p.price }}</p>
+          </div>
+          <div class="card-footer">
+            <div class="qty-row">
+              <label>Qty</label>
+              <input type="number" [(ngModel)]="quantities[p.productCode]" min="1" class="qty-input" />
+            </div>
+            <button class="btn-cart" (click)="addToCart(p); $event.stopPropagation()">
+              🛒 Add to Cart
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <p class="empty">No products found.</p>
+      }
+    </div>
+  }
+
+</div>

@@ -22,6 +22,11 @@ export class HeaderComponent {
     return localStorage.getItem('role') === 'ADMIN';
   }
 
+  get isUser(): boolean {
+    const role = localStorage.getItem('role');
+    return role !== 'ADMIN' && role !== 'DEALER';
+  }
+
   get userInitial(): string {
     const role = localStorage.getItem('role') || 'A';
     return role.charAt(0).toUpperCase();
@@ -32,7 +37,7 @@ export class HeaderComponent {
     if (role === 'ADMIN') return 'Admin';
     if (role === 'DEALER') return 'Dealer';
     if (role === 'PRIVILEGE_USER') return 'User';
-    return role;
+    return 'User';
   }
 
   toggleMenu(event: Event) {

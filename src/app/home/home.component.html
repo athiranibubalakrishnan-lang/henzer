@@ -1,5 +1,9 @@
 <div class="home">
 
+  @if (toast) {
+    <div class="cart-toast">{{ toast }}</div>
+  }
+
   <!-- 🔍 Search -->
   <div class="search-bar">
     <input type="text" placeholder="Search for products...">
@@ -23,7 +27,7 @@
       <div class="scroll-card" *ngFor="let p of topRatedProducts" (click)="goToAddProduct(p)" style="cursor:pointer">
         <p class="brand">{{ p.brand }}</p>
         <p class="product-name">{{ p.name }}</p>
-        <p class="price">₹{{ p.price }}</p>
+        <p class="price">¥{{ p.price }}</p>
       </div>
     </div>
 
@@ -49,7 +53,7 @@
         <p class="brand">{{ p.brand }}</p>
         <p class="product-name">{{ p.name }}</p>
         <p class="sku">SKU: SAMPLE123</p>
-        <p class="price">₹{{ p.price }}</p>
+        <p class="price">¥{{ p.price }}</p>
       </div>
     </div>
   </div>

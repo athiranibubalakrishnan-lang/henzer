@@ -20,6 +20,11 @@ export class SidenavComponent {
     return localStorage.getItem('role') === 'ADMIN';
   }
 
+  get isUser(): boolean {
+    const role = localStorage.getItem('role');
+    return role !== 'ADMIN' && role !== 'DEALER';
+  }
+
   navigate(path: string) {
     this.closeMenu();
     this.router.navigate([path]);

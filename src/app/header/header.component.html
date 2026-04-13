@@ -11,14 +11,16 @@
     <a routerLink="/home" routerLinkActive="active-link">Home</a>
     <a routerLink="/about" routerLinkActive="active-link">About</a>
 
-    <div class="dropdown" (click)="toggleDropdown($event)">
-      <span class="dropdown-title">Products ▾</span>
-      <div class="dropdown-menu" [class.show]="showDropdown">
-        <a routerLink="/add-product">Add Product</a>
-        <a routerLink="/add-category">Add Category</a>
-        <a routerLink="/view-products">View Products</a>
+    <ng-container *ngIf="!isUser">
+      <div class="dropdown" (click)="toggleDropdown($event)">
+        <span class="dropdown-title">Products ▾</span>
+        <div class="dropdown-menu" [class.show]="showDropdown">
+          <a routerLink="/add-product">Add Product</a>
+          <a routerLink="/add-category">Add Category</a>
+          <a routerLink="/view-products">View Products</a>
+        </div>
       </div>
-    </div>
+    </ng-container>
 
     <ng-container *ngIf="isAdmin">
       <a routerLink="/add-user" routerLinkActive="active-link">Create User</a>
@@ -26,6 +28,11 @@
     </ng-container>
 
     <a routerLink="/contact" routerLinkActive="active-link">Contact</a>
+
+    <ng-container *ngIf="isUser">
+      <a routerLink="/shop" routerLinkActive="active-link">Shop</a>
+      <a routerLink="/cart" routerLinkActive="active-link" class="cart-link">🛒 Cart</a>
+    </ng-container>
   </nav>
 
   <div class="right-section">

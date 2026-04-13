@@ -56,7 +56,7 @@
                   @if (editingId === p.productCode) {
                     <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
                   } @else {
-                    Rs{{ p.price }}
+                    ¥{{ p.price }}
                   }
                 </td>
 
@@ -65,7 +65,7 @@
                   @if (editingId === p.productCode) {
                     <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
                   } @else {
-                    Rs{{ p.dealerPrice }}
+                    ¥{{ p.dealerPrice }}
                   }
                 </td>
 

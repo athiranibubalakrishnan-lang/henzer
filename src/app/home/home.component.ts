@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { CartService } from '../services/cart.service';
 
 @Component({
   selector: 'app-home',
@@ -13,7 +14,18 @@ export class HomeComponent implements OnDestroy {
 
   private slideInterval: any;
 
-  constructor(private router: Router, private zone: NgZone) {}
+  constructor(private router: Router, private zone: NgZone, private cartService: CartService) {}
+
+  get isUser(): boolean {
+    const role = localStorage.getItem('role');
+    return role !== 'ADMIN' && role !== 'DEALER';
+  }
+
+  toast = '';
+  showToast(msg: string) {
+    this.toast = msg;
+    setTimeout(() => this.toast = '', 2000);
+  }
 
   images = [
     'assets/quality-banner.png',
@@ -66,9 +78,14 @@ export class HomeComponent implements OnDestroy {
   }
 
   goToAddProduct(p: any) {
-    this.router.navigate(['/add-product'], {
-      queryParams: { name: p.name, brand: p.brand, price: p.price }
-    });
+    if (this.isUser) {
+      this.cartService.addItem(p);
+      this.showToast(`${p.name} added to cart`);
+    } else {
+      this.router.navigate(['/add-product'], {
+        queryParams: { name: p.name, brand: p.brand, price: p.price }
+      });
+    }
   }
 }
 

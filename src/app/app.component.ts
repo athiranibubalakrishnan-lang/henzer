@@ -19,19 +19,14 @@ export class AppComponent {
   showHeader = true;
 
   constructor(private router: Router) {
-
-    // ✅ FIX: Handle initial page load
-    this.showHeader = !this.router.url.startsWith('/login');
+    this.showHeader = !!localStorage.getItem('token') && !this.router.url.includes('/login');
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.isLoading = true;
-      } 
-      else if (event instanceof NavigationEnd) {
+      } else if (event instanceof NavigationEnd) {
         this.isLoading = false;
-
-        // ✅ FIX: use urlAfterRedirects
-        this.showHeader = !event.url.includes('/login');
+        this.showHeader = !event.url.includes('/login') && !!localStorage.getItem('token');
       }
     });
   }
