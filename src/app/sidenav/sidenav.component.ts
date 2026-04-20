@@ -25,16 +25,25 @@ export class SidenavComponent {
     return role !== 'ADMIN' && role !== 'DEALER';
   }
 
+  get isGuest(): boolean {
+    return !localStorage.getItem('token');
+  }
+
   navigate(path: string) {
     this.closeMenu();
     this.router.navigate([path]);
   }
 
   logout() {
+    const role = localStorage.getItem('role');
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     this.closeMenu();
-    this.router.navigate(['/login']);
+    if (role === 'ADMIN' || role === 'DEALER') {
+      this.router.navigate(['/adminlogin']);
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 
   closeMenu() {

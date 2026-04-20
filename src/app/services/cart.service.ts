@@ -22,6 +22,18 @@ export class CartService {
     }
   }
 
+  increaseQty(index: number) {
+    this.items[index].quantity++;
+  }
+
+  decreaseQty(index: number) {
+    if (this.items[index].quantity > 1) {
+      this.items[index].quantity--;
+    } else {
+      this.removeItem(index);
+    }
+  }
+
   removeItem(index: number) {
     this.items.splice(index, 1);
   }

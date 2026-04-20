@@ -28,8 +28,10 @@
               <th>SKU</th>
               <th>Qty</th>
               <th>Price</th>
-              <th>Dealer Price</th>
-              @if (!isDealer) {
+              @if (!isGuest && !isDealer) {
+                <th>Dealer Price</th>
+              }
+              @if (!isGuest && !isDealer) {
                 <th>Status</th>
               }
               <th>Actions</th>
@@ -42,7 +44,6 @@
                 <td>{{ p.model }}</td>
                 <td>{{ p.sku }}</td>
 
-                <!-- Qty: editable only for admin -->
                 <td>
                   @if (editingId === p.productCode && !isDealer) {
                     <input class="inline-input" type="number" [(ngModel)]="editQuantity" min="0" />
@@ -51,7 +52,6 @@
                   }
                 </td>
 
-                <!-- Price: editable for both -->
                 <td>
                   @if (editingId === p.productCode) {
                     <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
@@ -60,16 +60,17 @@
                   }
                 </td>
 
-                <!-- Dealer Price: editable for both -->
-                <td>
-                  @if (editingId === p.productCode) {
-                    <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
-                  } @else {
-                    ¥{{ p.dealerPrice }}
-                  }
-                </td>
+                @if (!isGuest && !isDealer) {
+                  <td>
+                    @if (editingId === p.productCode) {
+                      <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
+                    } @else {
+                      ¥{{ p.dealerPrice }}
+                    }
+                  </td>
+                }
 
-                @if (!isDealer) {
+                @if (!isGuest && !isDealer) {
                   <td>
                     <span class="badge"
                       [class.approved]="p.status === 'APPROVED'"
@@ -81,7 +82,9 @@
                 }
 
                 <td class="actions">
-                  @if (editingId === p.productCode) {
+                  @if (isGuest) {
+                    <button class="btn-save" (click)="addToCart(p)">🛒 Add to Cart</button>
+                  } @else if (editingId === p.productCode) {
                     <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Save</button>
                     <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
                   } @else {
@@ -94,7 +97,7 @@
               </tr>
             } @empty {
               <tr>
-                <td [attr.colspan]="isDealer ? 7 : 8" class="empty-row">No products found.</td>
+                <td [attr.colspan]="isGuest ? 5 : (isDealer ? 7 : 8)" class="empty-row">No products found.</td>
               </tr>
             }
           </tbody>

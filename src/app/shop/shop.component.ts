@@ -29,7 +29,9 @@ export class ShopComponent implements OnInit {
 
   loadProducts() {
     this.loading = true;
-    this.productService.getAll().subscribe({
+    const role = localStorage.getItem('role');
+    const fetch$ = role === 'USER' ? this.productService.getPublic() : this.productService.getAll();
+    fetch$.subscribe({
       next: (data) => {
         this.zone.run(() => {
           this.loading = false;

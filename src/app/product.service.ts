@@ -32,6 +32,10 @@ export class ProductService {
     return this.http.get<any[]>(this.base);
   }
 
+  getPublic(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/api/products/bypass-authorization`);
+  }
+
   update(productCode: string, payload: any): Observable<any> {
     return this.http.put(`${this.base}/${productCode}`, payload, { responseType: 'text' });
   }

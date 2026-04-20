@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ProductService } from '../product.service';
 import { CategoryService } from '../services/category.service';
+import { CartService } from '../services/cart.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -25,6 +26,7 @@ export class ViewProductsComponent implements OnInit {
   constructor(
     private productService: ProductService,
     public categoryService: CategoryService,
+    private cartService: CartService,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
@@ -38,7 +40,9 @@ export class ViewProductsComponent implements OnInit {
 
   loadProducts() {
     this.loading = true;
-    this.productService.getAll().subscribe({
+    const isGuest = !localStorage.getItem('token');
+    const request = isGuest ? this.productService.getPublic() : this.productService.getAll();
+    request.subscribe({
       next: (data) => {
         this.zone.run(() => {
           this.loading = false;
@@ -63,6 +67,15 @@ export class ViewProductsComponent implements OnInit {
 
   get isDealer(): boolean {
     return localStorage.getItem('role') === 'DEALER';
+  }
+
+  get isGuest(): boolean {
+    return !localStorage.getItem('token');
+  }
+
+  addToCart(product: any) {
+    this.cartService.addItem(product);
+    this.showToast(`${product.productName} added to cart`);
   }
 
   getProductsByCategory(category: string): any[] {

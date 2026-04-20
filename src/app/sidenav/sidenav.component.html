@@ -1,4 +1,4 @@
-<div class="overlay" *ngIf="isOpen" (click)="closeMenu()"></div>
+<div class="overlay" [class.visible]="isOpen" (click)="closeMenu()"></div>
 
 <div class="sidenav" [class.open]="isOpen">
 
@@ -11,39 +11,56 @@
     <li (click)="navigate('/home')">
       <span class="icon">🏠</span> Home
     </li>
-    <li (click)="navigate('/about')">
-      <span class="icon">ℹ️</span> About
-    </li>
-    <li *ngIf="!isUser" (click)="navigate('/add-product')">
-      <span class="icon">➕</span> Add Product
-    </li>
-    <li *ngIf="!isUser" (click)="navigate('/add-category')">
-      <span class="icon">🗂️</span> Add Category
-    </li>
-    <li *ngIf="!isUser" (click)="navigate('/view-products')">
-      <span class="icon">📦</span> View Products
-    </li>
-    <li *ngIf="isAdmin" (click)="navigate('/add-user')">
-      <span class="icon">👤</span> Create User
-    </li>
-    <li *ngIf="isAdmin" (click)="navigate('/view-users')">
-      <span class="icon">👥</span> View Users
-    </li>
+
+    <!-- Admin/Dealer items -->
+    @if (!isUser && !isGuest) {
+      <li (click)="navigate('/about')">
+        <span class="icon">ℹ️</span> About
+      </li>
+      <li (click)="navigate('/add-product')">
+        <span class="icon">➕</span> Add Product
+      </li>
+      <li (click)="navigate('/add-category')">
+        <span class="icon">🗂️</span> Add Category
+      </li>
+      <li (click)="navigate('/view-products')">
+        <span class="icon">📋</span> View Products
+      </li>
+    }
+
+    @if (isAdmin) {
+      <li (click)="navigate('/add-user')">
+        <span class="icon">👤</span> Create User
+      </li>
+      <li (click)="navigate('/view-users')">
+        <span class="icon">👥</span> View Users
+      </li>
+    }
+
+    <!-- User/Guest items: Home, Products, Contact, Cart -->
+    @if (isUser || isGuest) {
+      <li (click)="navigate('/view-products')">
+        <span class="icon">📦</span> Products
+      </li>
+    }
+
     <li (click)="navigate('/contact')">
-      <span class="icon">✉️</span> Contact
+      <span class="icon">📞</span> Contact
     </li>
-    <li *ngIf="isUser" (click)="navigate('/shop')">
-      <span class="icon">🏪</span> Shop
-    </li>
-    <li *ngIf="isUser" (click)="navigate('/cart')">
-      <span class="icon">🛒</span> Cart
-    </li>
+
+    @if (isUser || isGuest) {
+      <li (click)="navigate('/cart')">
+        <span class="icon">🛒</span> Cart
+      </li>
+    }
   </ul>
 
   <div class="sidenav-footer">
-    <button class="logout-btn" (click)="logout()">
-      <span>⏻</span> Logout
-    </button>
+    @if (!isGuest) {
+      <button class="logout-btn" (click)="logout()">⏻ Logout</button>
+    } @else {
+      <button class="logout-btn" (click)="navigate('/userlogin')">🔐 Login</button>
+    }
   </div>
 
 </div>

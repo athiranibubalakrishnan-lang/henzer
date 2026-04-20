@@ -19,14 +19,14 @@ export class AppComponent {
   showHeader = true;
 
   constructor(private router: Router) {
-    this.showHeader = !!localStorage.getItem('token') && !this.router.url.includes('/login');
+    this.showHeader = !this.router.url.includes('/login');
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.isLoading = true;
       } else if (event instanceof NavigationEnd) {
         this.isLoading = false;
-        this.showHeader = !event.url.includes('/login') && !!localStorage.getItem('token');
+        this.showHeader = !event.url.includes('/login');
       }
     });
   }

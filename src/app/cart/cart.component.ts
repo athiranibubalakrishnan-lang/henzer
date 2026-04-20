@@ -15,5 +15,18 @@ export class CartComponent {
 
   remove(i: number) { this.cartService.removeItem(i); }
 
-  continueShopping() { this.router.navigate(['/home']); }
+  continueShopping() { this.router.navigate(['/shop']); }
+
+  get isLoggedIn(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  checkout() {
+    if (!this.isLoggedIn) {
+      this.router.navigate(['/userlogin'], { queryParams: { returnUrl: '/cart' } });
+    } else {
+      // proceed with checkout logic
+      alert('Proceeding to checkout...');
+    }
+  }
 }

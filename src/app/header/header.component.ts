@@ -23,8 +23,11 @@ export class HeaderComponent {
   }
 
   get isUser(): boolean {
-    const role = localStorage.getItem('role');
-    return role !== 'ADMIN' && role !== 'DEALER';
+    return localStorage.getItem('role') === 'USER' || localStorage.getItem('role') === 'PRIVILEGE_USER';
+  }
+
+  get isGuest(): boolean {
+    return !localStorage.getItem('token');
   }
 
   get userInitial(): string {
@@ -52,9 +55,14 @@ export class HeaderComponent {
   }
 
   logout() {
+    const role = localStorage.getItem('role');
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    this.router.navigate(['/login']);
+    if (role === 'ADMIN' || role === 'DEALER') {
+      this.router.navigate(['/adminlogin']);
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 
   @HostListener('document:click')

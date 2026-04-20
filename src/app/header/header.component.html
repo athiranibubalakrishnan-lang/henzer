@@ -8,41 +8,51 @@
   </div>
 
   <nav class="nav-links">
-    <a routerLink="/home" routerLinkActive="active-link">Home</a>
-    <a routerLink="/about" routerLinkActive="active-link">About</a>
 
-    <ng-container *ngIf="!isUser">
+    <a routerLink="/home" routerLinkActive="active-link">🏠 Home</a>
+
+    <!-- Admin/Dealer: Products dropdown + About -->
+    @if (!isUser && !isGuest) {
+      <a routerLink="/about" routerLinkActive="active-link">ℹ️ About</a>
       <div class="dropdown" (click)="toggleDropdown($event)">
-        <span class="dropdown-title">Products ▾</span>
+        <span class="dropdown-title">📦 Products ▾</span>
         <div class="dropdown-menu" [class.show]="showDropdown">
-          <a routerLink="/add-product">Add Product</a>
-          <a routerLink="/add-category">Add Category</a>
-          <a routerLink="/view-products">View Products</a>
+          <a routerLink="/add-product">➕ Add Product</a>
+          <a routerLink="/add-category">🗂️ Add Category</a>
+          <a routerLink="/view-products">📋 View Products</a>
         </div>
       </div>
-    </ng-container>
+    }
 
-    <ng-container *ngIf="isAdmin">
-      <a routerLink="/add-user" routerLinkActive="active-link">Create User</a>
-      <a routerLink="/view-users" routerLinkActive="active-link">View Users</a>
-    </ng-container>
+    <!-- Admin only: User management -->
+    @if (isAdmin) {
+      <a routerLink="/add-user" routerLinkActive="active-link">👤 Create User</a>
+      <a routerLink="/view-users" routerLinkActive="active-link">👥 View Users</a>
+    }
 
-    <a routerLink="/contact" routerLinkActive="active-link">Contact</a>
+    <!-- User/Guest: Products, Contact, Cart -->
+    @if (isUser || isGuest) {
+      <a routerLink="/view-products" routerLinkActive="active-link">📦 Products</a>
+    }
 
-    <ng-container *ngIf="isUser">
-      <a routerLink="/shop" routerLinkActive="active-link">Shop</a>
+    <a routerLink="/contact" routerLinkActive="active-link">📞 Contact</a>
+
+    @if (isUser || isGuest) {
       <a routerLink="/cart" routerLinkActive="active-link" class="cart-link">🛒 Cart</a>
-    </ng-container>
+    }
+
   </nav>
 
   <div class="right-section">
-    <div class="user-info">
-      <span class="avatar">{{ userInitial }}</span>
-      <span class="username">{{ userName }}</span>
-    </div>
-    <button class="logout-btn" (click)="logout()">
-      <span>⏻</span> Logout
-    </button>
+    @if (!isGuest) {
+      <div class="user-info">
+        <span class="avatar">{{ userInitial }}</span>
+        <span class="username">{{ userName }}</span>
+      </div>
+      <button class="logout-btn" (click)="logout()">⏻ Logout</button>
+    } @else {
+      <a routerLink="/userlogin" class="login-btn">🔐 Login</a>
+    }
   </div>
 
 </header>
