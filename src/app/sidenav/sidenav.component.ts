@@ -13,6 +13,8 @@ export class SidenavComponent {
 
   @Input() isOpen = false;
   @Output() close = new EventEmitter<void>();
+  showProductsDropdown = false;
+  showViewProductsDropdown = false;
 
   constructor(private router: Router) {}
 
@@ -20,18 +22,34 @@ export class SidenavComponent {
     return localStorage.getItem('role') === 'ADMIN';
   }
 
+  get isDealer(): boolean {
+    return localStorage.getItem('role') === 'DEALER';
+  }
+
   get isUser(): boolean {
     const role = localStorage.getItem('role');
-    return role !== 'ADMIN' && role !== 'DEALER';
+    return role === 'USER' || role === 'PRIVILEGE_USER';
   }
 
   get isGuest(): boolean {
     return !localStorage.getItem('token');
   }
 
-  navigate(path: string) {
+  toggleProductsDropdown() {
+    this.showProductsDropdown = !this.showProductsDropdown;
+  }
+
+  toggleViewProductsDropdown() {
+    this.showViewProductsDropdown = !this.showViewProductsDropdown;
+  }
+
+  navigate(path: string, brand?: string) {
     this.closeMenu();
-    this.router.navigate([path]);
+    if (brand) {
+      this.router.navigate([path], { queryParams: { brand } });
+    } else {
+      this.router.navigate([path]);
+    }
   }
 
   logout() {

@@ -57,10 +57,10 @@ export class ShopComponent implements OnInit {
 
   addToCart(p: any) {
     const qty = this.quantities[p.productCode] || 1;
-    for (let i = 0; i < qty; i++) {
-      this.cartService.addItem({ name: p.productName, brand: p.brand, price: p.price });
-    }
-    this.showToast(`${p.productName} added to cart`);
+    this.cartService.addItem(p.productCode, qty).subscribe({
+      next: () => this.showToast(`${p.productName} added to cart`),
+      error: () => this.showToast(`Failed to add to cart`)
+    });
   }
 
   showToast(msg: string) {

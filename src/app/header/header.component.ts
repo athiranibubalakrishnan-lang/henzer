@@ -15,11 +15,17 @@ export class HeaderComponent {
 
   isMenuOpen = false;
   showDropdown = false;
+  showBrandDropdown = false;
+  showViewProductsDropdown = false;
 
   constructor(private router: Router, private zone: NgZone) {}
 
   get isAdmin(): boolean {
     return localStorage.getItem('role') === 'ADMIN';
+  }
+
+  get isDealer(): boolean {
+    return localStorage.getItem('role') === 'DEALER';
   }
 
   get isUser(): boolean {
@@ -54,6 +60,16 @@ export class HeaderComponent {
     this.showDropdown = !this.showDropdown;
   }
 
+  toggleBrandDropdown(event: Event) {
+    event.stopPropagation();
+    this.showBrandDropdown = !this.showBrandDropdown;
+  }
+
+  toggleViewProductsDropdown(event: Event) {
+    event.stopPropagation();
+    this.showViewProductsDropdown = !this.showViewProductsDropdown;
+  }
+
   logout() {
     const role = localStorage.getItem('role');
     localStorage.removeItem('token');
@@ -69,6 +85,8 @@ export class HeaderComponent {
   closeAll() {
     this.zone.run(() => {
       this.showDropdown = false;
+      this.showBrandDropdown = false;
+      this.showViewProductsDropdown = false;
     });
   }
 }

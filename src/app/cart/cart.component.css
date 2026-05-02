@@ -298,3 +298,44 @@
     right: 16px;
   }
 }
+
+.thankyou-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.thankyou-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  animation: popIn 0.3s ease;
+}
+
+.thankyou-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.thankyou-box h2 {
+  font-size: 28px;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.thankyou-box p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

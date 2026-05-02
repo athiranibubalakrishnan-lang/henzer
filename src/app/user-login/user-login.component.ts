@@ -14,8 +14,8 @@ import { environment } from '../../environments/environment';
 })
 export class UserLoginComponent {
 
-  userEmail = 'user@henzeronline.com';
-  userPassword = 'test123';
+  userEmail = '';
+  userPassword = '';
   showPassword = false;
   loading = false;
 
@@ -29,7 +29,7 @@ export class UserLoginComponent {
         this.loading = false;
         if (res?.token) localStorage.setItem('token', res.token);
         localStorage.setItem('role', res?.role || 'USER');
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/shop';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/home';
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {

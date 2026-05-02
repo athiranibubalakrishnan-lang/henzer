@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CartService } from '../services/cart.service';
+import { CartService, CartItem, Cart } from '../services/cart.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -10,12 +10,32 @@ import { Router } from '@angular/router';
   templateUrl: './cart.component.html',
   styleUrls: ['./cart.component.css']
 })
-export class CartComponent {
-  constructor(public cartService: CartService, private router: Router) {}
+export class CartComponent implements OnInit {
+  cart: Cart | null = null;
+  showThankYou = false;
 
-  remove(i: number) { this.cartService.removeItem(i); }
+  constructor(public cartService: CartService, private router: Router, private cdr: ChangeDetectorRef) {}
 
-  continueShopping() { this.router.navigate(['/shop']); }
+  ngOnInit() {
+    // Subscribe first, then trigger load
+    this.cartService.cart$.subscribe(cart => {
+      this.cart = cart;
+      this.cdr.markForCheck();
+    });
+    // Small delay ensures subscription is active before data arrives
+    setTimeout(() => this.cartService.loadCart(), 0);
+  }
+
+  remove(item: CartItem) {
+    this.cartService.removeItem(item.id).subscribe({
+      next: () => {
+        this.cartService.loadCart();
+      },
+      error: () => console.error('Failed to remove item')
+    });
+  }
+
+  continueShopping() { this.router.navigate(['/view-products']); }
 
   get isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
@@ -25,8 +45,12 @@ export class CartComponent {
     if (!this.isLoggedIn) {
       this.router.navigate(['/userlogin'], { queryParams: { returnUrl: '/cart' } });
     } else {
-      // proceed with checkout logic
-      alert('Proceeding to checkout...');
+      this.showThankYou = true;
+      setTimeout(() => {
+        this.showThankYou = false;
+        this.cartService.clear();
+        this.router.navigate(['/home']);
+      }, 2500);
     }
   }
 }

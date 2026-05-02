@@ -11,15 +11,27 @@
 
     <a routerLink="/home" routerLinkActive="active-link">🏠 Home</a>
 
-    <!-- Admin/Dealer: Products dropdown + About -->
+    <!-- Admin/Dealer: separate management and view products dropdowns -->
     @if (!isUser && !isGuest) {
       <a routerLink="/about" routerLinkActive="active-link">ℹ️ About</a>
+
+      <!-- Products management dropdown -->
       <div class="dropdown" (click)="toggleDropdown($event)">
-        <span class="dropdown-title">📦 Products ▾</span>
+        <span class="dropdown-title">⚙️ Manage ▾</span>
         <div class="dropdown-menu" [class.show]="showDropdown">
           <a routerLink="/add-product">➕ Add Product</a>
           <a routerLink="/add-category">🗂️ Add Category</a>
-          <a routerLink="/view-products">📋 View Products</a>
+        </div>
+      </div>
+
+      <!-- View Products dropdown with brand filter -->
+      <div class="dropdown" (click)="toggleViewProductsDropdown($event)">
+        <span class="dropdown-title">📦 View Products ▾</span>
+        <div class="dropdown-menu" [class.show]="showViewProductsDropdown">
+          <a routerLink="/view-products">📋 All Products</a>
+          <a routerLink="/view-products" [queryParams]="{brand: 'HENZER'}">🔵 Henzer</a>
+          <a routerLink="/view-products" [queryParams]="{brand: 'SILICA'}">🟢 Silica</a>
+          <a routerLink="/view-products" [queryParams]="{brand: 'SILICA LITE'}">🟡 Silica Lite</a>
         </div>
       </div>
     }
@@ -30,9 +42,17 @@
       <a routerLink="/view-users" routerLinkActive="active-link">👥 View Users</a>
     }
 
-    <!-- User/Guest: Products, Contact, Cart -->
+    <!-- User/Guest: Home, About, Products dropdown (brands), Contact, Cart -->
     @if (isUser || isGuest) {
-      <a routerLink="/view-products" routerLinkActive="active-link">📦 Products</a>
+      <a routerLink="/about" routerLinkActive="active-link">ℹ️ About</a>
+      <div class="dropdown" (click)="toggleBrandDropdown($event)">
+        <span class="dropdown-title">📦 Products ▾</span>
+        <div class="dropdown-menu" [class.show]="showBrandDropdown">
+          <a routerLink="/view-products" [queryParams]="{brand: 'HENZER'}">🔵 Henzer</a>
+          <a routerLink="/view-products" [queryParams]="{brand: 'SILICA'}">🟢 Silica</a>
+          <a routerLink="/view-products" [queryParams]="{brand: 'SILICA LITE'}">🟡 Silica Lite</a>
+        </div>
+      </div>
     }
 
     <a routerLink="/contact" routerLinkActive="active-link">📞 Contact</a>
@@ -44,14 +64,20 @@
   </nav>
 
   <div class="right-section">
-    @if (!isGuest) {
+    @if (isAdmin || isDealer) {
+      <div class="user-info">
+        <span class="avatar">{{ userInitial }}</span>
+        <span class="username">{{ userName }}</span>
+      </div>
+      <button class="logout-btn" (click)="logout()">⏻ Logout</button>
+    } @else if (isUser) {
       <div class="user-info">
         <span class="avatar">{{ userInitial }}</span>
         <span class="username">{{ userName }}</span>
       </div>
       <button class="logout-btn" (click)="logout()">⏻ Logout</button>
     } @else {
-      <a routerLink="/userlogin" class="login-btn">🔐 Login</a>
+      <a routerLink="/userlogin" class="login-btn">🔐 Login / Register</a>
     }
   </div>
 

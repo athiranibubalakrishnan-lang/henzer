@@ -4,6 +4,7 @@ import { CategoryService } from '../services/category.service';
 import { CartService } from '../services/cart.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-view-products',
@@ -22,16 +23,26 @@ export class ViewProductsComponent implements OnInit {
   editPrice = 0;
   editDealerPrice = 0;
   editQuantity = 0;
+  brandFilter = '';
+  cartQuantities: { [key: string]: number } = {};
 
   constructor(
     private productService: ProductService,
     public categoryService: CategoryService,
     private cartService: CartService,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
 
-  ngOnInit() { this.loadProducts(); }
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      this.brandFilter = params['brand'] || '';
+      if (this.products.length === 0) {
+        this.loadProducts();
+      }
+    });
+  }
 
   showToast(msg: string) {
     this.toast = msg;
@@ -47,6 +58,11 @@ export class ViewProductsComponent implements OnInit {
         this.zone.run(() => {
           this.loading = false;
           this.products = Array.isArray(data) ? data : [];
+          this.products.forEach(p => {
+            if (!this.cartQuantities[p.productCode]) {
+              this.cartQuantities[p.productCode] = 1;
+            }
+          });
         });
       },
       error: (err) => {
@@ -69,22 +85,62 @@ export class ViewProductsComponent implements OnInit {
     return localStorage.getItem('role') === 'DEALER';
   }
 
+  get isAdmin(): boolean {
+    return localStorage.getItem('role') === 'ADMIN';
+  }
+
+  get isRegularUser(): boolean {
+    return localStorage.getItem('role') === 'USER';
+  }
+
   get isGuest(): boolean {
     return !localStorage.getItem('token');
   }
 
+  get isPrivilegedUser(): boolean {
+    return localStorage.getItem('role') === 'PRIVILEGE_USER';
+  }
+
   addToCart(product: any) {
-    this.cartService.addItem(product);
-    this.showToast(`${product.productName} added to cart`);
+    this.showToast(`Adding ${product.productName} to cart...`);
+    this.cartService.addItem(product.productCode, 1).subscribe({
+      next: () => this.showToast(`✅ ${product.productName} added to cart`),
+      error: () => this.showToast(`❌ Failed to add to cart`)
+    });
+  }
+
+  addToCartWithQty(product: any) {
+    const qty = this.cartQuantities[product.productCode] || 1;
+    this.showToast(`Adding ${product.productName} x${qty} to cart...`);
+    this.cartService.addItem(product.productCode, qty).subscribe({
+      next: () => {
+        this.cartQuantities[product.productCode] = 1;
+        this.showToast(`✅ ${product.productName} x${qty} added to cart`);
+      },
+      error: () => this.showToast(`❌ Failed to add to cart`)
+    });
   }
 
   getProductsByCategory(category: string): any[] {
-    if (!this.searchText) return this.products;
-    return this.products.filter(p =>
-      p.productName?.toLowerCase().includes(this.searchText.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(this.searchText.toLowerCase()) ||
-      p.model?.toLowerCase().includes(this.searchText.toLowerCase())
-    );
+    let filtered = this.products;
+
+    // filter by brand if set (client-side, from query param)
+    if (this.brandFilter) {
+      filtered = filtered.filter(p =>
+        p.model?.toLowerCase().includes(this.brandFilter.toLowerCase())
+      );
+    }
+
+    // filter by search text
+    if (this.searchText) {
+      filtered = filtered.filter(p =>
+        p.productName?.toLowerCase().includes(this.searchText.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(this.searchText.toLowerCase()) ||
+        p.model?.toLowerCase().includes(this.searchText.toLowerCase())
+      );
+    }
+
+    return filtered;
   }
 
   startEdit(p: any) {

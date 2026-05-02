@@ -27,11 +27,16 @@
               <th>Model</th>
               <th>SKU</th>
               <th>Qty</th>
-              <th>Price</th>
-              @if (!isGuest && !isDealer) {
+              @if (!isPrivilegedUser) {
+                <th>Price</th>
+              }
+              @if (isPrivilegedUser) {
+                <th>Price</th>
+              }
+              @if (isDealer || isAdmin) {
                 <th>Dealer Price</th>
               }
-              @if (!isGuest && !isDealer) {
+              @if (isAdmin) {
                 <th>Status</th>
               }
               <th>Actions</th>
@@ -44,23 +49,30 @@
                 <td>{{ p.model }}</td>
                 <td>{{ p.sku }}</td>
 
+                <!-- Qty: inline input for user/privileged, editable via edit mode for admin/dealer -->
                 <td>
-                  @if (editingId === p.productCode && !isDealer) {
+                  @if ((isRegularUser || isPrivilegedUser || isGuest) ) {
+                    <input class="inline-input qty-inline" type="number" [(ngModel)]="cartQuantities[p.productCode]" min="1" style="width:60px" />
+                  } @else if (editingId === p.productCode && !isDealer) {
                     <input class="inline-input" type="number" [(ngModel)]="editQuantity" min="0" />
                   } @else {
                     {{ p.quantity }}
                   }
                 </td>
 
-                <td>
-                  @if (editingId === p.productCode) {
-                    <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
-                  } @else {
-                    ¥{{ p.price }}
-                  }
-                </td>
+                <!-- Price: visible for non-privileged users -->
+                @if (!isPrivilegedUser) {
+                  <td>
+                    @if (editingId === p.productCode) {
+                      <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
+                    } @else {
+                      ¥{{ p.price }}
+                    }
+                  </td>
+                }
 
-                @if (!isGuest && !isDealer) {
+                <!-- Dealer price: visible for privileged users, dealers, and admin -->
+                @if (isPrivilegedUser || isDealer || isAdmin) {
                   <td>
                     @if (editingId === p.productCode) {
                       <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
@@ -70,7 +82,7 @@
                   </td>
                 }
 
-                @if (!isGuest && !isDealer) {
+                @if (isAdmin) {
                   <td>
                     <span class="badge"
                       [class.approved]="p.status === 'APPROVED'"
@@ -82,8 +94,8 @@
                 }
 
                 <td class="actions">
-                  @if (isGuest) {
-                    <button class="btn-save" (click)="addToCart(p)">🛒 Add to Cart</button>
+                  @if (isGuest || isPrivilegedUser || isRegularUser) {
+                    <button class="btn-save" (click)="addToCartWithQty(p)">🛒 Add to Cart</button>
                   } @else if (editingId === p.productCode) {
                     <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Save</button>
                     <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
@@ -97,7 +109,7 @@
               </tr>
             } @empty {
               <tr>
-                <td [attr.colspan]="isGuest ? 5 : (isDealer ? 7 : 8)" class="empty-row">No products found.</td>
+                <td [attr.colspan]="isGuest ? 6 : (isDealer ? 7 : 8)" class="empty-row">No products found.</td>
               </tr>
             }
           </tbody>

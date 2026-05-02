@@ -1,50 +1,67 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface CartItem {
-  name: string;
-  brand: string;
-  price: number;
+  id: number;
+  productId: number;
+  productName: string;
+  unitPrice: number;
   quantity: number;
+  price: number;
+  totalPrice: number;
+}
+
+export interface Cart {
+  id: number;
+  userEmail: string;
+  items: CartItem[];
+  grandTotal: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
-  private items: CartItem[] = [];
+  private apiUrl = `${environment.apiUrl}/api/cart`;
+  private cartSubject = new BehaviorSubject<Cart | null>(null);
+  cart$ = this.cartSubject.asObservable();
 
-  getItems(): CartItem[] { return this.items; }
+  constructor(private http: HttpClient, private zone: NgZone) {}
 
-  addItem(product: { name: string; brand: string; price: number }) {
-    const existing = this.items.find(i => i.name === product.name);
-    if (existing) {
-      existing.quantity++;
-    } else {
-      this.items.push({ ...product, quantity: 1 });
+  loadCart() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.http.get<Cart>(this.apiUrl).subscribe({
+        next: (cart) => this.zone.run(() => this.cartSubject.next(cart)),
+        error: () => this.zone.run(() => this.cartSubject.next(null))
+      });
     }
   }
 
-  increaseQty(index: number) {
-    this.items[index].quantity++;
+  getItems(): CartItem[] {
+    return this.cartSubject.value?.items || [];
   }
 
-  decreaseQty(index: number) {
-    if (this.items[index].quantity > 1) {
-      this.items[index].quantity--;
-    } else {
-      this.removeItem(index);
-    }
-  }
-
-  removeItem(index: number) {
-    this.items.splice(index, 1);
-  }
-
-  get total(): number {
-    return this.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  get grandTotal(): number {
+    return this.cartSubject.value?.grandTotal || 0;
   }
 
   get count(): number {
-    return this.items.reduce((sum, i) => sum + i.quantity, 0);
+    return this.getItems().reduce((sum, i) => sum + i.quantity, 0);
   }
 
-  clear() { this.items = []; }
+  addItem(productCode: string, quantity: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/add`, null, {
+      params: { productCode, quantity: quantity.toString() }
+    }).pipe(tap(() => this.loadCart()));
+  }
+
+  removeItem(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/remove/${id}`);
+  }
+
+  clear() {
+    this.cartSubject.next(null);
+  }
 }

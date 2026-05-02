@@ -1,11 +1,21 @@
 <div class="cart-page">
 
+  @if (showThankYou) {
+    <div class="thankyou-overlay">
+      <div class="thankyou-box">
+        <div class="thankyou-icon">✅</div>
+        <h2>Thank You!</h2>
+        <p>Your order has been placed successfully.</p>
+      </div>
+    </div>
+  }
+
   <div class="cart-header">
     <h2>🛒 My Cart</h2>
     <button class="btn-continue" (click)="continueShopping()">← Continue Shopping</button>
   </div>
 
-  @if (cartService.getItems().length === 0) {
+  @if (!cart || cart.items.length === 0) {
     <div class="empty-cart">
       <div class="empty-icon">🛒</div>
       <p>Your cart is empty</p>
@@ -16,23 +26,20 @@
 
       <!-- Items -->
       <div class="cart-items">
-        @for (item of cartService.getItems(); track item.name; let i = $index) {
+        @for (item of cart.items; track item.id) {
           <div class="cart-item">
             <div class="item-info">
-              <span class="item-brand">{{ item.brand }}</span>
-              <p class="item-name">{{ item.name }}</p>
-              <p class="item-unit-price">¥{{ item.price.toFixed(2) }} each</p>
+              <p class="item-name">{{ item.productName }}</p>
+              <p class="item-unit-price">¥{{ item.unitPrice.toFixed(2) }} each</p>
             </div>
 
             <div class="qty-controls">
-              <button class="qty-btn" (click)="cartService.decreaseQty(i)">−</button>
-              <span class="qty-value">{{ item.quantity }}</span>
-              <button class="qty-btn" (click)="cartService.increaseQty(i)">+</button>
+              <span class="qty-value">Qty: {{ item.quantity }}</span>
             </div>
 
-            <div class="item-subtotal">¥{{ (item.price * item.quantity).toFixed(2) }}</div>
+            <div class="item-subtotal">¥{{ item.totalPrice.toFixed(2) }}</div>
 
-            <button class="btn-remove" (click)="remove(i)" title="Remove">✕</button>
+            <button class="btn-remove" (click)="remove(item)" title="Remove">🗑️ Delete</button>
           </div>
         }
       </div>
@@ -42,7 +49,7 @@
         <h3>Order Summary</h3>
         <div class="summary-row">
           <span>Items ({{ cartService.count }})</span>
-          <span>¥{{ cartService.total.toFixed(2) }}</span>
+          <span>¥{{ cart.grandTotal.toFixed(2) }}</span>
         </div>
         <div class="summary-row">
           <span>Shipping</span>
@@ -51,7 +58,7 @@
         <div class="summary-divider"></div>
         <div class="summary-row total-row">
           <span>Total</span>
-          <span>¥{{ cartService.total.toFixed(2) }}</span>
+          <span>¥{{ cart.grandTotal.toFixed(2) }}</span>
         </div>
         <button class="btn-checkout" (click)="checkout()">
           {{ isLoggedIn ? 'Proceed to Checkout' : 'Login to Checkout' }}

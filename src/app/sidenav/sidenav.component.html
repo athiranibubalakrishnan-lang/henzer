@@ -23,9 +23,6 @@
       <li (click)="navigate('/add-category')">
         <span class="icon">🗂️</span> Add Category
       </li>
-      <li (click)="navigate('/view-products')">
-        <span class="icon">📋</span> View Products
-      </li>
     }
 
     @if (isAdmin) {
@@ -37,13 +34,64 @@
       </li>
     }
 
-    <!-- User/Guest items: Home, Products, Contact, Cart -->
+    <!-- User/Guest items -->
     @if (isUser || isGuest) {
-      <li (click)="navigate('/view-products')">
-        <span class="icon">📦</span> Products
+      <li (click)="navigate('/about')">
+        <span class="icon">ℹ️</span> About
       </li>
     }
+  </ul>
 
+  <!-- View Products dropdown for Admin/Dealer (click to expand) -->
+  @if (!isUser && !isGuest) {
+    <div class="nav-dropdown-header" (click)="toggleViewProductsDropdown()">
+      <div class="left">
+        <span class="icon">📦</span> View Products
+      </div>
+      <span class="arrow" [class.open]="showViewProductsDropdown">▾</span>
+    </div>
+    <div class="nav-dropdown-body" [class.open]="showViewProductsDropdown">
+      <ul>
+        <li (click)="navigate('/view-products')">
+          <span class="icon">📋</span> All Products
+        </li>
+        <li (click)="navigate('/view-products', 'HENZER')">
+          <span class="icon">🔵</span> Henzer
+        </li>
+        <li (click)="navigate('/view-products', 'SILICA')">
+          <span class="icon">🟢</span> Silica
+        </li>
+        <li (click)="navigate('/view-products', 'SILICA LITE')">
+          <span class="icon">🟡</span> Silica Lite
+        </li>
+      </ul>
+    </div>
+  }
+
+  <!-- Products dropdown (click to expand) for User/Guest -->
+  @if (isUser || isGuest) {
+    <div class="nav-dropdown-header" (click)="toggleProductsDropdown()">
+      <div class="left">
+        <span class="icon">📦</span> Products
+      </div>
+      <span class="arrow" [class.open]="showProductsDropdown">▾</span>
+    </div>
+    <div class="nav-dropdown-body" [class.open]="showProductsDropdown">
+      <ul>
+        <li (click)="navigate('/view-products', 'HENZER')">
+          <span class="icon">🔵</span> Henzer
+        </li>
+        <li (click)="navigate('/view-products', 'SILICA')">
+          <span class="icon">🟢</span> Silica
+        </li>
+        <li (click)="navigate('/view-products', 'SILICA LITE')">
+          <span class="icon">🟡</span> Silica Lite
+        </li>
+      </ul>
+    </div>
+  }
+
+  <ul>
     <li (click)="navigate('/contact')">
       <span class="icon">📞</span> Contact
     </li>
@@ -56,10 +104,12 @@
   </ul>
 
   <div class="sidenav-footer">
-    @if (!isGuest) {
+    @if (isAdmin || isDealer) {
+      <button class="logout-btn" (click)="logout()">⏻ Logout</button>
+    } @else if (isUser) {
       <button class="logout-btn" (click)="logout()">⏻ Logout</button>
     } @else {
-      <button class="logout-btn" (click)="navigate('/userlogin')">🔐 Login</button>
+      <button class="login-register-btn" (click)="navigate('/userlogin')">🔐 Login / Register</button>
     }
   </div>
 

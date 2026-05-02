@@ -6,6 +6,11 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 99;
+  display: none;
+}
+
+.overlay.visible {
+  display: block;
 }
 
 .sidenav {
@@ -14,12 +19,12 @@
   left: -280px;
   width: 260px;
   height: 100%;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  color: white;
+  background: #ffffff;
+  color: #1a1a2e;
   padding: 0;
   transition: left 0.3s ease;
   z-index: 100;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .sidenav.open {
@@ -31,7 +36,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #e0e0e0;
+  background: #1a1a2e;
 }
 
 .sidenav-title {
@@ -44,7 +50,7 @@
 .close-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255,255,255,0.7);
   font-size: 20px;
   cursor: pointer;
   line-height: 1;
@@ -58,7 +64,7 @@
 
 ul {
   list-style: none;
-  padding: 12px 0;
+  padding: 8px 0;
   margin: 0;
 }
 
@@ -69,14 +75,13 @@ li {
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 0;
+  color: #1a1a2e;
   transition: background 0.2s, color 0.2s;
 }
 
 li:hover {
-  background: rgba(106, 27, 154, 0.35);
-  color: #fff;
+  background: #f0e6f6;
+  color: #6a1b9a;
 }
 
 .icon {
@@ -85,13 +90,87 @@ li:hover {
   text-align: center;
 }
 
+/* Products dropdown in sidenav */
+.nav-dropdown-header {
+  padding: 12px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #1a1a2e;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-dropdown-header:hover {
+  background: #f0e6f6;
+  color: #6a1b9a;
+}
+
+.nav-dropdown-header .left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-dropdown-body {
+  display: none;
+  background: #f9f9f9;
+  border-left: 3px solid #6a1b9a;
+  margin-left: 20px;
+}
+
+.nav-dropdown-body.open {
+  display: block;
+}
+
+.nav-dropdown-body li {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #444;
+}
+
+.nav-dropdown-body li:hover {
+  background: #f0e6f6;
+  color: #6a1b9a;
+}
+
+.arrow {
+  font-size: 11px;
+  transition: transform 0.2s;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
 .sidenav-footer {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid #e0e0e0;
+}
+
+.login-register-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: #6a1b9a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-register-btn:hover {
+  background: #7b1fa2;
 }
 
 .logout-btn {
@@ -101,8 +180,8 @@ li:hover {
   justify-content: center;
   gap: 8px;
   padding: 10px;
-  background: rgba(229,57,53,0.15);
-  color: #ef9a9a;
+  background: rgba(229,57,53,0.1);
+  color: #e53935;
   border: 1px solid rgba(229,57,53,0.3);
   border-radius: 6px;
   font-size: 14px;
@@ -113,10 +192,4 @@ li:hover {
 .logout-btn:hover {
   background: #e53935;
   color: #fff;
-  border-color: #e53935;
-}
-
-.active-item {
-  background: rgba(106, 27, 154, 0.4) !important;
-  color: #fff !important;
 }

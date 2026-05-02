@@ -18,15 +18,19 @@ export class AppComponent {
   isLoading = false;
   showHeader = true;
 
+  private isLoginPage(url: string): boolean {
+    return url.includes('/login') || url.includes('/userlogin') || url.includes('/adminlogin');
+  }
+
   constructor(private router: Router) {
-    this.showHeader = !this.router.url.includes('/login');
+    this.showHeader = !this.isLoginPage(this.router.url);
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.isLoading = true;
       } else if (event instanceof NavigationEnd) {
         this.isLoading = false;
-        this.showHeader = !event.url.includes('/login');
+        this.showHeader = !this.isLoginPage(event.url);
       }
     });
   }

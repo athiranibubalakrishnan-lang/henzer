@@ -79,8 +79,7 @@ export class HomeComponent implements OnDestroy {
 
   goToAddProduct(p: any) {
     if (this.isUser) {
-      this.cartService.addItem(p);
-      this.showToast(`${p.name} added to cart`);
+      this.router.navigate(['/view-products']);
     } else {
       this.router.navigate(['/add-product'], {
         queryParams: { name: p.name, brand: p.brand, price: p.price }
