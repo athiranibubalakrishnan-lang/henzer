@@ -1,4 +1,7 @@
 <div class="page-wrapper">
+  @if (toast) {
+    <div class="toast">{{ toast }}</div>
+  }
   <div class="page-header">
     <h2>View Users</h2>
     <p>All registered users</p>
@@ -23,7 +26,9 @@
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Group</th>
               <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -33,15 +38,35 @@
                 <td>{{ u.email }}</td>
                 <td>{{ u.role }}</td>
                 <td>
+                  @if (editingEmail === u.email) {
+                    <select [(ngModel)]="editGroupId" class="inline-select">
+                      <option [value]="null">— None —</option>
+                      @for (g of customerGroups; track g.id) {
+                        <option [value]="g.id">{{ g.groupName }}</option>
+                      }
+                    </select>
+                  } @else {
+                    {{ u.groupName || '—' }}
+                  }
+                </td>
+                <td>
                   <span class="badge"
                     [class.active]="u.status === 'ACTIVE'"
                     [class.inactive]="u.status !== 'ACTIVE'">
                     {{ u.status }}
                   </span>
                 </td>
+                <td class="actions-cell">
+                  @if (editingEmail === u.email) {
+                    <button class="btn-save" (click)="saveGroup(u)">💾 Save</button>
+                    <button class="btn-cancel-edit" (click)="cancelEditGroup()">✕</button>
+                  } @else {
+                    <button class="btn-edit" (click)="startEditGroup(u)">✏️ Edit Group</button>
+                  }
+                </td>
               </tr>
             } @empty {
-              <tr><td colspan="4" class="empty-row">No users found.</td></tr>
+              <tr><td colspan="6" class="empty-row">No users found.</td></tr>
             }
           </tbody>
         </table>

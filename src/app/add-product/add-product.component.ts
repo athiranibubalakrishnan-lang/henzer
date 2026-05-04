@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { ProductService } from '../product.service';
-import { CategoryService } from '../services/category.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-add-product',
@@ -12,43 +13,44 @@ import { CategoryService } from '../services/category.service';
   templateUrl: './add-product.component.html',
   styleUrls: ['./add-product.component.css']
 })
-export class AddProductComponent {
+export class AddProductComponent implements OnInit {
 
   productName = '';
-  model = '';
-  quality = '';
+  category = '';
   sku = '';
-  spec = '';
-  price = 0;
+  supplierCode = '';
+  supplierPrice = 0;
   dealerPrice = 0;
-  quantity = 0;
-  status = 'APPROVED';
-  selectedCategory = '';
+  shortDescription = '';
+  description = '';
+  productDescription = '';
+  remarks = '';
+  inStock = true;
+  visibility = 'PUBLIC';
+  publishedStatus = true;
+  active = true;
+  status = 'PENDING';
+  brand = 'HENZER';
   loading = false;
   toast = '';
 
-  active = true;
-  brand = 'Henzer';
-
   constructor(
     private productService: ProductService,
-    public categoryService: CategoryService,
     private router: Router,
-    private route: ActivatedRoute
-  ) {
+    private route: ActivatedRoute,
+    private http: HttpClient
+  ) {}
+
+  ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['name']) this.productName = params['name'];
       if (params['brand']) this.brand = params['brand'];
-      if (params['price']) this.price = +params['price'];
+      if (params['price']) this.supplierPrice = +params['price'];
     });
   }
 
   get isDealer(): boolean {
     return localStorage.getItem('role') === 'DEALER';
-  }
-
-  get categories(): string[] {
-    return this.categoryService.getCategories();
   }
 
   showToast(msg: string) {
@@ -57,21 +59,23 @@ export class AddProductComponent {
   }
 
   addProduct() {
-    if (!this.selectedCategory) {
-      this.showToast('Please select a category');
-      return;
-    }
+    if (!this.productName.trim()) { this.showToast('Product name is required'); return; }
     const payload = {
       productName: this.productName,
-      model: this.model,
-      quality: this.quality,
+      category: this.category,
       sku: this.sku,
-      price: this.price,
+      supplierCode: this.supplierCode,
+      supplierPrice: this.supplierPrice,
       dealerPrice: this.dealerPrice,
-      quantity: this.quantity,
-      status: this.status,
-      category: this.selectedCategory,
+      shortDescription: this.shortDescription,
+      description: this.description,
+      productDescription: this.productDescription,
+      remarks: this.remarks,
+      inStock: this.inStock,
+      visibility: this.visibility,
+      publishedStatus: this.publishedStatus,
       active: this.active,
+      status: this.status,
       brand: this.brand
     };
     this.loading = true;
@@ -92,14 +96,19 @@ export class AddProductComponent {
 
   resetForm() {
     this.productName = '';
-    this.model = '';
-    this.quality = '';
+    this.category = '';
     this.sku = '';
-    this.spec = '';
-    this.price = 0;
+    this.supplierCode = '';
+    this.supplierPrice = 0;
     this.dealerPrice = 0;
-    this.quantity = 0;
-    this.status = 'APPROVED';
-    this.selectedCategory = '';
+    this.shortDescription = '';
+    this.description = '';
+    this.productDescription = '';
+    this.remarks = '';
+    this.inStock = true;
+    this.visibility = 'PUBLIC';
+    this.publishedStatus = true;
+    this.active = true;
+    this.status = 'PENDING';
   }
 }

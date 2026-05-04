@@ -4,7 +4,9 @@ import { CategoryService } from '../services/category.service';
 import { CartService } from '../services/cart.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-view-products',
@@ -26,22 +28,30 @@ export class ViewProductsComponent implements OnInit {
   brandFilter = '';
   cartQuantities: { [key: string]: number } = {};
 
+  // Assign to dealer modal
+  showAssignModal = false;
+  dealers: any[] = [];
+  selectedDealerIds: Set<string> = new Set();
+  selectedProductCodes: Set<string> = new Set();
+  assignPrice: number | null = null;
+  assignLoading = false;
+
   constructor(
     private productService: ProductService,
     public categoryService: CategoryService,
     private cartService: CartService,
     private route: ActivatedRoute,
+    private router: Router,
     private cdr: ChangeDetectorRef,
-    private zone: NgZone
+    private zone: NgZone,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.brandFilter = params['brand'] || '';
-      if (this.products.length === 0) {
-        this.loadProducts();
-      }
     });
+    this.loadProducts();
   }
 
   showToast(msg: string) {
@@ -89,6 +99,76 @@ export class ViewProductsComponent implements OnInit {
     return localStorage.getItem('role') === 'ADMIN';
   }
 
+  assignToDealer() {
+    this.selectedProductCodes.clear();
+    this.selectedDealerIds.clear();
+    this.showAssignModal = true;
+    this.loadDealers();
+  }
+
+  loadDealers() {
+    this.http.get<any[]>(`${environment.apiUrl}/api/users`).subscribe({
+      next: (data) => this.dealers = Array.isArray(data) ? data.filter(u => u.role === 'DEALER') : [],
+      error: () => {}
+    });
+  }
+
+  toggleDealerSelection(id: string) {
+    if (this.selectedDealerIds.has(id)) {
+      this.selectedDealerIds.delete(id);
+    } else {
+      this.selectedDealerIds.add(id);
+    }
+  }
+
+  isDealerSelected(id: string): boolean {
+    return this.selectedDealerIds.has(id);
+  }
+
+  toggleProductSelection(productCode: string) {
+    if (this.selectedProductCodes.has(productCode)) {
+      this.selectedProductCodes.delete(productCode);
+    } else {
+      this.selectedProductCodes.add(productCode);
+    }
+  }
+
+  isSelected(productCode: string): boolean {
+    return this.selectedProductCodes.has(productCode);
+  }
+
+  closeAssignModal() {
+    this.showAssignModal = false;
+    this.selectedProductCodes.clear();
+    this.selectedDealerIds.clear();
+    this.assignPrice = null;
+  }
+
+  confirmAssign() {
+    if (this.selectedDealerIds.size === 0) { this.showToast('Please select at least one dealer'); return; }
+    if (this.selectedProductCodes.size === 0) { this.showToast('Please select at least one product'); return; }
+    this.assignLoading = true;
+    const payload: any = {
+      action: 'ASSIGN',
+      productIds: Array.from(this.selectedProductCodes).map(id => Number(id)),
+      dealerIds: Array.from(this.selectedDealerIds).map(id => Number(id))
+    };
+    if (this.assignPrice !== null) {
+      payload.price = this.assignPrice;
+    }
+    this.http.post(`${environment.apiUrl}/api/products/process`, payload).subscribe({
+      next: () => {
+        this.assignLoading = false;
+        this.closeAssignModal();
+        this.showToast('Products assigned to dealer(s) successfully');
+      },
+      error: () => {
+        this.assignLoading = false;
+        this.showToast('Failed to assign products');
+      }
+    });
+  }
+
   get isRegularUser(): boolean {
     return localStorage.getItem('role') === 'USER';
   }
@@ -124,19 +204,18 @@ export class ViewProductsComponent implements OnInit {
   getProductsByCategory(category: string): any[] {
     let filtered = this.products;
 
-    // filter by brand if set (client-side, from query param)
     if (this.brandFilter) {
       filtered = filtered.filter(p =>
-        p.model?.toLowerCase().includes(this.brandFilter.toLowerCase())
+        p.brand?.toLowerCase().includes(this.brandFilter.toLowerCase()) ||
+        p.category?.toLowerCase().includes(this.brandFilter.toLowerCase())
       );
     }
 
-    // filter by search text
     if (this.searchText) {
       filtered = filtered.filter(p =>
         p.productName?.toLowerCase().includes(this.searchText.toLowerCase()) ||
         p.sku?.toLowerCase().includes(this.searchText.toLowerCase()) ||
-        p.model?.toLowerCase().includes(this.searchText.toLowerCase())
+        p.category?.toLowerCase().includes(this.searchText.toLowerCase())
       );
     }
 
@@ -145,7 +224,7 @@ export class ViewProductsComponent implements OnInit {
 
   startEdit(p: any) {
     this.editingId = p.productCode;
-    this.editPrice = p.price;
+    this.editPrice = p.supplierPrice;
     this.editDealerPrice = p.dealerPrice;
     this.editQuantity = p.quantity;
   }
@@ -168,7 +247,7 @@ export class ViewProductsComponent implements OnInit {
       brand: p.brand,
       status: p.status,
       active: p.active,
-      price: this.editPrice,
+      supplierPrice: this.editPrice,
       dealerPrice: this.editDealerPrice,
       quantity: this.isDealer ? p.quantity : this.editQuantity
     };
@@ -178,7 +257,7 @@ export class ViewProductsComponent implements OnInit {
     this.productService.update(p.productCode, payload).subscribe({
       next: () => {
         this.zone.run(() => {
-          p.price = this.editPrice;
+          p.supplierPrice = this.editPrice;
           p.dealerPrice = this.editDealerPrice;
           p.quantity = this.isDealer ? p.quantity : this.editQuantity;
           this.editingId = null;

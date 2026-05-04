@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { UserService, User } from '../user.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-add-user',
@@ -11,13 +13,38 @@ import { UserService, User } from '../user.service';
   templateUrl: './add-user.component.html',
   styleUrls: ['./add-user.component.css']
 })
-export class AddUserComponent {
+export class AddUserComponent implements OnInit {
 
-  user: User = { userName: '', email: '', role: '', status: 'ACTIVE', password: '' };
+  user: User & { customerGroupId?: number } = { userName: '', email: '', role: '', status: 'ACTIVE', password: '' };
   loading = false;
   toast = '';
+  customerGroups: any[] = [];
+  selectedRole = ''; // holds either 'DEALER' or a group id
 
-  constructor(private userService: UserService, private router: Router) {}
+  constructor(private userService: UserService, private router: Router, private http: HttpClient) {}
+
+  ngOnInit() {
+    this.http.get<any[]>(`${environment.apiUrl}/api/customer-groups`).subscribe({
+      next: (data) => this.customerGroups = Array.isArray(data) ? data : [],
+      error: () => {}
+    });
+  }
+
+  onRoleChange(value: string) {
+    if (value === 'DEALER') {
+      this.user.role = 'DEALER';
+      this.user.customerGroupId = undefined;
+    } else {
+      // value is a group id
+      const group = this.customerGroups.find(g => g.id == value);
+      this.user.role = group?.groupName || '';
+      this.user.customerGroupId = +value;
+    }
+  }
+
+  get showCustomerGroup(): boolean {
+    return false;
+  }
 
   showToast(msg: string) {
     this.toast = msg;

@@ -12,6 +12,8 @@ import { ViewUsersComponent } from './view-users/view-users.component';
 import { ContactComponent } from './contact/contact';
 import { CartComponent } from './cart/cart.component';
 import { ShopComponent } from './shop/shop.component';
+import { CreateUserGroupComponent } from './create-user-group/create-user-group.component';
+import { ManageUserGroupsComponent } from './manage-user-groups/manage-user-groups.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -29,5 +31,7 @@ export const routes: Routes = [
   { path: 'contact', component: ContactComponent },
   { path: 'cart', component: CartComponent },
   { path: 'shop', component: ShopComponent },
+  { path: 'create-user-group', component: CreateUserGroupComponent, canActivate: [authGuard] },
+  { path: 'manage-user-groups', component: ManageUserGroupsComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'userlogin' }
 ];

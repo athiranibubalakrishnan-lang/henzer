@@ -223,3 +223,57 @@
   color: #999;
   padding: 20px;
 }
+
+.inline-select {
+  padding: 6px 10px;
+  border: 1.5px solid #6a1b9a;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  min-width: 140px;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-edit {
+  background: rgba(106,27,154,0.08);
+  color: #6a1b9a;
+  border: 1px solid rgba(106,27,154,0.25);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-edit:hover { background: #6a1b9a; color: #fff; }
+
+.btn-save {
+  background: #6a1b9a;
+  color: #fff;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-save:hover { background: #7b1fa2; }
+
+.btn-cancel-edit {
+  background: none;
+  border: 1px solid #ddd;
+  color: #999;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-cancel-edit:hover { border-color: #e53935; color: #e53935; }

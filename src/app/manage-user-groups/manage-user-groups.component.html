@@ -1,0 +1,87 @@
+<div class="page">
+
+  @if (toast) {
+    <div class="toast" [class.error]="toastType === 'error'">{{ toast }}</div>
+  }
+
+  <div class="page-header">
+    <div>
+      <h2>🛠️ Manage Customer Groups</h2>
+      <p class="subtitle">View and manage all customer pricing groups</p>
+    </div>
+    <button class="btn-create" (click)="createNew()">➕ Create New Group</button>
+  </div>
+
+  @if (loading) {
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading groups...</p>
+    </div>
+  } @else if (groups.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <p>No customer groups found</p>
+      <button class="btn-create" (click)="createNew()">Create your first group</button>
+    </div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="groups-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Group Name</th>
+            <th>GST %</th>
+            <th>Commission %</th>
+            <th>Discount %</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (g of groups; track g.id; let i = $index) {
+            <tr [class.editing]="editingId === g.id">
+              <td class="row-num">{{ i + 1 }}</td>
+              <td class="group-name">
+                @if (editingId === g.id) {
+                  <input class="inline-input" [(ngModel)]="editData.groupName" />
+                } @else {
+                  {{ g.groupName }}
+                }
+              </td>
+              <td>
+                @if (editingId === g.id) {
+                  <input class="inline-input sm" type="number" [(ngModel)]="editData.gstPercentage" min="0" max="100" />
+                } @else {
+                  <span class="badge blue">{{ g.gstPercentage ?? '—' }}%</span>
+                }
+              </td>
+              <td>
+                @if (editingId === g.id) {
+                  <input class="inline-input sm" type="number" [(ngModel)]="editData.commissionPercentage" min="0" max="100" />
+                } @else {
+                  <span class="badge purple">{{ g.commissionPercentage ?? '—' }}%</span>
+                }
+              </td>
+              <td>
+                @if (editingId === g.id) {
+                  <input class="inline-input sm" type="number" [(ngModel)]="editData.discount" min="0" max="100" />
+                } @else {
+                  <span class="badge green">{{ g.discount ?? '—' }}%</span>
+                }
+              </td>
+              <td class="actions-cell">
+                @if (editingId === g.id) {
+                  <button class="btn-save" (click)="saveEdit(g)">💾 Save</button>
+                  <button class="btn-cancel-edit" (click)="cancelEdit()">✕</button>
+                } @else {
+                  <button class="btn-edit" (click)="startEdit(g)">✏️ Edit</button>
+                  <button class="btn-delete" (click)="delete(g)">🗑️</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>

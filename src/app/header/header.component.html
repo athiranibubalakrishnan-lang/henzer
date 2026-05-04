@@ -21,6 +21,10 @@
         <div class="dropdown-menu" [class.show]="showDropdown">
           <a routerLink="/add-product">➕ Add Product</a>
           <a routerLink="/add-category">🗂️ Add Category</a>
+          @if (isAdmin) {
+            <a routerLink="/create-user-group">👥 Create User Group</a>
+            <a routerLink="/manage-user-groups">🛠️ Manage User Groups</a>
+          }
         </div>
       </div>
 

@@ -47,10 +47,12 @@
 
         <div class="form-group">
           <label>Role <span class="required">*</span></label>
-          <select [(ngModel)]="user.role" name="role" #role="ngModel" required>
+          <select [(ngModel)]="selectedRole" name="role" #role="ngModel" required (ngModelChange)="onRoleChange($event)">
             <option value="" disabled selected>Select Role</option>
             <option value="DEALER">DEALER</option>
-            <option value="PRIVILEGE_USER">PRIVILEGE USER</option>
+            @for (g of customerGroups; track g.id) {
+              <option [value]="g.id">{{ g.groupName }}</option>
+            }
           </select>
           @if (role.invalid && (role.touched || userForm.submitted)) {
             <span class="hint error">Role is required</span>

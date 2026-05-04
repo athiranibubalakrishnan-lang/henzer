@@ -1,6 +1,11 @@
 <div class="container">
 
-  <h2 class="title">View Products</h2>
+  <div class="page-header-row">
+    <h2 class="title">View Products</h2>
+    @if (isAdmin) {
+      <button class="btn-assign" (click)="assignToDealer()">🤝 Assign to a Dealer</button>
+    }
+  </div>
 
   @if (toast) {
     <div class="toast">{{ toast }}</div>
@@ -24,14 +29,13 @@
           <thead>
             <tr>
               <th>Product Name</th>
-              <th>Model</th>
+              <th>Category</th>
               <th>SKU</th>
-              <th>Qty</th>
               @if (!isPrivilegedUser) {
-                <th>Price</th>
+                <th>Supplier Price</th>
               }
               @if (isPrivilegedUser) {
-                <th>Price</th>
+                <th>Dealer Price</th>
               }
               @if (isDealer || isAdmin) {
                 <th>Dealer Price</th>
@@ -46,19 +50,8 @@
             @for (p of getProductsByCategory(cat); track p.productCode) {
               <tr [class.editing-row]="editingId === p.productCode">
                 <td>{{ p.productName }}</td>
-                <td>{{ p.model }}</td>
+                <td>{{ p.category }}</td>
                 <td>{{ p.sku }}</td>
-
-                <!-- Qty: inline input for user/privileged, editable via edit mode for admin/dealer -->
-                <td>
-                  @if ((isRegularUser || isPrivilegedUser || isGuest) ) {
-                    <input class="inline-input qty-inline" type="number" [(ngModel)]="cartQuantities[p.productCode]" min="1" style="width:60px" />
-                  } @else if (editingId === p.productCode && !isDealer) {
-                    <input class="inline-input" type="number" [(ngModel)]="editQuantity" min="0" />
-                  } @else {
-                    {{ p.quantity }}
-                  }
-                </td>
 
                 <!-- Price: visible for non-privileged users -->
                 @if (!isPrivilegedUser) {
@@ -66,7 +59,7 @@
                     @if (editingId === p.productCode) {
                       <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
                     } @else {
-                      ¥{{ p.price }}
+                      ¥{{ p.supplierPrice }}
                     }
                   </td>
                 }
@@ -77,7 +70,7 @@
                     @if (editingId === p.productCode) {
                       <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
                     } @else {
-                      ¥{{ p.dealerPrice }}
+                      ¥{{ p.dealerPrice ?? '—' }}
                     }
                   </td>
                 }
@@ -109,7 +102,7 @@
               </tr>
             } @empty {
               <tr>
-                <td [attr.colspan]="isGuest ? 6 : (isDealer ? 7 : 8)" class="empty-row">No products found.</td>
+                <td [attr.colspan]="isGuest ? 4 : (isDealer ? 5 : 6)" class="empty-row">No products found.</td>
               </tr>
             }
           </tbody>
@@ -119,3 +112,63 @@
   }
 
 </div>
+
+<!-- Assign to Dealer Modal -->
+@if (showAssignModal) {
+  <div class="modal-overlay" (click)="closeAssignModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3>🤝 Assign Products to Dealer</h3>
+        <button class="modal-close" (click)="closeAssignModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="dealer-select-row">
+          <label>Select Dealer(s) <span class="count">({{ selectedDealerIds.size }} selected)</span></label>
+          <div class="dealer-list">
+            @for (d of dealers; track d.email) {
+              <div class="product-row" [class.selected]="isDealerSelected(d.email)" (click)="toggleDealerSelection(d.email)">
+                <div class="product-info">
+                  <span class="product-name">{{ d.username || d.email }}</span>
+                  <span class="product-meta">{{ d.email }}</span>
+                </div>
+                <input type="checkbox" [checked]="isDealerSelected(d.email)" (click)="$event.stopPropagation()" (change)="toggleDealerSelection(d.email)" />
+              </div>
+            }
+            @if (dealers.length === 0) {
+              <p class="empty-list">No dealers found</p>
+            }
+          </div>
+        </div>
+
+        <div class="product-list">
+          <p class="list-label">Select Products <span class="count">({{ selectedProductCodes.size }} selected)</span></p>
+          @for (p of products; track p.productCode) {
+            <div class="product-row" [class.selected]="isSelected(p.productCode)" (click)="toggleProductSelection(p.productCode)">
+              <div class="product-info">
+                <span class="product-name">{{ p.productName }}</span>
+                <span class="product-meta">{{ p.brand }} · {{ p.sku }}</span>
+              </div>
+              <input type="checkbox" [checked]="isSelected(p.productCode)" (click)="$event.stopPropagation()" (change)="toggleProductSelection(p.productCode)" />
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="price-input-row">
+          <label>Price (optional)</label>
+          <input type="number" [(ngModel)]="assignPrice" placeholder="0.00" min="0" class="price-input" />
+        </div>
+        <div class="footer-actions">
+          <button class="btn-cancel-modal" (click)="closeAssignModal()">Cancel</button>
+          <button class="btn-confirm" (click)="confirmAssign()" [disabled]="assignLoading">
+            {{ assignLoading ? 'Assigning...' : 'Confirm Assign' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
