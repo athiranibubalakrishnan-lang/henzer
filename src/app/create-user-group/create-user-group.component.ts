@@ -14,10 +14,10 @@ import { environment } from '../../environments/environment';
 })
 export class CreateUserGroupComponent {
   groupName = '';
-  gstPercentage: number | null = null;
-  commissionPercentage: number | null = null;
-  discount: number | null = null;
-  pricingFormula = '';
+  gstPercentage     = '';
+  commissionPercentage = '';
+  discount          = '';
+  pricingFormula    = '';
   loading = false;
   toast = '';
   toastType = '';
@@ -30,6 +30,12 @@ export class CreateUserGroupComponent {
     setTimeout(() => this.toast = '', 3000);
   }
 
+  /** Format field to 2 decimal places on blur */
+  formatField(field: 'gstPercentage' | 'commissionPercentage' | 'discount') {
+    const raw = parseFloat((this as any)[field]);
+    (this as any)[field] = isNaN(raw) ? '0.00' : raw.toFixed(2);
+  }
+
   submit() {
     if (!this.groupName.trim()) {
       this.showToast('Group name is required', 'error');
@@ -37,11 +43,11 @@ export class CreateUserGroupComponent {
     }
     this.loading = true;
     const payload = {
-      groupName: this.groupName,
-      gstPercentage: this.gstPercentage,
-      commissionPercentage: this.commissionPercentage,
-      discount: this.discount,
-      pricingFormula: this.pricingFormula
+      groupName:            this.groupName,
+      gstPercentage:        parseFloat(this.gstPercentage)        || 0,
+      commissionPercentage: parseFloat(this.commissionPercentage) || 0,
+      discount:             parseFloat(this.discount)             || 0,
+      pricingFormula:       this.pricingFormula
     };
     this.http.post(`${environment.apiUrl}/api/customer-groups`, payload).subscribe({
       next: () => {

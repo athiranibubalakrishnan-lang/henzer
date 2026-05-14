@@ -40,10 +40,25 @@
       </div>
     }
 
-    <!-- Admin only: User management -->
+    <!-- Admin only: User management + new admin pages -->
     @if (isAdmin) {
-      <a routerLink="/add-user" routerLinkActive="active-link">👤 Create User</a>
-      <a routerLink="/view-users" routerLinkActive="active-link">👥 View Users</a>
+      <div class="dropdown" (click)="toggleAdminDropdown($event)">
+        <span class="dropdown-title">👤 Users ▾</span>
+        <div class="dropdown-menu" [class.show]="showAdminDropdown">
+          <a routerLink="/add-user">👤 Create User</a>
+          <a routerLink="/view-users">👥 View Users</a>
+          <a routerLink="/add-dealer">🏪 Create Dealer</a>
+          <a routerLink="/create-user-group">👥 Create User Group</a>
+          <a routerLink="/manage-user-groups">🛠️ Manage User Groups</a>
+        </div>
+      </div>
+      <div class="dropdown" (click)="toggleReviewDropdown($event)">
+        <span class="dropdown-title">📋 Review ▾</span>
+        <div class="dropdown-menu" [class.show]="showReviewDropdown">
+          <a routerLink="/product-approval">✅ Product Approval</a>
+          <!-- <a routerLink="/price-review">💰 Price Review</a> -->
+        </div>
+      </div>
     }
 
     <!-- User/Guest: Home, About, Products dropdown (brands), Contact, Cart -->

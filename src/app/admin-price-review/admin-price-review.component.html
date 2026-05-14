@@ -1,0 +1,257 @@
+<div class="container">
+
+  @if (toast) {
+    <div class="toast" [class.toast-error]="toastType === 'error'">{{ toast }}</div>
+  }
+
+  <!-- Page header -->
+  <div class="page-header-row">
+    <div>
+      <h2 class="title">Product & Dealer Management</h2>
+      <p class="subtitle">View assignments and review dealer price proposals</p>
+    </div>
+    <div class="header-right">
+      @if (pendingCount > 0) {
+        <span class="pending-badge">{{ pendingCount }} pending review</span>
+      }
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'assignments'" (click)="switchTab('assignments')">
+      📋 Product Assignments
+      <span class="tab-count">{{ totalAssigned }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'review'" (click)="switchTab('review')">
+      💰 Price Review
+      @if (pendingCount > 0) {
+        <span class="tab-count pending">{{ pendingCount }}</span>
+      }
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: ASSIGNMENTS                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'assignments') {
+
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Category</label>
+        <select [(ngModel)]="assignFilterCategory">
+          @for (cat of assignCategories; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Dealer</label>
+        <select [(ngModel)]="assignFilterDealer">
+          @for (d of assignDealers; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-text" (click)="expandAll()">Expand All</button>
+        <button class="btn-text" (click)="collapseAll()">Collapse All</button>
+        <button class="btn-refresh" (click)="loadAssignments()">↻ Refresh</button>
+      </div>
+    </div>
+
+    @if (assignmentsLoading) {
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <p>Loading assignments...</p>
+      </div>
+    } @else if (filteredGroups.length === 0) {
+      <div class="empty-state">
+        <p>No product assignments found.</p>
+      </div>
+    } @else {
+      <div class="assignment-list">
+        @for (group of filteredGroups; track group.productId) {
+          <div class="product-card">
+
+            <!-- Product header row -->
+            <div class="product-card-header" (click)="toggleExpand(group)">
+              <div class="product-card-left">
+                <span class="expand-icon">{{ group.expanded ? '▾' : '▸' }}</span>
+                <div class="product-card-info">
+                  <span class="product-card-name">{{ group.productName }}</span>
+                  <span class="product-card-meta">{{ group.brand }} · {{ group.category }} · SKU: {{ group.sku }}</span>
+                </div>
+              </div>
+              <div class="product-card-right">
+                <span class="supplier-price">Supplier: ¥{{ group.supplierPrice }}</span>
+                <span class="dealer-count-badge">{{ group.dealers.length }} dealer{{ group.dealers.length !== 1 ? 's' : '' }}</span>
+              </div>
+            </div>
+
+            <!-- Dealer rows (expanded) -->
+            @if (group.expanded) {
+              <div class="dealer-table-wrap">
+                <table class="dealer-table">
+                  <thead>
+                    <tr>
+                      <th>Dealer</th>
+                      <th>Email</th>
+                      <th>Assigned Price</th>
+                      <th>Proposed Price</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (d of visibleDealers(group); track d.dealerId) {
+                      <tr>
+                        <td class="dealer-name-cell">{{ d.dealerName }}</td>
+                        <td class="dealer-email-cell">{{ d.dealerEmail }}</td>
+                        <td>{{ d.assignedPrice !== null ? ('¥' + d.assignedPrice) : '—' }}</td>
+                        <td [class.proposed-highlight]="d.proposedPrice !== null">
+                          {{ d.proposedPrice !== null ? ('¥' + d.proposedPrice) : '—' }}
+                        </td>
+                        <td>
+                          <span class="badge"
+                            [class.finalized]="d.status === 'FINALIZE_PRICE'"
+                            [class.pending]="d.status === 'PENDING_APPROVAL'"
+                            [class.assigned]="d.status === 'ASSIGNED'"
+                            [class.rejected]="d.status === 'REJECTED'">
+                            {{ d.status === 'FINALIZE_PRICE' ? 'Approved'
+                               : d.status === 'PENDING_APPROVAL' ? 'Pending Review'
+                               : d.status === 'ASSIGNED' ? 'Assigned'
+                               : d.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: PRICE REVIEW                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @if (activeTab === 'review') {
+
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Category</label>
+        <select [(ngModel)]="filterCategory">
+          @for (cat of reviewCategories; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Dealer</label>
+        <select [(ngModel)]="filterDealer">
+          @for (d of reviewDealers; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="filterStatus">
+          <option value="All">All</option>
+          <option value="PENDING_APPROVAL">Pending Approval</option>
+          <option value="FINALIZE_PRICE">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-refresh" (click)="loadProposals()">↻ Refresh</button>
+      </div>
+    </div>
+
+    @if (reviewLoading) {
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <p>Loading proposals...</p>
+      </div>
+    } @else if (filteredProposals.length === 0) {
+      <div class="empty-state">
+        <p>No price proposals found for the selected filters.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>SKU</th>
+              <th>Dealer</th>
+              <th>Supplier Price</th>
+              <th>Current Price</th>
+              <th>Proposed Price</th>
+              <th>Δ Change</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of filteredProposals; track p.productId + '-' + p.dealerId) {
+              <tr [class.row-pending]="p.status === 'PENDING_APPROVAL'">
+                <td class="product-name-cell">{{ p.productName }}</td>
+                <td>{{ p.category }}</td>
+                <td>{{ p.sku }}</td>
+                <td>
+                  <div class="dealer-cell">
+                    <span class="dealer-name">{{ p.dealerName }}</span>
+                    <span class="dealer-email">{{ p.dealerEmail }}</span>
+                  </div>
+                </td>
+                <td>¥{{ p.supplierPrice }}</td>
+                <td>{{ p.dealerPrice !== null ? ('¥' + p.dealerPrice) : '—' }}</td>
+                <td class="proposed-price">¥{{ p.proposedPrice }}</td>
+                <td>
+                  @if (p.dealerPrice !== null) {
+                    <span class="delta"
+                      [class.positive]="p.proposedPrice > p.dealerPrice!"
+                      [class.negative]="p.proposedPrice < p.dealerPrice!">
+                      {{ p.proposedPrice > p.dealerPrice! ? '+' : '' }}{{ (p.proposedPrice - p.dealerPrice!).toFixed(2) }}
+                    </span>
+                  } @else {
+                    <span class="delta">New</span>
+                  }
+                </td>
+                <td>
+                  <span class="badge"
+                    [class.finalized]="p.status === 'FINALIZE_PRICE'"
+                    [class.pending]="p.status === 'PENDING_APPROVAL'"
+                    [class.rejected]="p.status === 'REJECTED'">
+                    {{ p.status === 'FINALIZE_PRICE' ? 'Approved'
+                       : p.status === 'PENDING_APPROVAL' ? 'Pending'
+                       : p.status }}
+                  </span>
+                </td>
+                <td class="actions">
+                  @if (p.status === 'PENDING_APPROVAL') {
+                    <button class="btn-approve" (click)="approve(p)" [disabled]="p.processing">
+                      {{ p.processing ? '...' : '✓ Approve' }}
+                    </button>
+                    <button class="btn-reject" (click)="reject(p)" [disabled]="p.processing">
+                      {{ p.processing ? '...' : '✕ Reject' }}
+                    </button>
+                  } @else {
+                    <span class="action-done">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+</div>

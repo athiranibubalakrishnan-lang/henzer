@@ -32,11 +32,26 @@
       <li (click)="navigate('/view-users')">
         <span class="icon">👥</span> View Users
       </li>
+      <li (click)="navigate('/add-dealer')">
+        <span class="icon">🏪</span> Create Dealer
+      </li>
       <li (click)="navigate('/create-user-group')">
         <span class="icon">👥</span> Create User Group
       </li>
       <li (click)="navigate('/manage-user-groups')">
         <span class="icon">🛠️</span> Manage User Groups
+      </li>
+      <!-- <li (click)="navigate('/price-review')">
+        <span class="icon">💰</span> Price Review
+      </li> -->
+      <li (click)="navigate('/product-approval')">
+        <span class="icon">✅</span> Product Approval
+      </li>
+    }
+
+    @if (isDealer) {
+      <li (click)="navigate('/dealer-products')">
+        <span class="icon">📦</span> My Products
       </li>
     }
 

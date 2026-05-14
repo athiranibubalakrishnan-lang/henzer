@@ -10,7 +10,6 @@ export interface Product {
   quality: string;
   sku: string;
   price: number;
-  dealerPrice: number;
   quantity: number;
   status: string;
   category: string;

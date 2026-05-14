@@ -8,8 +8,12 @@
     <h2>Create User</h2>
     <p>Fill in the details below to create a new user</p>
   </div>
+
   <div class="card">
     <form #userForm="ngForm" (ngSubmit)="addUser(userForm)" autocomplete="off">
+
+      <!-- Basic Info -->
+      <h3 class="section-title">Basic Information</h3>
       <div class="form-grid">
 
         <div class="form-group">
@@ -47,25 +51,72 @@
 
         <div class="form-group">
           <label>Role <span class="required">*</span></label>
-          <select [(ngModel)]="selectedRole" name="role" #role="ngModel" required (ngModelChange)="onRoleChange($event)">
+          <select [(ngModel)]="user.role" name="role" #role="ngModel" required>
             <option value="" disabled selected>Select Role</option>
             <option value="DEALER">DEALER</option>
-            @for (g of customerGroups; track g.id) {
-              <option [value]="g.id">{{ g.groupName }}</option>
-            }
+            <option value="USER">USER</option>
           </select>
           @if (role.invalid && (role.touched || userForm.submitted)) {
             <span class="hint error">Role is required</span>
           }
         </div>
 
+        <div class="form-group">
+          <label>Select Customer Group</label>
+          <select [(ngModel)]="user.customerGroupId" name="customerGroupId">
+            <option [ngValue]="undefined">— None —</option>
+            @if (groupsLoading) {
+              <option disabled>Loading groups...</option>
+            }
+            @for (g of customerGroups; track g.id) {
+              <option [ngValue]="g.id">{{ g.groupName }}</option>
+            }
+          </select>
+          <span class="hint">Assign this user to a pricing group (optional)</span>
+        </div>
+
       </div>
+
+      <!-- Address -->
+      <h3 class="section-title" style="margin-top: 28px;">Address <span class="optional">(optional)</span></h3>
+      <div class="form-grid">
+
+        <div class="form-group full-width">
+          <label>Street</label>
+          <input type="text" [(ngModel)]="address.street" name="street"
+            placeholder="Street address, building, flat no." />
+        </div>
+
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" [(ngModel)]="address.city" name="city" placeholder="City" />
+        </div>
+
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" [(ngModel)]="address.state" name="state" placeholder="State" />
+        </div>
+
+        <div class="form-group">
+          <label>Pincode</label>
+          <input type="text" [(ngModel)]="address.pincode" name="pincode"
+            placeholder="6-digit pincode" maxlength="6" />
+        </div>
+
+        <div class="form-group">
+          <label>Country</label>
+          <input type="text" [(ngModel)]="address.country" name="country" placeholder="Country" />
+        </div>
+
+      </div>
+
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
-        <button type="submit" class="btn-primary" [disabled]="loading" (click)="$event.stopPropagation()">
+        <button type="submit" class="btn-primary" [disabled]="loading">
           {{ loading ? "Creating..." : "Create User" }}
         </button>
       </div>
+
     </form>
   </div>
 </div>

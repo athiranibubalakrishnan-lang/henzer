@@ -6,6 +6,14 @@ import { HttpClient } from '@angular/common/http';
 import { UserService, User } from '../user.service';
 import { environment } from '../../environments/environment';
 
+export interface Address {
+  street: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+}
+
 @Component({
   selector: 'app-add-user',
   standalone: true,
@@ -15,35 +23,38 @@ import { environment } from '../../environments/environment';
 })
 export class AddUserComponent implements OnInit {
 
-  user: User & { customerGroupId?: number } = { userName: '', email: '', role: '', status: 'ACTIVE', password: '' };
+  user: User & { customerGroupId?: number; addresses?: Address[] } = {
+    userName: '',
+    email: '',
+    role: '',
+    status: 'ACTIVE',
+    password: '',
+    addresses: []
+  };
+
+  // Single address entry (added to the list on submit)
+  address: Address = { street: '', city: '', state: '', pincode: '', country: '' };
+
   loading = false;
   toast = '';
   customerGroups: any[] = [];
-  selectedRole = ''; // holds either 'DEALER' or a group id
+  groupsLoading = false;
 
-  constructor(private userService: UserService, private router: Router, private http: HttpClient) {}
+  constructor(
+    private userService: UserService,
+    private router: Router,
+    private http: HttpClient
+  ) {}
 
   ngOnInit() {
+    this.groupsLoading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/customer-groups`).subscribe({
-      next: (data) => this.customerGroups = Array.isArray(data) ? data : [],
-      error: () => {}
+      next: (data) => {
+        this.groupsLoading = false;
+        this.customerGroups = Array.isArray(data) ? data : [];
+      },
+      error: () => { this.groupsLoading = false; }
     });
-  }
-
-  onRoleChange(value: string) {
-    if (value === 'DEALER') {
-      this.user.role = 'DEALER';
-      this.user.customerGroupId = undefined;
-    } else {
-      // value is a group id
-      const group = this.customerGroups.find(g => g.id == value);
-      this.user.role = group?.groupName || '';
-      this.user.customerGroupId = +value;
-    }
-  }
-
-  get showCustomerGroup(): boolean {
-    return false;
   }
 
   showToast(msg: string) {
@@ -57,7 +68,15 @@ export class AddUserComponent implements OnInit {
       return;
     }
     this.loading = true;
-    this.userService.create(this.user).subscribe({
+
+    // Include address if any field is filled
+    const hasAddress = Object.values(this.address).some(v => v.trim() !== '');
+    const payload = {
+      ...this.user,
+      addresses: hasAddress ? [this.address] : []
+    };
+
+    this.userService.create(payload).subscribe({
       next: () => {
         this.loading = false;
         this.showToast('User created successfully!');
@@ -73,7 +92,8 @@ export class AddUserComponent implements OnInit {
   }
 
   resetForm(form?: NgForm) {
-    this.user = { userName: '', email: '', role: '', status: 'ACTIVE', password: '' };
+    this.user = { userName: '', email: '', role: '', status: 'ACTIVE', password: '', addresses: [] };
+    this.address = { street: '', city: '', state: '', pincode: '', country: '' };
     form?.resetForm(this.user);
   }
 }

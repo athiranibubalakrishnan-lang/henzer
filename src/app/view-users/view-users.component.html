@@ -1,76 +1,136 @@
 <div class="page-wrapper">
+
   @if (toast) {
     <div class="toast">{{ toast }}</div>
   }
-  <div class="page-header">
-    <h2>View Users</h2>
-    <p>All registered users</p>
-  </div>
 
-  <div class="card">
-    <div class="search-row">
-      <input type="text" [(ngModel)]="searchText" placeholder="Search by name, email or role" />
-      <button class="btn-primary" (click)="refresh($event)">Refresh</button>
+  <div class="page-header-row">
+    <div>
+      <h2>View Users</h2>
+      <p>All registered users</p>
     </div>
-
-    @if (loading) {
-      <div class="loading-wrap">
-        <div class="spinner"></div>
-        <p>Loading users...</p>
-      </div>
-    } @else {
-      <div class="table-wrapper" style="margin-top: 20px">
-        <table class="product-table">
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Group</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (u of filteredUsers; track u.email) {
-              <tr>
-                <td>{{ u.username }}</td>
-                <td>{{ u.email }}</td>
-                <td>{{ u.role }}</td>
-                <td>
-                  @if (editingEmail === u.email) {
-                    <select [(ngModel)]="editGroupId" class="inline-select">
-                      <option [value]="null">— None —</option>
-                      @for (g of customerGroups; track g.id) {
-                        <option [value]="g.id">{{ g.groupName }}</option>
-                      }
-                    </select>
-                  } @else {
-                    {{ u.groupName || '—' }}
-                  }
-                </td>
-                <td>
-                  <span class="badge"
-                    [class.active]="u.status === 'ACTIVE'"
-                    [class.inactive]="u.status !== 'ACTIVE'">
-                    {{ u.status }}
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  @if (editingEmail === u.email) {
-                    <button class="btn-save" (click)="saveGroup(u)">💾 Save</button>
-                    <button class="btn-cancel-edit" (click)="cancelEditGroup()">✕</button>
-                  } @else {
-                    <button class="btn-edit" (click)="startEditGroup(u)">✏️ Edit Group</button>
-                  }
-                </td>
-              </tr>
-            } @empty {
-              <tr><td colspan="6" class="empty-row">No users found.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+    <button class="btn-refresh" (click)="refresh()">↻ Refresh</button>
   </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'dealers'" (click)="activeTab = 'dealers'">
+      🏪 Dealers
+      <span class="tab-count">{{ dealerCount }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'group-users'" (click)="activeTab = 'group-users'">
+      👥 Customer Group Users
+      <span class="tab-count">{{ groupUserCount }}</span>
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading users...</p>
+    </div>
+  } @else {
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- TAB 1: DEALERS                        -->
+    <!-- ══════════════════════════════════════ -->
+    @if (activeTab === 'dealers') {
+      <div class="toolbar">
+        <input type="text" [(ngModel)]="searchDealers"
+          placeholder="Search by name or email..." class="search-input" />
+      </div>
+
+      @if (dealers.length === 0) {
+        <div class="empty-state"><p>No dealers found.</p></div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of dealers; track u.email; let i = $index) {
+                <tr>
+                  <td class="row-num">{{ i + 1 }}</td>
+                  <td class="name-cell">{{ u.username }}</td>
+                  <td>{{ u.email }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- TAB 2: CUSTOMER GROUP USERS           -->
+    <!-- ══════════════════════════════════════ -->
+    @if (activeTab === 'group-users') {
+      <div class="toolbar">
+        <input type="text" [(ngModel)]="searchGroupUsers"
+          placeholder="Search by name, email or group..." class="search-input" />
+        <select [(ngModel)]="selectedGroupId" class="group-filter">
+          <option [ngValue]="null">All Groups</option>
+          @for (g of customerGroups; track g.id) {
+            <option [ngValue]="g.id">{{ g.groupName }}</option>
+          }
+        </select>
+      </div>
+
+      @if (groupUsers.length === 0) {
+        <div class="empty-state"><p>No users assigned to a customer group.</p></div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Customer Group</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of groupUsers; track u.email; let i = $index) {
+                <tr>
+                  <td class="row-num">{{ i + 1 }}</td>
+                  <td class="name-cell">{{ u.username }}</td>
+                  <td>{{ u.email }}</td>
+                  <td>{{ u.role }}</td>
+                  <td>
+                    @if (editingEmail === u.email) {
+                      <select [(ngModel)]="editGroupId" class="inline-select">
+                        <option [ngValue]="null">— None —</option>
+                        @for (g of customerGroups; track g.id) {
+                          <option [ngValue]="g.id">{{ g.groupName }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <span class="group-tag">{{ u.groupName || groupNameFor(u.customerGroupId) }}</span>
+                    }
+                  </td>
+                  <td class="actions-cell">
+                    @if (editingEmail === u.email) {
+                      <button class="btn-save" (click)="saveGroup(u)">💾 Save</button>
+                      <button class="btn-cancel-edit" (click)="cancelEditGroup()">✕</button>
+                    } @else if (u.role === 'USER') {
+                      <button class="btn-edit" (click)="startEditGroup(u)">✏️ Edit Group</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+  }
+
 </div>

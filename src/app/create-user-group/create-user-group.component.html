@@ -32,14 +32,16 @@
         <div class="form-group">
           <label>GST Percentage (%)</label>
           <div class="input-with-icon">
-            <input type="number" [(ngModel)]="gstPercentage" placeholder="0.00" min="0" max="100" step="0.01" />
+            <input type="text" inputmode="decimal" [(ngModel)]="gstPercentage"
+              placeholder="0.00" (blur)="formatField('gstPercentage')" />
             <span class="input-suffix">%</span>
           </div>
         </div>
         <div class="form-group">
           <label>Commission Percentage (%)</label>
           <div class="input-with-icon">
-            <input type="number" [(ngModel)]="commissionPercentage" placeholder="0.00" min="0" max="100" step="0.01" />
+            <input type="text" inputmode="decimal" [(ngModel)]="commissionPercentage"
+              placeholder="0.00" (blur)="formatField('commissionPercentage')" />
             <span class="input-suffix">%</span>
           </div>
         </div>
@@ -48,7 +50,8 @@
         <div class="form-group">
           <label>Discount (%)</label>
           <div class="input-with-icon">
-            <input type="number" [(ngModel)]="discount" placeholder="0.00" min="0" max="100" step="0.01" />
+            <input type="text" inputmode="decimal" [(ngModel)]="discount"
+              placeholder="0.00" (blur)="formatField('discount')" />
             <span class="input-suffix">%</span>
           </div>
         </div>

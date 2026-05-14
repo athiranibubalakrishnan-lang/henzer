@@ -40,34 +40,45 @@
           @for (g of groups; track g.id; let i = $index) {
             <tr [class.editing]="editingId === g.id">
               <td class="row-num">{{ i + 1 }}</td>
+
               <td class="group-name">
                 @if (editingId === g.id) {
-                  <input class="inline-input" [(ngModel)]="editData.groupName" />
+                  <input class="inline-input" type="text" [(ngModel)]="editGroupName" />
                 } @else {
                   {{ g.groupName }}
                 }
               </td>
+
               <td>
                 @if (editingId === g.id) {
-                  <input class="inline-input sm" type="number" [(ngModel)]="editData.gstPercentage" min="0" max="100" />
+                  <input class="inline-input sm" type="text" inputmode="decimal"
+                    [(ngModel)]="editGst"
+                    (blur)="formatField('gst')" />
                 } @else {
-                  <span class="badge blue">{{ g.gstPercentage ?? '—' }}%</span>
+                  <span class="badge blue">{{ fmt(g.gstPercentage) }}%</span>
                 }
               </td>
+
               <td>
                 @if (editingId === g.id) {
-                  <input class="inline-input sm" type="number" [(ngModel)]="editData.commissionPercentage" min="0" max="100" />
+                  <input class="inline-input sm" type="text" inputmode="decimal"
+                    [(ngModel)]="editCommission"
+                    (blur)="formatField('commission')" />
                 } @else {
-                  <span class="badge purple">{{ g.commissionPercentage ?? '—' }}%</span>
+                  <span class="badge purple">{{ fmt(g.commissionPercentage) }}%</span>
                 }
               </td>
+
               <td>
                 @if (editingId === g.id) {
-                  <input class="inline-input sm" type="number" [(ngModel)]="editData.discount" min="0" max="100" />
+                  <input class="inline-input sm" type="text" inputmode="decimal"
+                    [(ngModel)]="editDiscount"
+                    (blur)="formatField('discount')" />
                 } @else {
-                  <span class="badge green">{{ g.discount ?? '—' }}%</span>
+                  <span class="badge green">{{ fmt(g.discount) }}%</span>
                 }
               </td>
+
               <td class="actions-cell">
                 @if (editingId === g.id) {
                   <button class="btn-save" (click)="saveEdit(g)">💾 Save</button>

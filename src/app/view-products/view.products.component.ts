@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ProductService } from '../product.service';
 import { CategoryService } from '../services/category.service';
 import { CartService } from '../services/cart.service';
+import { ProductManagementService } from '../services/product-management.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,8 +23,8 @@ export class ViewProductsComponent implements OnInit {
   loading = false;
   toast = '';
   editingId: string | null = null;
-  editPrice = 0;
-  editDealerPrice = 0;
+  editPrice = 0;        // admin: supplier price
+  editDealerPrice = 0;  // dealer: dealer price
   editQuantity = 0;
   brandFilter = '';
   cartQuantities: { [key: string]: number } = {};
@@ -31,8 +32,8 @@ export class ViewProductsComponent implements OnInit {
   // Assign to dealer modal
   showAssignModal = false;
   dealers: any[] = [];
-  selectedDealerIds: Set<string> = new Set();
-  selectedProductCodes: Set<string> = new Set();
+  selectedDealerIds: Set<number> = new Set();
+  selectedProductIds: Set<number> = new Set();
   assignPrice: number | null = null;
   assignLoading = false;
 
@@ -40,6 +41,7 @@ export class ViewProductsComponent implements OnInit {
     private productService: ProductService,
     public categoryService: CategoryService,
     private cartService: CartService,
+    private productMgmt: ProductManagementService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -100,7 +102,7 @@ export class ViewProductsComponent implements OnInit {
   }
 
   assignToDealer() {
-    this.selectedProductCodes.clear();
+    this.selectedProductIds.clear();
     this.selectedDealerIds.clear();
     this.showAssignModal = true;
     this.loadDealers();
@@ -113,7 +115,7 @@ export class ViewProductsComponent implements OnInit {
     });
   }
 
-  toggleDealerSelection(id: string) {
+  toggleDealerSelection(id: number) {
     if (this.selectedDealerIds.has(id)) {
       this.selectedDealerIds.delete(id);
     } else {
@@ -121,42 +123,37 @@ export class ViewProductsComponent implements OnInit {
     }
   }
 
-  isDealerSelected(id: string): boolean {
+  isDealerSelected(id: number): boolean {
     return this.selectedDealerIds.has(id);
   }
 
-  toggleProductSelection(productCode: string) {
-    if (this.selectedProductCodes.has(productCode)) {
-      this.selectedProductCodes.delete(productCode);
+  toggleProductSelection(id: number) {
+    if (this.selectedProductIds.has(id)) {
+      this.selectedProductIds.delete(id);
     } else {
-      this.selectedProductCodes.add(productCode);
+      this.selectedProductIds.add(id);
     }
   }
 
-  isSelected(productCode: string): boolean {
-    return this.selectedProductCodes.has(productCode);
+  isSelected(id: number): boolean {
+    return this.selectedProductIds.has(id);
   }
 
   closeAssignModal() {
     this.showAssignModal = false;
-    this.selectedProductCodes.clear();
+    this.selectedProductIds.clear();
     this.selectedDealerIds.clear();
     this.assignPrice = null;
   }
 
   confirmAssign() {
     if (this.selectedDealerIds.size === 0) { this.showToast('Please select at least one dealer'); return; }
-    if (this.selectedProductCodes.size === 0) { this.showToast('Please select at least one product'); return; }
+    if (this.selectedProductIds.size === 0) { this.showToast('Please select at least one product'); return; }
     this.assignLoading = true;
-    const payload: any = {
-      action: 'ASSIGN',
-      productIds: Array.from(this.selectedProductCodes).map(id => Number(id)),
-      dealerIds: Array.from(this.selectedDealerIds).map(id => Number(id))
-    };
-    if (this.assignPrice !== null) {
-      payload.price = this.assignPrice;
-    }
-    this.http.post(`${environment.apiUrl}/api/products/process`, payload).subscribe({
+    const productIds = Array.from(this.selectedProductIds);
+    const dealerIds  = Array.from(this.selectedDealerIds);
+    const price = this.assignPrice !== null ? this.assignPrice : undefined;
+    this.productMgmt.assign(productIds, dealerIds, price).subscribe({
       next: () => {
         this.assignLoading = false;
         this.closeAssignModal();
@@ -171,6 +168,11 @@ export class ViewProductsComponent implements OnInit {
 
   get isRegularUser(): boolean {
     return localStorage.getItem('role') === 'USER';
+  }
+
+  /** Products eligible for dealer assignment — excludes approved and already-assigned ones */
+  get assignableProducts(): any[] {
+    return this.products.filter(p => p.status !== 'APPROVED' && p.status !== 'ASSIGNED');
   }
 
   get isGuest(): boolean {
@@ -223,44 +225,82 @@ export class ViewProductsComponent implements OnInit {
   }
 
   startEdit(p: any) {
-    this.editingId = p.productCode;
-    this.editPrice = p.supplierPrice;
-    this.editDealerPrice = p.dealerPrice;
-    this.editQuantity = p.quantity;
+    this.editingId      = p.productCode;
+    this.editPrice      = p.supplierPrice;   // admin edits this
+    this.editDealerPrice = p.dealerPrice ?? 0; // dealer edits this
+    this.editQuantity   = p.quantity;
   }
 
   cancelEdit() { this.editingId = null; }
 
   saveEdit(p: any) {
     if (!p.productCode) {
-      console.error('productCode is missing on product:', p);
       this.showToast('Cannot update: product code missing');
       return;
     }
 
-    const payload = {
-      productCode: p.productCode,
-      productName: p.productName,
-      model: p.model,
-      quality: p.quality,
-      sku: p.sku,
-      brand: p.brand,
-      status: p.status,
-      active: p.active,
-      supplierPrice: this.editPrice,
-      dealerPrice: this.editDealerPrice,
-      quantity: this.isDealer ? p.quantity : this.editQuantity
-    };
+    // Dealer: submit proposed dealer price via POST /api/products/process (UPDATE_PRICE)
+    if (this.isDealer) {
+      const dealerId  = Number(localStorage.getItem('dealerId') || 0);
+      // Backend needs the numeric DB primary key (ProductEntity.id), not productCode
+      const productId = Number(p.id ?? p.productId ?? 0);
 
-    console.log('Updating product:', p.productCode, payload);
+      console.log('UPDATE_PRICE → dealerId:', dealerId, '| productId:', productId, '| price:', this.editDealerPrice, '| full product object:', p);
+
+      if (!dealerId) {
+        this.showToast('Session error: dealer ID missing. Please log in again.');
+        return;
+      }
+      if (!productId) {
+        this.showToast('Cannot update: product ID missing.');
+        return;
+      }
+
+      this.productMgmt.updatePrice(dealerId, productId, this.editDealerPrice).subscribe({
+        next: () => {
+          this.zone.run(() => {
+            p.dealerPrice  = this.editDealerPrice;
+            this.editingId = null;
+            this.showToast('Dealer price submitted for admin approval');
+          });
+        },
+        error: (err) => {
+          this.zone.run(() => {
+            console.error('Update failed', err);
+            this.showToast('Failed to submit dealer price');
+          });
+        }
+      });
+      return;
+    }
+
+    // Admin: full product PUT with updated supplier price
+    const payload = {
+      productCode:        p.productCode,
+      productName:        p.productName,
+      category:           p.category,
+      sku:                p.sku,
+      supplierCode:       p.supplierCode,
+      brand:              p.brand,
+      status:             p.status,
+      active:             p.active,
+      inStock:            p.inStock,
+      visibility:         p.visibility ?? 'PUBLIC',
+      publishedStatus:    p.publishedStatus ?? true,
+      shortDescription:   p.shortDescription,
+      description:        p.description,
+      productDescription: p.productDescription,
+      remarks:            p.remarks,
+      supplierPrice:      this.editPrice,
+      quantity:           this.editQuantity
+    };
 
     this.productService.update(p.productCode, payload).subscribe({
       next: () => {
         this.zone.run(() => {
           p.supplierPrice = this.editPrice;
-          p.dealerPrice = this.editDealerPrice;
-          p.quantity = this.isDealer ? p.quantity : this.editQuantity;
-          this.editingId = null;
+          p.quantity      = this.editQuantity;
+          this.editingId  = null;
           this.showToast('Product updated successfully');
         });
       },

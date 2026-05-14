@@ -42,16 +42,19 @@
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
   justify-content: center;
+  overflow: visible;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .nav-links a {
   text-decoration: none;
   color: rgba(255,255,255,0.75);
-  font-size: 14px;
-  padding: 6px 12px;
+  font-size: 13px;
+  padding: 6px 10px;
   border-radius: 6px;
   transition: background 0.2s, color 0.2s;
   white-space: nowrap;
@@ -74,8 +77,8 @@
 
 .dropdown-title {
   color: rgba(255,255,255,0.75);
-  font-size: 14px;
-  padding: 6px 12px;
+  font-size: 13px;
+  padding: 6px 10px;
   border-radius: 6px;
   display: block;
   transition: background 0.2s, color 0.2s;
@@ -122,8 +125,9 @@
 .right-section {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .user-info {

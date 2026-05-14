@@ -27,7 +27,12 @@ export class ManageUserGroupsComponent implements OnInit {
   toast = '';
   toastType = '';
   editingId: number | null = null;
-  editData: Partial<CustomerGroup> = {};
+
+  // Text-based edit fields so we can show "8.00" instead of "8"
+  editGroupName = '';
+  editGst = '';
+  editCommission = '';
+  editDiscount = '';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -42,8 +47,14 @@ export class ManageUserGroupsComponent implements OnInit {
   loadGroups() {
     this.loading = true;
     this.http.get<CustomerGroup[]>(`${environment.apiUrl}/api/customer-groups`).subscribe({
-      next: (data) => { this.loading = false; this.groups = Array.isArray(data) ? data : []; },
-      error: () => { this.loading = false; this.showToast('Failed to load customer groups', 'error'); }
+      next: (data) => {
+        this.loading = false;
+        this.groups = Array.isArray(data) ? data : [];
+      },
+      error: () => {
+        this.loading = false;
+        this.showToast('Failed to load customer groups', 'error');
+      }
     });
   }
 
@@ -53,21 +64,42 @@ export class ManageUserGroupsComponent implements OnInit {
 
   startEdit(g: CustomerGroup) {
     this.editingId = g.id;
-    this.editData = { ...g };
+    this.editGroupName  = g.groupName;
+    this.editGst        = this.fmt(g.gstPercentage);
+    this.editCommission = this.fmt(g.commissionPercentage);
+    this.editDiscount   = this.fmt(g.discount);
   }
 
   cancelEdit() {
     this.editingId = null;
-    this.editData = {};
+  }
+
+  /** On blur: reformat the text field to always show 2 decimal places */
+  formatField(field: 'gst' | 'commission' | 'discount') {
+    const map = { gst: 'editGst', commission: 'editCommission', discount: 'editDiscount' } as const;
+    const key = map[field];
+    const parsed = parseFloat((this as any)[key]);
+    (this as any)[key] = isNaN(parsed) ? '0.00' : parsed.toFixed(2);
   }
 
   saveEdit(g: CustomerGroup) {
-    this.http.put(`${environment.apiUrl}/api/customer-groups/${g.id}`, this.editData).subscribe({
+    const payload: Partial<CustomerGroup> = {
+      groupName:            this.editGroupName,
+      gstPercentage:        parseFloat(this.editGst)        || 0,
+      commissionPercentage: parseFloat(this.editCommission) || 0,
+      discount:             parseFloat(this.editDiscount)   || 0,
+      pricingFormula:       g.pricingFormula
+    };
+
+    this.http.put(`${environment.apiUrl}/api/customer-groups/${g.id}`, payload, { responseType: 'text' }).subscribe({
       next: () => {
+        // Update in-place — no reload needed, no double-click issue
+        const idx = this.groups.findIndex(x => x.id === g.id);
+        if (idx !== -1) {
+          this.groups[idx] = { ...this.groups[idx], ...payload };
+        }
         this.editingId = null;
-        this.editData = {};
         this.showToast('Group updated successfully');
-        this.loadGroups();
       },
       error: () => this.showToast('Failed to update group', 'error')
     });
@@ -75,12 +107,19 @@ export class ManageUserGroupsComponent implements OnInit {
 
   delete(g: CustomerGroup) {
     if (!confirm(`Delete group "${g.groupName}"?`)) return;
-    this.http.delete(`${environment.apiUrl}/api/customer-groups/${g.id}`).subscribe({
+    this.http.delete(`${environment.apiUrl}/api/customer-groups/${g.id}`, { responseType: 'text' }).subscribe({
       next: () => {
+        // Remove in-place — no reload, no double-click issue
+        this.groups = this.groups.filter(x => x.id !== g.id);
         this.showToast('Group deleted successfully');
-        this.loadGroups();
       },
       error: () => this.showToast('Failed to delete group', 'error')
     });
+  }
+
+  /** Format a number for display: always 2 decimal places */
+  fmt(v: number | undefined | null): string {
+    if (v === undefined || v === null) return '0.00';
+    return Number(v).toFixed(2);
   }
 }

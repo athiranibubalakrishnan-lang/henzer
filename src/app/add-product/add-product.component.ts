@@ -20,7 +20,6 @@ export class AddProductComponent implements OnInit {
   sku = '';
   supplierCode = '';
   supplierPrice = 0;
-  dealerPrice = 0;
   shortDescription = '';
   description = '';
   productDescription = '';
@@ -66,7 +65,6 @@ export class AddProductComponent implements OnInit {
       sku: this.sku,
       supplierCode: this.supplierCode,
       supplierPrice: this.supplierPrice,
-      dealerPrice: this.dealerPrice,
       shortDescription: this.shortDescription,
       description: this.description,
       productDescription: this.productDescription,
@@ -100,7 +98,6 @@ export class AddProductComponent implements OnInit {
     this.sku = '';
     this.supplierCode = '';
     this.supplierPrice = 0;
-    this.dealerPrice = 0;
     this.shortDescription = '';
     this.description = '';
     this.productDescription = '';

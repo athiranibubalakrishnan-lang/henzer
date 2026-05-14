@@ -17,6 +17,8 @@ export class HeaderComponent {
   showDropdown = false;
   showBrandDropdown = false;
   showViewProductsDropdown = false;
+  showAdminDropdown = false;
+  showReviewDropdown = false;
 
   constructor(private router: Router, private zone: NgZone) {}
 
@@ -70,6 +72,16 @@ export class HeaderComponent {
     this.showViewProductsDropdown = !this.showViewProductsDropdown;
   }
 
+  toggleAdminDropdown(event: Event) {
+    event.stopPropagation();
+    this.showAdminDropdown = !this.showAdminDropdown;
+  }
+
+  toggleReviewDropdown(event: Event) {
+    event.stopPropagation();
+    this.showReviewDropdown = !this.showReviewDropdown;
+  }
+
   logout() {
     const role = localStorage.getItem('role');
     localStorage.removeItem('token');
@@ -87,6 +99,8 @@ export class HeaderComponent {
       this.showDropdown = false;
       this.showBrandDropdown = false;
       this.showViewProductsDropdown = false;
+      this.showAdminDropdown = false;
+      this.showReviewDropdown = false;
     });
   }
 }

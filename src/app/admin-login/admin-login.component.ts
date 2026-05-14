@@ -14,7 +14,7 @@ import { environment } from '../../environments/environment';
 })
 export class AdminLoginComponent {
 
-  adminEmail = 'anibubalakrishnan@gmail.com';
+  adminEmail = 'vivekk@gmail.com';
   adminPassword = 'Asdfgh@098';
   showAdminPassword = false;
   adminLoading = false;
@@ -52,6 +52,22 @@ export class AdminLoginComponent {
         this.dealerLoading = false;
         if (res?.token) localStorage.setItem('token', res.token);
         localStorage.setItem('role', res?.role || 'DEALER');
+
+        // Try every common field name the backend might use for the dealer's numeric ID
+        const dealerId = res?.userId
+          ?? res?.id
+          ?? res?.dealerId
+          ?? res?.user?.id
+          ?? res?.user?.dealerId
+          ?? this.extractIdFromJwt(res?.token);
+
+        if (dealerId) {
+          localStorage.setItem('dealerId', String(dealerId));
+        } else {
+          // Log the full response so the field name can be identified
+          console.warn('dealerId not found in login response. Full response:', res);
+        }
+
         this.router.navigate(['/home']);
       },
       error: (err) => {
@@ -60,5 +76,16 @@ export class AdminLoginComponent {
         alert('Invalid dealer credentials');
       }
     });
+  }
+
+  /** Decode the JWT payload and extract an id/userId/dealerId claim */
+  private extractIdFromJwt(token: string | undefined): number | null {
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload?.id ?? payload?.userId ?? payload?.dealerId ?? null;
+    } catch {
+      return null;
+    }
   }
 }
