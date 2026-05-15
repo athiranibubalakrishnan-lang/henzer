@@ -6,11 +6,12 @@ import { environment } from '../../environments/environment';
 
 export interface DealerProduct {
   id: number;
+  dealerId: number;
   dealerCode: string;
   dealerName: string;
   dealerPrice: number | null;
   processing: boolean;
-  status?: string; // local UI state after action
+  status?: string;
 }
 
 export interface ProductCard {
@@ -24,7 +25,7 @@ export interface ProductCard {
   status: string;
   dealerProducts: DealerProduct[];
   expanded: boolean;
-  processing: boolean; // for product-level approve/reject
+  processing: boolean;
 }
 
 @Component({
@@ -36,26 +37,25 @@ export interface ProductCard {
 })
 export class ProductApprovalComponent implements OnInit {
 
-  activeTab: 'pending' | 'approved' = 'pending';
+  activeTab: 'pending' | 'approved' | 'rejected' = 'pending';
 
   pending:  ProductCard[] = [];
   approved: ProductCard[] = [];
+  rejected: ProductCard[] = [];
 
   pendingLoading  = false;
   approvedLoading = false;
 
   searchPending  = '';
   searchApproved = '';
+  searchRejected = '';
 
   toast     = '';
   toastType: 'success' | 'error' = 'success';
 
   constructor(private http: HttpClient, private zone: NgZone) {}
 
-  ngOnInit() {
-    this.loadPending();
-    this.loadApproved();
-  }
+  ngOnInit() { this.loadAll(); }
 
   showToast(msg: string, type: 'success' | 'error' = 'success') {
     this.toast     = msg;
@@ -63,18 +63,82 @@ export class ProductApprovalComponent implements OnInit {
     setTimeout(() => this.toast = '', 3000);
   }
 
-  // ── Data loading ─────────────────────────────────────────────────
+  loadAll() { this.loadPending(); }
+
+  // ── Data loading ──────────────────────────────────────────────────
 
   loadPending() {
-    this.pendingLoading = true;
+    this.pendingLoading  = true;
+    this.approvedLoading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/products/pending`).subscribe({
       next: (data) => this.zone.run(() => {
         this.pendingLoading = false;
-        this.pending = this.mapCards(data);
+        const raw = Array.isArray(data) ? data : [];
+
+        const approvedFromPending: ProductCard[] = [];
+        const rejectedFromPending: ProductCard[] = [];
+        const pendingCards:        ProductCard[] = [];
+
+        raw.forEach(p => {
+          const dealers: any[] = p.dealerProducts ?? [];
+
+          const approvedDealers = dealers.filter((d: any) => d.status === 'APPROVED');
+          const rejectedDealers = dealers.filter((d: any) => d.status === 'REJECTED');
+          // Pending dealers: empty array OR dealers with null status
+          const pendingDealers  = dealers.filter((d: any) => d.status == null);
+
+          // Products with APPROVED dealers → Approved tab
+          if (approvedDealers.length > 0) {
+            approvedFromPending.push({ ...this.mapCard(p, approvedDealers), status: 'APPROVED' });
+          }
+
+          // Products with REJECTED dealers → Rejected tab
+          if (rejectedDealers.length > 0) {
+            rejectedFromPending.push({ ...this.mapCard(p, rejectedDealers), status: 'REJECTED' });
+          }
+
+          // Pending tab:
+          //   - dealerProducts is empty (no dealers assigned yet) → PENDING
+          //   - has dealers but all statuses are null (assigned, not yet actioned) → ASSIGNED
+          //   - has some pending (null-status) dealers alongside actioned ones → show only pending dealers
+          const hasPendingDealers = dealers.length === 0 || pendingDealers.length > 0;
+          if (hasPendingDealers) {
+            const derivedStatus = dealers.length === 0 ? 'PENDING' : 'ASSIGNED';
+            pendingCards.push({
+              ...this.mapCard(p, pendingDealers),
+              status: derivedStatus
+            });
+          }
+        });
+
+        this.pending  = pendingCards;
+        this.rejected = rejectedFromPending;
+
+        // Load approved from API and merge with those derived from pending response
+        this.http.get<any[]>(`${environment.apiUrl}/api/products/approved`).subscribe({
+          next: (approvedData) => this.zone.run(() => {
+            this.approvedLoading = false;
+            const fromApi = this.mapCards(Array.isArray(approvedData) ? approvedData : []);
+            const merged  = [...fromApi];
+            approvedFromPending.forEach(card => {
+              if (!merged.find(a => a.productCode === card.productCode)) {
+                merged.push(card);
+              }
+            });
+            this.approved = merged;
+          }),
+          error: () => this.zone.run(() => {
+            this.approvedLoading = false;
+            this.approved = approvedFromPending;
+            this.showToast('Failed to load approved products', 'error');
+          })
+        });
       }),
       error: () => this.zone.run(() => {
-        this.pendingLoading = false;
+        this.pendingLoading  = false;
+        this.approvedLoading = false;
         this.showToast('Failed to load pending products', 'error');
+        this.loadApproved();
       })
     });
   }
@@ -84,7 +148,7 @@ export class ProductApprovalComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiUrl}/api/products/approved`).subscribe({
       next: (data) => this.zone.run(() => {
         this.approvedLoading = false;
-        this.approved = this.mapCards(data);
+        this.approved = this.mapCards(Array.isArray(data) ? data : []);
       }),
       error: () => this.zone.run(() => {
         this.approvedLoading = false;
@@ -93,8 +157,14 @@ export class ProductApprovalComponent implements OnInit {
     });
   }
 
+  // ── Mappers ───────────────────────────────────────────────────────
+
   private mapCards(data: any[]): ProductCard[] {
-    return (Array.isArray(data) ? data : []).map(p => ({
+    return data.map(p => this.mapCard(p, p.dealerProducts ?? []));
+  }
+
+  private mapCard(p: any, dealerProducts: any[]): ProductCard {
+    return {
       id:            p.id,
       productCode:   p.productCode,
       productName:   p.productName,
@@ -105,46 +175,48 @@ export class ProductApprovalComponent implements OnInit {
       status:        p.status,
       expanded:      false,
       processing:    false,
-      dealerProducts: (p.dealerProducts ?? []).map((d: any) => ({
-        id:          d.id,
-        dealerCode:  d.dealerCode,
-        dealerName:  d.dealerName,
-        dealerPrice: d.dealerPrice ?? null,
-        processing:  false,
-        status:      undefined
-      }))
-    }));
+      dealerProducts: dealerProducts.map((d: any) => this.mapDealer(d))
+    };
+  }
+
+  private mapDealer(d: any): DealerProduct {
+    return {
+      id:          d.id,
+      dealerId:    d.dealerId,
+      dealerCode:  d.dealerCode,
+      dealerName:  d.dealerName,
+      dealerPrice: d.dealerPrice ?? null,
+      processing:  false,
+      status:      d.status ?? undefined
+    };
   }
 
   // ── Filtered lists ────────────────────────────────────────────────
 
   get filteredPending(): ProductCard[] {
     const q = this.searchPending.toLowerCase();
-    return q
-      ? this.pending.filter(p =>
-          p.productName?.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q) ||
-          p.category?.toLowerCase().includes(q))
-      : this.pending;
+    return q ? this.pending.filter(p => this.matchesSearch(p, q)) : this.pending;
   }
 
   get filteredApproved(): ProductCard[] {
     const q = this.searchApproved.toLowerCase();
-    return q
-      ? this.approved.filter(p =>
-          p.productName?.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q) ||
-          p.category?.toLowerCase().includes(q))
-      : this.approved;
+    return q ? this.approved.filter(p => this.matchesSearch(p, q)) : this.approved;
   }
 
-  // ── Expand / collapse ─────────────────────────────────────────────
-
-  toggle(card: ProductCard) {
-    card.expanded = !card.expanded;
+  get filteredRejected(): ProductCard[] {
+    const q = this.searchRejected.toLowerCase();
+    return q ? this.rejected.filter(p => this.matchesSearch(p, q)) : this.rejected;
   }
 
-  // ── Product-level approve / reject (no dealers assigned) ──────────
+  private matchesSearch(p: ProductCard, q: string): boolean {
+    return p.productName?.toLowerCase().includes(q) ||
+           p.sku?.toLowerCase().includes(q) ||
+           p.category?.toLowerCase().includes(q);
+  }
+
+  toggle(card: ProductCard) { card.expanded = !card.expanded; }
+
+  // ── Product-level approve / reject ────────────────────────────────
 
   approveProduct(card: ProductCard) {
     card.processing = true;
@@ -154,9 +226,9 @@ export class ProductApprovalComponent implements OnInit {
     ).subscribe({
       next: () => this.zone.run(() => {
         card.processing = false;
-        this.pending  = this.pending.filter(p => p.productCode !== card.productCode);
-        card.status   = 'APPROVED';
-        this.approved = [card, ...this.approved];
+        card.status     = 'APPROVED';
+        this.pending    = this.pending.filter(p => p.productCode !== card.productCode);
+        this.approved   = [{ ...card, status: 'APPROVED' }, ...this.approved];
         this.showToast(`"${card.productName}" approved`, 'success');
       }),
       error: () => this.zone.run(() => {
@@ -174,7 +246,9 @@ export class ProductApprovalComponent implements OnInit {
     ).subscribe({
       next: () => this.zone.run(() => {
         card.processing = false;
-        this.pending = this.pending.filter(p => p.productCode !== card.productCode);
+        card.status     = 'REJECTED';
+        this.pending    = this.pending.filter(p => p.productCode !== card.productCode);
+        this.rejected   = [{ ...card, status: 'REJECTED' }, ...this.rejected];
         this.showToast(`"${card.productName}" rejected`, 'success');
       }),
       error: () => this.zone.run(() => {
@@ -190,11 +264,25 @@ export class ProductApprovalComponent implements OnInit {
     dealer.processing = true;
     this.http.put(
       `${environment.apiUrl}/api/products/${card.productCode}/approve`, {},
-      { responseType: 'text' as 'json' }
+      { params: { dealerId: dealer.dealerId }, responseType: 'text' as 'json' }
     ).subscribe({
       next: () => this.zone.run(() => {
         dealer.processing = false;
         dealer.status     = 'APPROVED';
+
+        // Remove dealer from pending card
+        card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
+
+        // Add to approved tab
+        const approvedCard = this.approved.find(a => a.productCode === card.productCode);
+        if (approvedCard) {
+          approvedCard.dealerProducts.push({ ...dealer, status: 'APPROVED' });
+        } else {
+          this.approved = [
+            { ...card, dealerProducts: [{ ...dealer, status: 'APPROVED' }], status: 'APPROVED', expanded: false },
+            ...this.approved
+          ];
+        }
         this.showToast(`Approved for ${dealer.dealerName}`, 'success');
       }),
       error: () => this.zone.run(() => {
@@ -208,11 +296,25 @@ export class ProductApprovalComponent implements OnInit {
     dealer.processing = true;
     this.http.put(
       `${environment.apiUrl}/api/products/${card.productCode}/reject`, {},
-      { responseType: 'text' as 'json' }
+      { params: { dealerId: dealer.dealerId }, responseType: 'text' as 'json' }
     ).subscribe({
       next: () => this.zone.run(() => {
         dealer.processing = false;
         dealer.status     = 'REJECTED';
+
+        // Remove dealer from pending card
+        card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
+
+        // Add to rejected tab
+        const rejectedCard = this.rejected.find(r => r.productCode === card.productCode);
+        if (rejectedCard) {
+          rejectedCard.dealerProducts.push({ ...dealer, status: 'REJECTED' });
+        } else {
+          this.rejected = [
+            { ...card, dealerProducts: [{ ...dealer, status: 'REJECTED' }], status: 'REJECTED', expanded: false },
+            ...this.rejected
+          ];
+        }
         this.showToast(`Rejected for ${dealer.dealerName}`, 'success');
       }),
       error: () => this.zone.run(() => {
@@ -222,6 +324,7 @@ export class ProductApprovalComponent implements OnInit {
     });
   }
 
-  get pendingCount(): number  { return this.pending.length; }
+  get pendingCount():  number { return this.pending.length; }
   get approvedCount(): number { return this.approved.length; }
+  get rejectedCount(): number { return this.rejected.length; }
 }

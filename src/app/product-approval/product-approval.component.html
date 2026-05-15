@@ -19,14 +19,20 @@
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab" [class.active]="activeTab === 'pending'" (click)="activeTab = 'pending'">
-      ⏳ Pending Approval
+      ⏳ Pending
       @if (pendingCount > 0) {
         <span class="tab-count pending">{{ pendingCount }}</span>
       }
     </button>
     <button class="tab" [class.active]="activeTab === 'approved'" (click)="activeTab = 'approved'">
-      ✅ Approved Products
+      ✅ Approved
       <span class="tab-count">{{ approvedCount }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'rejected'" (click)="activeTab = 'rejected'">
+      ✕ Rejected
+      @if (rejectedCount > 0) {
+        <span class="tab-count rejected">{{ rejectedCount }}</span>
+      }
     </button>
   </div>
 
@@ -37,7 +43,7 @@
     <div class="toolbar">
       <input type="text" [(ngModel)]="searchPending"
         placeholder="Search by name, SKU or category..." class="search-input" />
-      <button class="btn-refresh" (click)="loadPending()">↻ Refresh</button>
+      <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
     @if (pendingLoading) {
@@ -49,76 +55,58 @@
     } @else {
       <div class="card-list">
         @for (card of filteredPending; track card.productCode) {
-
           <div class="product-card">
-
-            <!-- Product header -->
             <div class="card-header" (click)="toggle(card)">
               <div class="card-header-left">
                 <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
                 <div class="card-info">
                   <span class="card-name">{{ card.productName }}</span>
-                  <span class="card-meta">
-                    {{ card.brand }} · {{ card.category }}
-                    @if (card.sku) { · SKU: {{ card.sku }} }
-                  </span>
+                  <span class="card-meta">{{ card.brand }} · {{ card.category }}@if (card.sku) { · SKU: {{ card.sku }} }</span>
                 </div>
               </div>
               <div class="card-header-right">
                 <span class="price-tag">¥{{ card.supplierPrice }}</span>
                 @if (card.dealerProducts.length > 0) {
-                  <span class="dealer-count">
-                    {{ card.dealerProducts.length }} dealer{{ card.dealerProducts.length !== 1 ? 's' : '' }}
-                  </span>
+                  <span class="dealer-count">{{ card.dealerProducts.length }} dealer{{ card.dealerProducts.length !== 1 ? 's' : '' }}</span>
                 }
-                <span class="badge pending">{{ card.status }}</span>
-                <!-- Product-level actions (when no dealers assigned) -->
+                <span class="badge"
+                  [class.pending]="card.status === 'PENDING'"
+                  [class.assigned]="card.status === 'ASSIGNED'">
+                  {{ card.status }}
+                </span>
                 @if (card.dealerProducts.length === 0) {
-                  <button class="btn-approve sm" (click)="approveProduct(card); $event.stopPropagation()"
-                    [disabled]="card.processing">
+                  <button class="btn-approve sm" (click)="approveProduct(card); $event.stopPropagation()" [disabled]="card.processing">
                     {{ card.processing ? '...' : '✓ Approve' }}
                   </button>
-                  <button class="btn-reject sm" (click)="rejectProduct(card); $event.stopPropagation()"
-                    [disabled]="card.processing">
+                  <button class="btn-reject sm" (click)="rejectProduct(card); $event.stopPropagation()" [disabled]="card.processing">
                     {{ card.processing ? '...' : '✕ Reject' }}
                   </button>
                 }
               </div>
             </div>
 
-            <!-- Dealer rows (expanded) -->
             @if (card.expanded && card.dealerProducts.length > 0) {
               <div class="dealer-section">
                 <table class="dealer-table">
                   <thead>
-                    <tr>
-                      <th>Dealer Name</th>
-                      <th>Dealer Email</th>
-                      <th>Dealer Price</th>
-                      <th>Actions</th>
-                    </tr>
+                    <tr><th>Dealer Name</th><th>Email</th><th>Dealer Price</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     @for (d of card.dealerProducts; track d.id) {
-                      <tr [class.row-approved]="d.status === 'APPROVED'"
-                          [class.row-rejected]="d.status === 'REJECTED'">
+                      <tr>
                         <td class="dealer-name-cell">{{ d.dealerName }}</td>
                         <td class="dealer-email-cell">{{ d.dealerCode }}</td>
-                        <td>
-                          {{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}
-                        </td>
+                        <td>{{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}</td>
                         <td class="dealer-actions">
                           @if (d.status === 'APPROVED') {
                             <span class="badge approved">Approved</span>
                           } @else if (d.status === 'REJECTED') {
                             <span class="badge rejected">Rejected</span>
                           } @else {
-                            <button class="btn-approve sm"
-                              (click)="approveDealer(card, d)" [disabled]="d.processing">
+                            <button class="btn-approve sm" (click)="approveDealer(card, d)" [disabled]="d.processing">
                               {{ d.processing ? '...' : '✓ Approve' }}
                             </button>
-                            <button class="btn-reject sm"
-                              (click)="rejectDealer(card, d)" [disabled]="d.processing">
+                            <button class="btn-reject sm" (click)="rejectDealer(card, d)" [disabled]="d.processing">
                               {{ d.processing ? '...' : '✕ Reject' }}
                             </button>
                           }
@@ -129,13 +117,10 @@
                 </table>
               </div>
             }
-
             @if (card.expanded && card.dealerProducts.length === 0) {
               <div class="no-dealers">No dealers assigned to this product.</div>
             }
-
           </div>
-
         }
       </div>
     }
@@ -148,51 +133,38 @@
     <div class="toolbar">
       <input type="text" [(ngModel)]="searchApproved"
         placeholder="Search by name, SKU or category..." class="search-input" />
-      <button class="btn-refresh" (click)="loadApproved()">↻ Refresh</button>
+      <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
     @if (approvedLoading) {
       <div class="loading-wrap"><div class="spinner"></div><p>Loading...</p></div>
     } @else if (filteredApproved.length === 0) {
-      <div class="empty-state">
-        <p>{{ searchApproved ? 'No products match your search.' : 'No approved products yet.' }}</p>
-      </div>
+      <div class="empty-state"><p>{{ searchApproved ? 'No products match your search.' : 'No approved products yet.' }}</p></div>
     } @else {
       <div class="card-list">
         @for (card of filteredApproved; track card.productCode) {
-
           <div class="product-card">
             <div class="card-header" (click)="toggle(card)">
               <div class="card-header-left">
                 <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
                 <div class="card-info">
                   <span class="card-name">{{ card.productName }}</span>
-                  <span class="card-meta">
-                    {{ card.brand }} · {{ card.category }}
-                    @if (card.sku) { · SKU: {{ card.sku }} }
-                  </span>
+                  <span class="card-meta">{{ card.brand }} · {{ card.category }}@if (card.sku) { · SKU: {{ card.sku }} }</span>
                 </div>
               </div>
               <div class="card-header-right">
                 <span class="price-tag">¥{{ card.supplierPrice }}</span>
                 @if (card.dealerProducts.length > 0) {
-                  <span class="dealer-count">
-                    {{ card.dealerProducts.length }} dealer{{ card.dealerProducts.length !== 1 ? 's' : '' }}
-                  </span>
+                  <span class="dealer-count">{{ card.dealerProducts.length }} dealer{{ card.dealerProducts.length !== 1 ? 's' : '' }}</span>
                 }
-                <span class="badge approved">{{ card.status }}</span>
+                <span class="badge approved">APPROVED</span>
               </div>
             </div>
-
             @if (card.expanded && card.dealerProducts.length > 0) {
               <div class="dealer-section">
                 <table class="dealer-table">
                   <thead>
-                    <tr>
-                      <th>Dealer Name</th>
-                      <th>Dealer Email</th>
-                      <th>Dealer Price</th>
-                    </tr>
+                    <tr><th>Dealer Name</th><th>Email</th><th>Dealer Price</th></tr>
                   </thead>
                   <tbody>
                     @for (d of card.dealerProducts; track d.id) {
@@ -207,7 +179,65 @@
               </div>
             }
           </div>
+        }
+      </div>
+    }
+  }
 
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- TAB 3: REJECTED                                   -->
+  <!-- ══════════════════════════════════════════════════ -->
+  @if (activeTab === 'rejected') {
+    <div class="toolbar">
+      <input type="text" [(ngModel)]="searchRejected"
+        placeholder="Search by name, SKU or category..." class="search-input" />
+      <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
+    </div>
+
+    @if (filteredRejected.length === 0) {
+      <div class="empty-state"><p>{{ searchRejected ? 'No products match your search.' : 'No rejected products.' }}</p></div>
+    } @else {
+      <div class="card-list">
+        @for (card of filteredRejected; track card.productCode) {
+          <div class="product-card rejected-card">
+            <div class="card-header" (click)="toggle(card)">
+              <div class="card-header-left">
+                <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
+                <div class="card-info">
+                  <span class="card-name">{{ card.productName }}</span>
+                  <span class="card-meta">{{ card.brand }} · {{ card.category }}@if (card.sku) { · SKU: {{ card.sku }} }</span>
+                </div>
+              </div>
+              <div class="card-header-right">
+                <span class="price-tag">¥{{ card.supplierPrice }}</span>
+                @if (card.dealerProducts.length > 0) {
+                  <span class="dealer-count">{{ card.dealerProducts.length }} dealer{{ card.dealerProducts.length !== 1 ? 's' : '' }}</span>
+                }
+                <span class="badge rejected">REJECTED</span>
+              </div>
+            </div>
+            @if (card.expanded && card.dealerProducts.length > 0) {
+              <div class="dealer-section rejected-section">
+                <table class="dealer-table">
+                  <thead>
+                    <tr><th>Dealer Name</th><th>Email</th><th>Dealer Price</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (d of card.dealerProducts; track d.id) {
+                      <tr>
+                        <td class="dealer-name-cell">{{ d.dealerName }}</td>
+                        <td class="dealer-email-cell">{{ d.dealerCode }}</td>
+                        <td>{{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            @if (card.expanded && card.dealerProducts.length === 0) {
+              <div class="no-dealers">No dealer details available.</div>
+            }
+          </div>
         }
       </div>
     }

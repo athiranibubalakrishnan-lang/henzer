@@ -15,7 +15,7 @@ import { environment } from '../../environments/environment';
 export class AdminLoginComponent {
 
   adminEmail = 'vivekk@gmail.com';
-  adminPassword = 'Asdfgh@098';
+  adminPassword = 'Password@1234';
   showAdminPassword = false;
   adminLoading = false;
 

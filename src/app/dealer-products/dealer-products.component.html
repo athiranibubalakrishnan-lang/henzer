@@ -5,17 +5,31 @@
   }
 
   <div class="page-header-row">
-    <h2 class="title">My Assigned Products</h2>
-    <button class="btn-refresh" (click)="loadAssignedProducts()">↻ Refresh</button>
+    <div>
+      <h2 class="title">My Products</h2>
+      <p class="subtitle">Products assigned to you by the admin</p>
+    </div>
+    <button class="btn-refresh" (click)="loadProducts()">↻ Refresh</button>
   </div>
 
-  <!-- Category filter tabs -->
-  <div class="category-tabs">
-    @for (cat of categories; track cat) {
-      <button class="tab-btn" [class.active]="selectedCategory === cat" (click)="selectedCategory = cat">
-        {{ cat }}
-      </button>
-    }
+  <!-- ── Status Tabs ── -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'assigned'" (click)="activeTab = 'assigned'">
+      📋 Assigned
+      @if (assignedCount > 0) {
+        <span class="tab-count assigned">{{ assignedCount }}</span>
+      }
+    </button>
+    <button class="tab" [class.active]="activeTab === 'approved'" (click)="activeTab = 'approved'">
+      ✅ Approved
+      <span class="tab-count">{{ approvedCount }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'rejected'" (click)="activeTab = 'rejected'">
+      ✕ Rejected
+      @if (rejectedCount > 0) {
+        <span class="tab-count rejected">{{ rejectedCount }}</span>
+      }
+    </button>
   </div>
 
   @if (loading) {
@@ -23,64 +37,154 @@
       <div class="spinner"></div>
       <p>Loading products...</p>
     </div>
-  } @else if (filteredProducts.length === 0) {
-    <div class="empty-state">
-      <p>No products assigned yet.</p>
-    </div>
   } @else {
-    <div class="table-wrapper">
-      <table class="product-table">
-        <thead>
-          <tr>
-            <th>Product Name</th>
-            <th>Category</th>
-            <th>SKU</th>
-            <th>Supplier Price</th>
-            <th>Dealer Price</th>
-            <th>My Proposed Price</th>
-            <th>Product Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of filteredProducts; track row.productId) {
-            <tr [class.editing-row]="row.editing">
-              <td>{{ row.productName }}</td>
-              <td>{{ row.category }}</td>
-              <td>{{ row.sku }}</td>
-              <td>¥{{ row.supplierPrice }}</td>
-              <td>{{ row.dealerPrice !== null ? ('¥' + row.dealerPrice) : '—' }}</td>
-              <td>
-                @if (row.editing) {
-                  <input class="inline-input" type="number" [(ngModel)]="row.proposedPrice" min="0" placeholder="Enter price" />
-                } @else {
-                  {{ row.proposedPrice !== null ? ('¥' + row.proposedPrice) : '—' }}
-                }
-              </td>
-              <td>
-                <span class="badge"
-                  [class.finalized]="row.productStatus === 'APPROVED'"
-                  [class.pending]="row.productStatus === 'PENDING'"
-                  [class.assigned]="row.productStatus === 'ASSIGNED'"
-                  [class.rejected]="row.productStatus === 'REJECTED'">
-                  {{ row.productStatus || '—' }}
-                </span>
-              </td>
-              <td class="actions">
-                @if (row.editing) {
-                  <button class="btn-save" (click)="savePrice(row)" [disabled]="row.saving">
-                    {{ row.saving ? 'Saving...' : 'Save' }}
-                  </button>
-                  <button class="btn-cancel" (click)="cancelEdit(row)">Cancel</button>
-                } @else if (row.productStatus !== 'APPROVED' && row.productStatus !== 'REJECTED') {
-                  <button class="btn-edit" (click)="startEdit(row)">Update Price</button>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- TAB 1: ASSIGNED                                   -->
+    <!-- ══════════════════════════════════════════════════ -->
+    @if (activeTab === 'assigned') {
+      <div class="toolbar">
+        <input type="text" [(ngModel)]="searchAssigned"
+          placeholder="Search by name, SKU or category..." class="search-input" />
+      </div>
+
+      @if (filteredAssigned.length === 0) {
+        <div class="empty-state">
+          <p>{{ searchAssigned ? 'No products match your search.' : 'No products assigned yet.' }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>SKU</th>
+                <th>Supplier Price</th>
+                <th>Dealer Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of filteredAssigned; track row.productCode) {
+                <tr [class.editing-row]="row.editing">
+                  <td>{{ row.productName }}</td>
+                  <td>{{ row.category }}</td>
+                  <td>{{ row.sku || '—' }}</td>
+                  <td>¥{{ row.supplierPrice }}</td>
+                  <td>
+                    @if (row.editing) {
+                      <input class="inline-input" type="number" [(ngModel)]="row.proposedPrice" min="0" placeholder="Enter price" />
+                    } @else {
+                      {{ row.dealerPrice !== null ? ('¥' + row.dealerPrice) : '—' }}
+                    }
+                  </td>
+                  <td><span class="badge assigned">ASSIGNED</span></td>
+                  <td class="actions">
+                    @if (row.editing) {
+                      <button class="btn-save" (click)="savePrice(row)" [disabled]="row.saving">
+                        {{ row.saving ? 'Saving...' : 'Submit' }}
+                      </button>
+                      <button class="btn-cancel" (click)="cancelEdit(row)">Cancel</button>
+                    } @else {
+                      <button class="btn-edit" (click)="startEdit(row)">Update Price</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- TAB 2: APPROVED                                   -->
+    <!-- ══════════════════════════════════════════════════ -->
+    @if (activeTab === 'approved') {
+      <div class="toolbar">
+        <input type="text" [(ngModel)]="searchApproved"
+          placeholder="Search by name, SKU or category..." class="search-input" />
+      </div>
+
+      @if (filteredApproved.length === 0) {
+        <div class="empty-state">
+          <p>{{ searchApproved ? 'No products match your search.' : 'No approved products yet.' }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>SKU</th>
+                <th>Supplier Price</th>
+                <th>Dealer Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of filteredApproved; track row.productCode) {
+                <tr>
+                  <td>{{ row.productName }}</td>
+                  <td>{{ row.category }}</td>
+                  <td>{{ row.sku || '—' }}</td>
+                  <td>¥{{ row.supplierPrice }}</td>
+                  <td>{{ row.dealerPrice !== null ? ('¥' + row.dealerPrice) : '—' }}</td>
+                  <td><span class="badge approved">APPROVED</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- TAB 3: REJECTED                                   -->
+    <!-- ══════════════════════════════════════════════════ -->
+    @if (activeTab === 'rejected') {
+      <div class="toolbar">
+        <input type="text" [(ngModel)]="searchRejected"
+          placeholder="Search by name, SKU or category..." class="search-input" />
+      </div>
+
+      @if (filteredRejected.length === 0) {
+        <div class="empty-state">
+          <p>{{ searchRejected ? 'No products match your search.' : 'No rejected products.' }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>SKU</th>
+                <th>Supplier Price</th>
+                <th>Dealer Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of filteredRejected; track row.productCode) {
+                <tr class="rejected-row">
+                  <td>{{ row.productName }}</td>
+                  <td>{{ row.category }}</td>
+                  <td>{{ row.sku || '—' }}</td>
+                  <td>¥{{ row.supplierPrice }}</td>
+                  <td>{{ row.dealerPrice !== null ? ('¥' + row.dealerPrice) : '—' }}</td>
+                  <td><span class="badge rejected">REJECTED</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
   }
 
 </div>

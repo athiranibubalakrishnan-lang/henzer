@@ -72,7 +72,8 @@
   text-align: center;
 }
 
-.tab-count.pending { background: #fff3e0; color: #e65100; }
+.tab-count.pending  { background: #fff3e0; color: #e65100; }
+.tab-count.rejected { background: #fce4ec; color: #c62828; }
 
 /* ── Toolbar ─────────────────────────────────────── */
 .toolbar {
@@ -245,6 +246,15 @@
   background: #fdf6ff;
 }
 
+.rejected-card { border-color: #ffcdd2; }
+.rejected-card .card-header:hover { background: #fff5f5; }
+.rejected-section {
+  border-top-color: #ffcdd2;
+  background: #fff5f5;
+}
+.rejected-section .dealer-table th { color: #c62828; border-bottom-color: #ffcdd2; }
+.rejected-section .dealer-table td { border-bottom-color: #ffebee; }
+
 /* ── Badges ──────────────────────────────────────── */
 .badge {
   padding: 3px 10px;
@@ -257,6 +267,7 @@
 .badge.pending  { background: #fff8e1; color: #f57f17; }
 .badge.approved { background: #e8f5e9; color: #2e7d32; }
 .badge.rejected { background: #fce4ec; color: #c62828; }
+.badge.assigned { background: #e3f2fd; color: #1565c0; }
 
 /* ── Action buttons ──────────────────────────────── */
 .btn-approve {

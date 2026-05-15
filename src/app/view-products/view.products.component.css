@@ -159,9 +159,67 @@
   color: #1565c0;
 }
 
-.badge.approved { background: #e8f5e9; color: #2e7d32; }
-.badge.pending  { background: #fff8e1; color: #f57f17; }
-.badge.rejected { background: #fce4ec; color: #c62828; }
+.badge.approved  { background: #e8f5e9; color: #2e7d32; }
+.badge.pending   { background: #fff8e1; color: #f57f17; }
+.badge.rejected  { background: #fce4ec; color: #c62828; }
+.badge.assigned  { background: #e3f2fd; color: #1565c0; }
+
+/* ── Dealer tabs ─────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s;
+}
+
+.tab:hover { color: #6a1b9a; }
+
+.tab.active {
+  color: #6a1b9a;
+  border-bottom-color: #6a1b9a;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #e0e0e0;
+  color: #555;
+}
+
+.tab-count.tab-assigned { background: #e3f2fd; color: #1565c0; }
+.tab-count.tab-rejected { background: #fce4ec; color: #c62828; }
+
+.rejected-row td { background: #fff8f8; }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: #999;
+  font-size: 15px;
+}
 
 .empty-row {
   text-align: center;

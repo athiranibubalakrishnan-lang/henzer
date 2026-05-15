@@ -11,17 +11,181 @@
     <div class="toast">{{ toast }}</div>
   }
 
-  <div class="top-bar">
-    <input type="text" placeholder="Search by name, SKU or model" [(ngModel)]="searchText" />
-    <button class="search-btn" (click)="refresh()">Refresh</button>
-  </div>
-
   @if (loading) {
     <div class="loading-wrap">
       <div class="spinner"></div>
       <p>Loading products...</p>
     </div>
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- DEALER VIEW — tabbed layout                            -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  } @else if (isDealer) {
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab" [class.active]="dealerActiveTab === 'assigned'" (click)="dealerActiveTab = 'assigned'">
+        📋 Assigned
+        @if (dealerAssignedCount > 0) {
+          <span class="tab-count tab-assigned">{{ dealerAssignedCount }}</span>
+        }
+      </button>
+      <button class="tab" [class.active]="dealerActiveTab === 'approved'" (click)="dealerActiveTab = 'approved'">
+        ✅ Approved
+        <span class="tab-count">{{ dealerApprovedCount }}</span>
+      </button>
+      <button class="tab" [class.active]="dealerActiveTab === 'rejected'" (click)="dealerActiveTab = 'rejected'">
+        ✕ Rejected
+        @if (dealerRejectedCount > 0) {
+          <span class="tab-count tab-rejected">{{ dealerRejectedCount }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- ── TAB: ASSIGNED ── -->
+    @if (dealerActiveTab === 'assigned') {
+      <div class="top-bar">
+        <input type="text" placeholder="Search by name, SKU or category" [(ngModel)]="dealerSearchAssigned" />
+        <button class="search-btn" (click)="refresh()">Refresh</button>
+      </div>
+      @if (dealerAssigned.length === 0) {
+        <div class="empty-state">
+          <p>{{ dealerSearchAssigned ? 'No products match your search.' : 'No products assigned yet.' }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>SKU</th>
+                <th>Supplier Price</th>
+                <th>Dealer Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of dealerAssigned; track p.productCode) {
+                <tr [class.editing-row]="editingId === p.productCode">
+                  <td>{{ p.productName }}</td>
+                  <td>{{ p.category }}</td>
+                  <td>{{ p.sku || '—' }}</td>
+                  <td>¥{{ p.supplierPrice }}</td>
+                  <td>
+                    @if (editingId === p.productCode) {
+                      <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
+                    } @else {
+                      {{ getDealerPrice(p) !== null ? ('¥' + getDealerPrice(p)) : '—' }}
+                    }
+                  </td>
+                  <td><span class="badge assigned">ASSIGNED</span></td>
+                  <td class="actions">
+                    @if (editingId === p.productCode) {
+                      <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Submit</button>
+                      <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
+                    } @else {
+                      <button class="btn-edit" (click)="startEdit(p); $event.stopPropagation()">Update Price</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ── TAB: APPROVED ── -->
+    @if (dealerActiveTab === 'approved') {
+      <div class="top-bar">
+        <input type="text" placeholder="Search by name, SKU or category" [(ngModel)]="dealerSearchApproved" />
+        <button class="search-btn" (click)="refresh()">Refresh</button>
+      </div>
+      @if (dealerApproved.length === 0) {
+        <div class="empty-state">
+          <p>{{ dealerSearchApproved ? 'No products match your search.' : 'No approved products yet.' }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>SKU</th>
+                <th>Supplier Price</th>
+                <th>Dealer Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of dealerApproved; track p.productCode) {
+                <tr>
+                  <td>{{ p.productName }}</td>
+                  <td>{{ p.category }}</td>
+                  <td>{{ p.sku || '—' }}</td>
+                  <td>¥{{ p.supplierPrice }}</td>
+                  <td>{{ getDealerPrice(p) !== null ? ('¥' + getDealerPrice(p)) : '—' }}</td>
+                  <td><span class="badge approved">APPROVED</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ── TAB: REJECTED ── -->
+    @if (dealerActiveTab === 'rejected') {
+      <div class="top-bar">
+        <input type="text" placeholder="Search by name, SKU or category" [(ngModel)]="dealerSearchRejected" />
+        <button class="search-btn" (click)="refresh()">Refresh</button>
+      </div>
+      @if (dealerRejected.length === 0) {
+        <div class="empty-state">
+          <p>{{ dealerSearchRejected ? 'No products match your search.' : 'No rejected products.' }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>SKU</th>
+                <th>Supplier Price</th>
+                <th>Dealer Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of dealerRejected; track p.productCode) {
+                <tr class="rejected-row">
+                  <td>{{ p.productName }}</td>
+                  <td>{{ p.category }}</td>
+                  <td>{{ p.sku || '—' }}</td>
+                  <td>¥{{ p.supplierPrice }}</td>
+                  <td>{{ getDealerPrice(p) !== null ? ('¥' + getDealerPrice(p)) : '—' }}</td>
+                  <td><span class="badge rejected">REJECTED</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- ADMIN / GUEST / USER VIEW — flat table                 -->
+  <!-- ════════════════════════════════════════════════════════ -->
   } @else {
+    <div class="top-bar">
+      <input type="text" placeholder="Search by name, SKU or model" [(ngModel)]="searchText" />
+      <button class="search-btn" (click)="refresh()">Refresh</button>
+    </div>
+
     @for (cat of categories; track cat) {
       <h3 class="category-heading">{{ cat }}</h3>
       <div class="table-wrapper">
@@ -32,11 +196,8 @@
               <th>Category</th>
               <th>SKU</th>
               <th>Supplier Price</th>
-              @if (isDealer || isPrivilegedUser) {
+              @if (isPrivilegedUser) {
                 <th>Dealer Price</th>
-              }
-              @if (isDealer) {
-                <th>Status</th>
               }
               @if (isAdmin) {
                 <th>Status</th>
@@ -51,7 +212,6 @@
                 <td>{{ p.category }}</td>
                 <td>{{ p.sku }}</td>
 
-                <!-- Supplier Price: editable by admin, read-only for dealer -->
                 <td>
                   @if (editingId === p.productCode && isAdmin) {
                     <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
@@ -60,38 +220,18 @@
                   }
                 </td>
 
-                <!-- Dealer Price: shown to dealer (editable) and privileged user (read-only) -->
-                @if (isDealer) {
-                  <td>
-                    @if (editingId === p.productCode) {
-                      <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
-                    } @else {
-                      {{ p.dealerPrice != null ? ('¥' + p.dealerPrice) : '—' }}
-                    }
-                  </td>
-                }
                 @if (isPrivilegedUser) {
                   <td>{{ p.dealerPrice != null ? ('¥' + p.dealerPrice) : '—' }}</td>
-                }
-
-                @if (isDealer) {
-                  <td>
-                    <span class="badge"
-                      [class.approved]="p.status === 'APPROVED'"
-                      [class.pending]="p.status === 'PENDING'"
-                      [class.rejected]="p.status === 'REJECTED'">
-                      {{ p.status || '—' }}
-                    </span>
-                  </td>
                 }
 
                 @if (isAdmin) {
                   <td>
                     <span class="badge"
-                      [class.approved]="p.status === 'APPROVED'"
-                      [class.pending]="p.status === 'PENDING'"
-                      [class.rejected]="p.status === 'REJECTED'">
-                      {{ p.status }}
+                      [class.approved]="getProductStatusClass(p) === 'approved'"
+                      [class.pending]="getProductStatusClass(p) === 'pending'"
+                      [class.assigned]="getProductStatusClass(p) === 'assigned'"
+                      [class.rejected]="getProductStatusClass(p) === 'rejected'">
+                      {{ getProductStatus(p) }}
                     </span>
                   </td>
                 }
@@ -99,22 +239,18 @@
                 <td class="actions">
                   @if (isGuest || isPrivilegedUser || isRegularUser) {
                     <button class="btn-save" (click)="addToCartWithQty(p)">🛒 Add to Cart</button>
-                  } @else if ((isAdmin || isDealer) && editingId === p.productCode) {
-                    <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">
-                      {{ isDealer ? 'Submit' : 'Save' }}
-                    </button>
+                  } @else if (isAdmin && editingId === p.productCode) {
+                    <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Save</button>
                     <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
-                  } @else if ((isAdmin || isDealer) && p.status !== 'APPROVED' && p.status !== 'REJECTED' && p.status !== 'ASSIGNED') {
+                  } @else if (isAdmin && p.status !== 'APPROVED' && p.status !== 'REJECTED' && p.status !== 'ASSIGNED') {
                     <button class="btn-edit" (click)="startEdit(p); $event.stopPropagation()">Edit</button>
-                    @if (isAdmin) {
-                      <button class="btn-delete" (click)="deleteProduct(p); $event.stopPropagation()">Delete</button>
-                    }
+                    <button class="btn-delete" (click)="deleteProduct(p); $event.stopPropagation()">Delete</button>
                   }
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td [attr.colspan]="isGuest ? 4 : (isDealer ? 5 : 6)" class="empty-row">No products found.</td>
+                <td [attr.colspan]="isGuest ? 4 : 6" class="empty-row">No products found.</td>
               </tr>
             }
           </tbody>

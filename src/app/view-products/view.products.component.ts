@@ -29,6 +29,12 @@ export class ViewProductsComponent implements OnInit {
   brandFilter = '';
   cartQuantities: { [key: string]: number } = {};
 
+  // Dealer tabs
+  dealerActiveTab: 'assigned' | 'approved' | 'rejected' = 'assigned';
+  dealerSearchAssigned = '';
+  dealerSearchApproved = '';
+  dealerSearchRejected = '';
+
   // Assign to dealer modal
   showAssignModal = false;
   dealers: any[] = [];
@@ -170,13 +176,125 @@ export class ViewProductsComponent implements OnInit {
     return localStorage.getItem('role') === 'USER';
   }
 
-  /** Products eligible for dealer assignment — excludes approved and already-assigned ones */
+  /** Products eligible for dealer assignment — excludes approved, assigned and rejected ones */
   get assignableProducts(): any[] {
-    return this.products.filter(p => p.status !== 'APPROVED' && p.status !== 'ASSIGNED');
+    return this.products.filter(p =>
+      p.status !== 'APPROVED' &&
+      p.status !== 'ASSIGNED' &&
+      p.status !== 'REJECTED'
+    );
   }
 
   get isGuest(): boolean {
     return !localStorage.getItem('token');
+  }
+
+  /**
+   * Derives a single clean display status for a product.
+   *
+   * For DEALER:
+   *   1. Check their own entry in dealerProducts (matched by dealerId)
+   *   2. Fall back to p.status on the product itself
+   *   - null / no entry → 'ASSIGNED'
+   *   - APPROVED        → 'APPROVED'
+   *   - REJECTED        → 'REJECTED'
+   *
+   * For ADMIN: looks across all dealer entries.
+   *   - Empty array          → 'PENDING'
+   *   - All statuses null    → 'ASSIGNED'
+   *   - At least one APPROVED → 'APPROVED'
+   *   - All actioned REJECTED → 'REJECTED'
+   *   - Mixed                → 'ASSIGNED'
+   */
+  getProductStatus(p: any): string {
+    const dealers: any[] = p.dealerProducts ?? [];
+
+    // Dealer: check their own dealerProducts entry first, then fall back to p.status
+    if (this.isDealer) {
+      const myId = Number(localStorage.getItem('dealerId') || 0);
+      const myEntry = dealers.find((d: any) => d.dealerId === myId);
+
+      // Use the dealer-specific entry status if found
+      if (myEntry) {
+        return myEntry.status == null ? 'ASSIGNED' : myEntry.status;
+      }
+
+      // Fall back to the product-level status field
+      const productStatus: string | null = p.status ?? null;
+      if (productStatus === 'APPROVED') return 'APPROVED';
+      if (productStatus === 'REJECTED') return 'REJECTED';
+
+      return 'ASSIGNED';
+    }
+
+    // Admin: derive overall status from all dealer entries
+    if (dealers.length === 0) return 'PENDING';
+
+    const statuses = dealers.map((d: any) => d.status).filter((s: any) => s != null);
+    if (statuses.length === 0) return 'ASSIGNED';
+
+    const hasApproved = statuses.some((s: string) => s === 'APPROVED');
+    if (hasApproved) return 'APPROVED';
+
+    const allRejected = statuses.every((s: string) => s === 'REJECTED');
+    if (allRejected) return 'REJECTED';
+
+    return 'ASSIGNED';
+  }
+
+  /** Returns the CSS class for the status badge */
+  getProductStatusClass(p: any): string {
+    return this.getProductStatus(p).toLowerCase();
+  }
+
+  // ── Dealer tab lists ──────────────────────────────────────────────
+
+  /** All products that belong to this dealer — either via dealerProducts entry or p.status */
+  private get dealerOwnProducts(): any[] {
+    const myId = Number(localStorage.getItem('dealerId') || 0);
+    return this.products.filter(p => {
+      // Has a dealerProducts entry for this dealer
+      const hasEntry = (p.dealerProducts ?? []).some((d: any) => d.dealerId === myId);
+      if (hasEntry) return true;
+      // Or product-level status indicates it was assigned/actioned for this dealer
+      const s: string | null = p.status ?? null;
+      return s === 'APPROVED' || s === 'REJECTED' || s === 'ASSIGNED';
+    });
+  }
+
+  get dealerAssigned(): any[] {
+    const q = this.dealerSearchAssigned.toLowerCase();
+    const list = this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'ASSIGNED');
+    return q ? list.filter(p => this.matchesSearch(p, q)) : list;
+  }
+
+  get dealerApproved(): any[] {
+    const q = this.dealerSearchApproved.toLowerCase();
+    const list = this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'APPROVED');
+    return q ? list.filter(p => this.matchesSearch(p, q)) : list;
+  }
+
+  get dealerRejected(): any[] {
+    const q = this.dealerSearchRejected.toLowerCase();
+    const list = this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'REJECTED');
+    return q ? list.filter(p => this.matchesSearch(p, q)) : list;
+  }
+
+  private matchesSearch(p: any, q: string): boolean {
+    return p.productName?.toLowerCase().includes(q) ||
+           p.sku?.toLowerCase().includes(q) ||
+           p.category?.toLowerCase().includes(q);
+  }
+
+  get dealerAssignedCount(): number { return this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'ASSIGNED').length; }
+  get dealerApprovedCount(): number { return this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'APPROVED').length; }
+  get dealerRejectedCount(): number { return this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'REJECTED').length; }
+
+  /** Gets the dealer price for the logged-in dealer from a product's dealerProducts array */
+  getDealerPrice(p: any): number | null {
+    const myId = Number(localStorage.getItem('dealerId') || 0);
+    const entry = (p.dealerProducts ?? []).find((d: any) => d.dealerId === myId);
+    return entry?.dealerPrice ?? null;
   }
 
   get isPrivilegedUser(): boolean {
@@ -205,6 +323,11 @@ export class ViewProductsComponent implements OnInit {
 
   getProductsByCategory(category: string): any[] {
     let filtered = this.products;
+
+    // Dealers should not see products in PENDING state (derived from dealerProducts)
+    if (this.isDealer) {
+      filtered = filtered.filter(p => this.getProductStatus(p) !== 'PENDING');
+    }
 
     if (this.brandFilter) {
       filtered = filtered.filter(p =>

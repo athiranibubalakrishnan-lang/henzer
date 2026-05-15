@@ -49,11 +49,6 @@
       </li>
     }
 
-    @if (isDealer) {
-      <li (click)="navigate('/dealer-products')">
-        <span class="icon">📦</span> My Products
-      </li>
-    }
 
     <!-- User/Guest items -->
     @if (isUser || isGuest) {
