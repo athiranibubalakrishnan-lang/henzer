@@ -83,25 +83,42 @@ export class OrderHistoryComponent implements OnInit {
 
       items.forEach(item => {
         const product = item.product ?? {};
-        const dealer  = item.dealerDetails ?? {};
+
+        // dealerDetails can be at item level or inside product's dealerProducts
+        const dealer = item.dealerDetails ?? item.dealer ?? {};
+
+        // Try multiple field name patterns the backend might use
+        const dealerName  = dealer.userName
+          ?? dealer.username
+          ?? dealer.dealerName
+          ?? dealer.name
+          ?? (product.dealerProducts?.[0]?.dealerName)
+          ?? '—';
+
+        const dealerEmail = dealer.email
+          ?? dealer.dealerCode
+          ?? dealer.dealerEmail
+          ?? (product.dealerProducts?.[0]?.dealerCode)
+          ?? '—';
 
         rows.push({
           orderId:     order.id,
           status:      order.status ?? '—',
           totalAmount: order.totalAmount ?? 0,
           createdAt:   order.createdAt ?? '',
-          userName:    user.userName ?? '—',
+          userName:    user.userName ?? user.username ?? user.name ?? '—',
           userEmail:   user.email ?? '—',
           productName: product.productName ?? '—',
           brand:       product.brand ?? '—',
           sku:         product.sku ?? '—',
-          dealerName:  dealer.userName ?? '—',
-          dealerEmail: dealer.email ?? '—',
+          dealerName,
+          dealerEmail,
           quantity:    item.quantity ?? 0,
           unitPrice:   item.unitPrice ?? 0
         });
       });
     });
+    console.log('Flattened orders:', rows);
     return rows;
   }
 
