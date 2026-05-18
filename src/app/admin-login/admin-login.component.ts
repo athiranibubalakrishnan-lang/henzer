@@ -14,68 +14,68 @@ import { environment } from '../../environments/environment';
 })
 export class AdminLoginComponent {
 
-  adminEmail = 'vivekk@gmail.com';
-  adminPassword = 'Password@1234';
-  showAdminPassword = false;
-  adminLoading = false;
-
-  dealerEmail = '';
-  dealerPassword = '';
-  showDealerPassword = false;
-  dealerLoading = false;
+  email    = '';
+  password = '';
+  showPassword = false;
+  loading  = false;
+  errorMsg = '';
 
   constructor(private router: Router, private http: HttpClient) {}
 
-  adminLogin() {
-    const payload = { email: this.adminEmail, password: this.adminPassword };
-    this.adminLoading = true;
+  login() {
+    if (!this.email || !this.password) {
+      this.errorMsg = 'Please enter your email and password.';
+      return;
+    }
+    this.errorMsg = '';
+    this.loading  = true;
+
+    const payload = { email: this.email, password: this.password };
+
+    // Try admin login first; if it fails, try dealer login
     this.http.post<any>(`${environment.apiUrl}/api/auth/admin/login`, payload).subscribe({
       next: (res) => {
-        this.adminLoading = false;
-        if (res?.token) localStorage.setItem('token', res.token);
-        localStorage.setItem('role', res?.role || 'ADMIN');
-        this.router.navigate(['/home']);
+        this.loading = false;
+        this.handleSuccess(res, 'ADMIN');
       },
-      error: (err) => {
-        this.adminLoading = false;
-        console.error(err);
-        alert('Invalid admin credentials');
+      error: () => {
+        // Admin failed — try dealer
+        this.http.post<any>(`${environment.apiUrl}/api/auth/dealer/login`, payload).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.handleSuccess(res, 'DEALER');
+          },
+          error: () => {
+            this.loading  = false;
+            this.errorMsg = 'Invalid email or password.';
+          }
+        });
       }
     });
   }
 
-  dealerLogin() {
-    const payload = { email: this.dealerEmail, password: this.dealerPassword };
-    this.dealerLoading = true;
-    this.http.post<any>(`${environment.apiUrl}/api/auth/dealer/login`, payload).subscribe({
-      next: (res) => {
-        this.dealerLoading = false;
-        if (res?.token) localStorage.setItem('token', res.token);
-        localStorage.setItem('role', res?.role || 'DEALER');
+  private handleSuccess(res: any, fallbackRole: string) {
+    if (res?.token) localStorage.setItem('token', res.token);
 
-        // Try every common field name the backend might use for the dealer's numeric ID
-        const dealerId = res?.userId
-          ?? res?.id
-          ?? res?.dealerId
-          ?? res?.user?.id
-          ?? res?.user?.dealerId
-          ?? this.extractIdFromJwt(res?.token);
+    const role = res?.role || fallbackRole;
+    localStorage.setItem('role', role);
 
-        if (dealerId) {
-          localStorage.setItem('dealerId', String(dealerId));
-        } else {
-          // Log the full response so the field name can be identified
-          console.warn('dealerId not found in login response. Full response:', res);
-        }
+    if (role === 'DEALER') {
+      const dealerId = res?.userId
+        ?? res?.id
+        ?? res?.dealerId
+        ?? res?.user?.id
+        ?? res?.user?.dealerId
+        ?? this.extractIdFromJwt(res?.token);
 
-        this.router.navigate(['/home']);
-      },
-      error: (err) => {
-        this.dealerLoading = false;
-        console.error(err);
-        alert('Invalid dealer credentials');
+      if (dealerId) {
+        localStorage.setItem('dealerId', String(dealerId));
+      } else {
+        console.warn('dealerId not found in login response. Full response:', res);
       }
-    });
+    }
+
+    this.router.navigate(['/home']);
   }
 
   /** Decode the JWT payload and extract an id/userId/dealerId claim */

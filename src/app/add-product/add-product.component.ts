@@ -29,7 +29,7 @@ export class AddProductComponent implements OnInit {
   publishedStatus = true;
   active = true;
   status = 'PENDING';
-  brand = 'HENZER';
+  brand = '';
   loading = false;
   toast = '';
 

@@ -18,6 +18,7 @@ import { AddDealerComponent } from './add-dealer/add-dealer.component';
 import { DealerProductsComponent } from './dealer-products/dealer-products.component';
 import { AdminPriceReviewComponent } from './admin-price-review/admin-price-review.component';
 import { ProductApprovalComponent } from './product-approval/product-approval.component';
+import { OrderHistoryComponent } from './order-history/order-history.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -41,5 +42,6 @@ export const routes: Routes = [
   { path: 'dealer-products', component: DealerProductsComponent, canActivate: [authGuard] },
   // { path: 'price-review', component: AdminPriceReviewComponent, canActivate: [authGuard] },
   { path: 'product-approval', component: ProductApprovalComponent, canActivate: [authGuard] },
+  { path: 'order-history', component: OrderHistoryComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'userlogin' }
 ];

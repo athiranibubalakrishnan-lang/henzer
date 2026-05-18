@@ -6,18 +6,18 @@ import { ProductManagementService } from '../services/product-management.service
 import { environment } from '../../environments/environment';
 
 export interface DealerProductRow {
-  productId:     number;
-  productCode:   string;
-  productName:   string;
-  brand:         string;
-  category:      string;
-  sku:           string;
-  supplierPrice: number;
-  dealerPrice:   number | null;
-  proposedPrice: number | null;
-  dealerProductId: number;   // dealerProducts[].id — needed for price update
-  editing:       boolean;
-  saving:        boolean;
+  productId:       number;
+  productCode:     string;
+  productName:     string;
+  brand:           string;
+  category:        string;
+  sku:             string;
+  supplierPrice:   number;
+  dealerPrice:     number | null;
+  proposedPrice:   number | null;
+  dealerProductId: number;
+  editing:         boolean;
+  saving:          boolean;
 }
 
 @Component({
@@ -144,7 +144,8 @@ export class DealerProductsComponent implements OnInit {
   private matches(r: DealerProductRow, q: string): boolean {
     return r.productName?.toLowerCase().includes(q) ||
            r.sku?.toLowerCase().includes(q) ||
-           r.category?.toLowerCase().includes(q);
+           r.category?.toLowerCase().includes(q) ||
+           r.brand?.toLowerCase().includes(q);
   }
 
   // ── Counts ────────────────────────────────────────────────────────

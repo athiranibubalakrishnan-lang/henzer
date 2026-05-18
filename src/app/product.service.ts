@@ -31,6 +31,10 @@ export class ProductService {
     return this.http.get<any[]>(this.base);
   }
 
+  getApproved(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/approved`);
+  }
+
   getPublic(): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiUrl}/api/products/bypass-authorization`);
   }

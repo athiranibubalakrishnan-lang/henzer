@@ -1,0 +1,117 @@
+<div class="container">
+
+  <div class="page-header-row">
+    <div>
+      <h2 class="title">Order History</h2>
+      <p class="subtitle">{{ isUser ? 'Your placed orders' : 'All purchased products' }}</p>
+    </div>
+    <button class="btn-refresh" (click)="loadOrders()">↻ Refresh</button>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" [(ngModel)]="searchText" (ngModelChange)="currentPage = 1"
+      placeholder="Search by Product Name, Brand or SKU"
+      class="search-input" />
+  </div>
+
+  @if (loading) {
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading orders...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-state">
+      <p>{{ error }}</p>
+      <button class="btn-refresh" (click)="loadOrders()">↻ Retry</button>
+    </div>
+  } @else if (filtered.length === 0) {
+    <div class="empty-state">
+      <p>{{ searchText ? 'No orders match your search.' : 'No orders found.' }}</p>
+    </div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="order-table">
+        <thead>
+          @if (!isUser) {
+            <!-- Admin / Dealer view -->
+            <tr>
+              <th>Product Name</th>
+              <th>Brand</th>
+              <th>SKU</th>
+              <th>Qty</th>
+              <th>Total Price</th>
+              <th>Dealer</th>
+              <th>Status</th>
+            </tr>
+          } @else {
+            <!-- User view -->
+            <tr>
+              <th>Product Name</th>
+              <th>Brand</th>
+              <th>SKU</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Status</th>
+            </tr>
+          }
+        </thead>
+        <tbody>
+          @for (row of paged; track row.orderId + row.productName) {
+            @if (!isUser) {
+              <!-- Admin / Dealer row -->
+              <tr>
+                <td class="product-name">{{ row.productName }}</td>
+                <td>{{ row.brand }}</td>
+                <td>{{ row.sku }}</td>
+                <td>{{ row.quantity }}</td>
+                <td>¥{{ row.totalAmount }}</td>
+                <td>
+                  <div class="user-cell">
+                    <span class="name">{{ row.dealerName }}</span>
+                    <span class="email">{{ row.dealerEmail }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge"
+                    [class.processing]="row.status === 'PROCESSING'"
+                    [class.completed]="row.status === 'COMPLETED'"
+                    [class.cancelled]="row.status === 'CANCELLED'">
+                    {{ row.status }}
+                  </span>
+                </td>
+              </tr>
+            } @else {
+              <!-- User row -->
+              <tr>
+                <td class="product-name">{{ row.productName }}</td>
+                <td>{{ row.brand }}</td>
+                <td>{{ row.sku }}</td>
+                <td>{{ row.quantity }}</td>
+                <td>¥{{ row.unitPrice }}</td>
+                <td>
+                  <span class="badge"
+                    [class.processing]="row.status === 'PROCESSING'"
+                    [class.completed]="row.status === 'COMPLETED'"
+                    [class.cancelled]="row.status === 'CANCELLED'">
+                    {{ row.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button class="page-btn" (click)="currentPage = currentPage - 1" [disabled]="currentPage === 1">‹</button>
+      @for (n of pageNumbers; track n) {
+        <button class="page-btn" [class.active]="currentPage === n" (click)="currentPage = n">{{ n }}</button>
+      }
+      <button class="page-btn" (click)="currentPage = currentPage + 1" [disabled]="currentPage === totalPages">›</button>
+      <span class="page-info">{{ filtered.length }} orders</span>
+    </div>
+  }
+
+</div>

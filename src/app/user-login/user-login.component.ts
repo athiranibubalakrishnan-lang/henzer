@@ -14,10 +14,24 @@ import { environment } from '../../environments/environment';
 })
 export class UserLoginComponent {
 
-  userEmail = '';
+  activeTab: 'login' | 'register' = 'login';
+
+  // Login fields
+  userEmail    = '';
   userPassword = '';
   showPassword = false;
-  loading = false;
+  loading      = false;
+
+  // Register fields
+  regName      = '';
+  regEmail     = '';
+  regPassword  = '';
+  regConfirm   = '';
+  showRegPass  = false;
+  showRegConf  = false;
+  regLoading   = false;
+  regError     = '';
+  regSuccess   = '';
 
   constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute) {}
 
@@ -28,7 +42,17 @@ export class UserLoginComponent {
       next: (res) => {
         this.loading = false;
         if (res?.token) localStorage.setItem('token', res.token);
-        localStorage.setItem('role', res?.role || 'USER');
+
+        // role === 'USER' && createdByAdmin === true  → PRIVILEGE_USER
+        // role === 'USER' && createdByAdmin === false → USER
+        let role: string;
+        if (res?.role === 'USER' && res?.createdByAdmin === true) {
+          role = 'PRIVILEGE_USER';
+        } else {
+          role = res?.role || 'USER';
+        }
+        localStorage.setItem('role', role);
+
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/home';
         this.router.navigateByUrl(returnUrl);
       },
@@ -36,6 +60,51 @@ export class UserLoginComponent {
         this.loading = false;
         console.error(err);
         alert('Invalid credentials');
+      }
+    });
+  }
+
+  register() {
+    this.regError   = '';
+    this.regSuccess = '';
+
+    if (!this.regName.trim() || !this.regEmail.trim() || !this.regPassword) {
+      this.regError = 'All fields are required.';
+      return;
+    }
+    if (this.regPassword !== this.regConfirm) {
+      this.regError = 'Passwords do not match.';
+      return;
+    }
+    if (this.regPassword.length < 6) {
+      this.regError = 'Password must be at least 6 characters.';
+      return;
+    }
+
+    const payload = {
+      userName:       this.regName.trim(),
+      email:          this.regEmail.trim(),
+      password:       this.regPassword,
+      role:           'USER',
+      status:         'ACTIVE',
+      createdByAdmin: false,
+      addresses:      []
+    };
+
+    this.regLoading = true;
+    this.http.post<any>(`${environment.apiUrl}/api/users`, payload).subscribe({
+      next: () => {
+        this.regLoading  = false;
+        this.regSuccess  = 'Account created! You can now sign in.';
+        this.regName     = '';
+        this.regEmail    = '';
+        this.regPassword = '';
+        this.regConfirm  = '';
+        setTimeout(() => { this.activeTab = 'login'; this.regSuccess = ''; }, 2000);
+      },
+      error: (err) => {
+        this.regLoading = false;
+        this.regError   = err?.error?.message || err?.error || 'Registration failed. Please try again.';
       }
     });
   }

@@ -1,19 +1,28 @@
 <div class="login-page">
+
   <div class="login-logo">
     <img src="assets/logo.png" alt="Logo" />
   </div>
 
-  <div class="login-cards">
-    <div class="login-card">
-      <div class="card-badge user-badge">User</div>
-      <h2>Welcome</h2>
+  <div class="login-card">
+
+    <!-- Tab switcher -->
+    <div class="auth-tabs">
+      <button class="auth-tab" [class.active]="activeTab === 'login'" (click)="activeTab = 'login'">Sign In</button>
+      <button class="auth-tab" [class.active]="activeTab === 'register'" (click)="activeTab = 'register'">Register</button>
+    </div>
+
+    <!-- ── LOGIN ── -->
+    @if (activeTab === 'login') {
+      <h2>Welcome Back</h2>
       <p class="subtitle">Sign in to browse products</p>
 
       <div class="form-group">
         <label>Email Address</label>
         <div class="input-wrapper">
           <span class="input-icon">✉</span>
-          <input type="email" [(ngModel)]="userEmail" placeholder="Enter your email" />
+          <input type="email" [(ngModel)]="userEmail" placeholder="Enter your email"
+            (keyup.enter)="login()" />
         </div>
       </div>
 
@@ -21,14 +30,86 @@
         <label>Password</label>
         <div class="input-wrapper">
           <span class="input-icon">🔒</span>
-          <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="userPassword" placeholder="Enter your password" />
-          <span class="toggle-eye" (click)="showPassword = !showPassword">{{ showPassword ? '🙈' : '👁' }}</span>
+          <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="userPassword"
+            placeholder="Enter your password" (keyup.enter)="login()" />
+          <span class="toggle-eye" (click)="showPassword = !showPassword">
+            {{ showPassword ? '🙈' : '👁' }}
+          </span>
         </div>
       </div>
 
       <button class="login-btn user-btn" (click)="login()" [disabled]="loading">
         {{ loading ? 'Signing in...' : 'Sign In' }}
       </button>
-    </div>
+
+      <p class="switch-link">
+        Don't have an account?
+        <span (click)="activeTab = 'register'">Register</span>
+      </p>
+    }
+
+    <!-- ── REGISTER ── -->
+    @if (activeTab === 'register') {
+      <h2>Create Account</h2>
+      <p class="subtitle">Register to start shopping</p>
+
+      @if (regError) {
+        <div class="alert alert-error">{{ regError }}</div>
+      }
+      @if (regSuccess) {
+        <div class="alert alert-success">{{ regSuccess }}</div>
+      }
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input type="text" [(ngModel)]="regName" placeholder="Enter your name" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉</span>
+          <input type="email" [(ngModel)]="regEmail" placeholder="Enter your email" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input [type]="showRegPass ? 'text' : 'password'" [(ngModel)]="regPassword"
+            placeholder="Min. 6 characters" />
+          <span class="toggle-eye" (click)="showRegPass = !showRegPass">
+            {{ showRegPass ? '🙈' : '👁' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input [type]="showRegConf ? 'text' : 'password'" [(ngModel)]="regConfirm"
+            placeholder="Re-enter password" (keyup.enter)="register()" />
+          <span class="toggle-eye" (click)="showRegConf = !showRegConf">
+            {{ showRegConf ? '🙈' : '👁' }}
+          </span>
+        </div>
+      </div>
+
+      <button class="login-btn user-btn" (click)="register()" [disabled]="regLoading">
+        {{ regLoading ? 'Creating account...' : 'Create Account' }}
+      </button>
+
+      <p class="switch-link">
+        Already have an account?
+        <span (click)="activeTab = 'login'">Sign In</span>
+      </p>
+    }
+
   </div>
+
 </div>

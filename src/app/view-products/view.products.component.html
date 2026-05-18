@@ -22,19 +22,18 @@
   <!-- ════════════════════════════════════════════════════════ -->
   } @else if (isDealer) {
 
-    <!-- Tabs -->
     <div class="tabs">
-      <button class="tab" [class.active]="dealerActiveTab === 'assigned'" (click)="dealerActiveTab = 'assigned'">
+      <button class="tab" [class.active]="dealerActiveTab === 'assigned'" (click)="dealerActiveTab = 'assigned'; dealerPageAssigned = 1">
         📋 Assigned
         @if (dealerAssignedCount > 0) {
           <span class="tab-count tab-assigned">{{ dealerAssignedCount }}</span>
         }
       </button>
-      <button class="tab" [class.active]="dealerActiveTab === 'approved'" (click)="dealerActiveTab = 'approved'">
+      <button class="tab" [class.active]="dealerActiveTab === 'approved'" (click)="dealerActiveTab = 'approved'; dealerPageApproved = 1">
         ✅ Approved
         <span class="tab-count">{{ dealerApprovedCount }}</span>
       </button>
-      <button class="tab" [class.active]="dealerActiveTab === 'rejected'" (click)="dealerActiveTab = 'rejected'">
+      <button class="tab" [class.active]="dealerActiveTab === 'rejected'" (click)="dealerActiveTab = 'rejected'; dealerPageRejected = 1">
         ✕ Rejected
         @if (dealerRejectedCount > 0) {
           <span class="tab-count tab-rejected">{{ dealerRejectedCount }}</span>
@@ -44,8 +43,10 @@
 
     <!-- ── TAB: ASSIGNED ── -->
     @if (dealerActiveTab === 'assigned') {
-      <div class="top-bar">
-        <input type="text" placeholder="Search by name, SKU or category" [(ngModel)]="dealerSearchAssigned" />
+      <div class="filter-bar">
+        <input type="text" placeholder="Category" [(ngModel)]="dealerCategoryFilter" (ngModelChange)="dealerPageAssigned = 1" class="filter-input" />
+        <input type="text" placeholder="Brand" [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageAssigned = 1" class="filter-input" />
+        <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchAssigned" (ngModelChange)="dealerPageAssigned = 1" class="filter-input flex-grow" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerAssigned.length === 0) {
@@ -57,19 +58,15 @@
           <table class="product-table">
             <thead>
               <tr>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>SKU</th>
-                <th>Supplier Price</th>
-                <th>Dealer Price</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
+                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              @for (p of dealerAssigned; track p.productCode) {
+              @for (p of pagedDealerAssigned; track p.productCode) {
                 <tr [class.editing-row]="editingId === p.productCode">
                   <td>{{ p.productName }}</td>
+                  <td>{{ p.brand || '—' }}</td>
                   <td>{{ p.category }}</td>
                   <td>{{ p.sku || '—' }}</td>
                   <td>¥{{ p.supplierPrice }}</td>
@@ -94,13 +91,23 @@
             </tbody>
           </table>
         </div>
+        <div class="pagination">
+          <button class="page-btn" (click)="dealerPageAssigned = dealerPageAssigned - 1" [disabled]="dealerPageAssigned === 1">‹</button>
+          @for (n of pageNumbers(dealerAssigned.length); track n) {
+            <button class="page-btn" [class.active]="dealerPageAssigned === n" (click)="dealerPageAssigned = n">{{ n }}</button>
+          }
+          <button class="page-btn" (click)="dealerPageAssigned = dealerPageAssigned + 1" [disabled]="dealerPageAssigned === totalPages(dealerAssigned.length)">›</button>
+          <span class="page-info">{{ dealerAssigned.length }} items</span>
+        </div>
       }
     }
 
     <!-- ── TAB: APPROVED ── -->
     @if (dealerActiveTab === 'approved') {
-      <div class="top-bar">
-        <input type="text" placeholder="Search by name, SKU or category" [(ngModel)]="dealerSearchApproved" />
+      <div class="filter-bar">
+        <input type="text" placeholder="Category" [(ngModel)]="dealerCategoryFilter" (ngModelChange)="dealerPageApproved = 1" class="filter-input" />
+        <input type="text" placeholder="Brand" [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageApproved = 1" class="filter-input" />
+        <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchApproved" (ngModelChange)="dealerPageApproved = 1" class="filter-input flex-grow" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerApproved.length === 0) {
@@ -112,18 +119,15 @@
           <table class="product-table">
             <thead>
               <tr>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>SKU</th>
-                <th>Supplier Price</th>
-                <th>Dealer Price</th>
-                <th>Status</th>
+                <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
+                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
-              @for (p of dealerApproved; track p.productCode) {
+              @for (p of pagedDealerApproved; track p.productCode) {
                 <tr>
                   <td>{{ p.productName }}</td>
+                  <td>{{ p.brand || '—' }}</td>
                   <td>{{ p.category }}</td>
                   <td>{{ p.sku || '—' }}</td>
                   <td>¥{{ p.supplierPrice }}</td>
@@ -134,13 +138,23 @@
             </tbody>
           </table>
         </div>
+        <div class="pagination">
+          <button class="page-btn" (click)="dealerPageApproved = dealerPageApproved - 1" [disabled]="dealerPageApproved === 1">‹</button>
+          @for (n of pageNumbers(dealerApproved.length); track n) {
+            <button class="page-btn" [class.active]="dealerPageApproved === n" (click)="dealerPageApproved = n">{{ n }}</button>
+          }
+          <button class="page-btn" (click)="dealerPageApproved = dealerPageApproved + 1" [disabled]="dealerPageApproved === totalPages(dealerApproved.length)">›</button>
+          <span class="page-info">{{ dealerApproved.length }} items</span>
+        </div>
       }
     }
 
     <!-- ── TAB: REJECTED ── -->
     @if (dealerActiveTab === 'rejected') {
-      <div class="top-bar">
-        <input type="text" placeholder="Search by name, SKU or category" [(ngModel)]="dealerSearchRejected" />
+      <div class="filter-bar">
+        <input type="text" placeholder="Category" [(ngModel)]="dealerCategoryFilter" (ngModelChange)="dealerPageRejected = 1" class="filter-input" />
+        <input type="text" placeholder="Brand" [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageRejected = 1" class="filter-input" />
+        <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchRejected" (ngModelChange)="dealerPageRejected = 1" class="filter-input flex-grow" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerRejected.length === 0) {
@@ -152,18 +166,15 @@
           <table class="product-table">
             <thead>
               <tr>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>SKU</th>
-                <th>Supplier Price</th>
-                <th>Dealer Price</th>
-                <th>Status</th>
+                <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
+                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
-              @for (p of dealerRejected; track p.productCode) {
+              @for (p of pagedDealerRejected; track p.productCode) {
                 <tr class="rejected-row">
                   <td>{{ p.productName }}</td>
+                  <td>{{ p.brand || '—' }}</td>
                   <td>{{ p.category }}</td>
                   <td>{{ p.sku || '—' }}</td>
                   <td>¥{{ p.supplierPrice }}</td>
@@ -174,6 +185,14 @@
             </tbody>
           </table>
         </div>
+        <div class="pagination">
+          <button class="page-btn" (click)="dealerPageRejected = dealerPageRejected - 1" [disabled]="dealerPageRejected === 1">‹</button>
+          @for (n of pageNumbers(dealerRejected.length); track n) {
+            <button class="page-btn" [class.active]="dealerPageRejected === n" (click)="dealerPageRejected = n">{{ n }}</button>
+          }
+          <button class="page-btn" (click)="dealerPageRejected = dealerPageRejected + 1" [disabled]="dealerPageRejected === totalPages(dealerRejected.length)">›</button>
+          <span class="page-info">{{ dealerRejected.length }} items</span>
+        </div>
       }
     }
 
@@ -181,8 +200,10 @@
   <!-- ADMIN / GUEST / USER VIEW — flat table                 -->
   <!-- ════════════════════════════════════════════════════════ -->
   } @else {
-    <div class="top-bar">
-      <input type="text" placeholder="Search by name, SKU or model" [(ngModel)]="searchText" />
+    <div class="filter-bar">
+      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="adminPage = 1" class="filter-input" />
+      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="adminPage = 1" class="filter-input" />
+      <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="searchText" (ngModelChange)="adminPage = 1" class="filter-input flex-grow" />
       <button class="search-btn" (click)="refresh()">Refresh</button>
     </div>
 
@@ -192,38 +213,28 @@
         <table class="product-table">
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Category</th>
-              <th>SKU</th>
-              <th>Supplier Price</th>
-              @if (isPrivilegedUser) {
-                <th>Dealer Price</th>
-              }
-              @if (isAdmin) {
-                <th>Status</th>
-              }
+              <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
+              <th>Price</th>
+              @if (isAdmin) { <th>Status</th> }
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (p of getProductsByCategory(cat); track p.productCode) {
+            @for (p of pagedAdminProducts; track p.productCode) {
               <tr [class.editing-row]="editingId === p.productCode">
                 <td>{{ p.productName }}</td>
+                <td>{{ p.brand || '—' }}</td>
                 <td>{{ p.category }}</td>
                 <td>{{ p.sku }}</td>
-
                 <td>
                   @if (editingId === p.productCode && isAdmin) {
                     <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
+                  } @else if (isPrivilegedUser) {
+                    ¥{{ getBestDealerPrice(p) ?? p.supplierPrice }}
                   } @else {
                     ¥{{ p.supplierPrice }}
                   }
                 </td>
-
-                @if (isPrivilegedUser) {
-                  <td>{{ p.dealerPrice != null ? ('¥' + p.dealerPrice) : '—' }}</td>
-                }
-
                 @if (isAdmin) {
                   <td>
                     <span class="badge"
@@ -235,10 +246,17 @@
                     </span>
                   </td>
                 }
-
                 <td class="actions">
-                  @if (isGuest || isPrivilegedUser || isRegularUser) {
-                    <button class="btn-save" (click)="addToCartWithQty(p)">🛒 Add to Cart</button>
+                  @if ((isPrivilegedUser || isRegularUser) && !isGuest) {
+                    <div class="qty-add-row">
+                      <div class="qty-controls-inline">
+                        <button class="qty-btn-sm" (click)="cartQuantities[p.productCode] = (cartQuantities[p.productCode] || 1) > 1 ? (cartQuantities[p.productCode] - 1) : 1">−</button>
+                        <input class="qty-input-sm" type="number" min="1"
+                          [(ngModel)]="cartQuantities[p.productCode]" />
+                        <button class="qty-btn-sm" (click)="cartQuantities[p.productCode] = (cartQuantities[p.productCode] || 1) + 1">+</button>
+                      </div>
+                      <button class="btn-save" (click)="addToCartWithQty(p)">🛒 Add to Cart</button>
+                    </div>
                   } @else if (isAdmin && editingId === p.productCode) {
                     <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Save</button>
                     <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
@@ -256,6 +274,16 @@
           </tbody>
         </table>
       </div>
+      @if (getProductsByCategory(cat).length > PAGE_SIZE) {
+        <div class="pagination">
+          <button class="page-btn" (click)="adminPage = adminPage - 1" [disabled]="adminPage === 1">‹</button>
+          @for (n of pageNumbers(getProductsByCategory(cat).length); track n) {
+            <button class="page-btn" [class.active]="adminPage === n" (click)="adminPage = n">{{ n }}</button>
+          }
+          <button class="page-btn" (click)="adminPage = adminPage + 1" [disabled]="adminPage === adminTotalPages">›</button>
+          <span class="page-info">{{ getProductsByCategory(cat).length }} items</span>
+        </div>
+      }
     }
   }
 
@@ -292,23 +320,25 @@
 
         <div class="product-list">
           <p class="list-label">Select Products <span class="count">({{ selectedProductIds.size }} selected)</span></p>
+          <input type="text" [(ngModel)]="assignProductSearch"
+            placeholder="Search by Product Name, SKU, Brand or Category"
+            class="assign-search" />
           @for (p of assignableProducts; track p.id) {
             <div class="product-row" [class.selected]="isSelected(p.id)" (click)="toggleProductSelection(p.id)">
               <div class="product-info">
                 <span class="product-name">{{ p.productName }}</span>
-                <span class="product-meta">{{ p.brand }} · {{ p.sku }}</span>
+                <span class="product-meta">{{ p.brand }} · {{ p.category }} · {{ p.sku }}</span>
               </div>
               <input type="checkbox" [checked]="isSelected(p.id)" (click)="$event.stopPropagation()" (change)="toggleProductSelection(p.id)" />
             </div>
+          }
+          @if (assignableProducts.length === 0) {
+            <p class="empty-list">{{ assignProductSearch ? 'No products match your search.' : 'No products available to assign.' }}</p>
           }
         </div>
       </div>
 
       <div class="modal-footer">
-        <div class="price-input-row">
-          <label>Price (optional)</label>
-          <input type="number" [(ngModel)]="assignPrice" placeholder="0.00" min="0" class="price-input" />
-        </div>
         <div class="footer-actions">
           <button class="btn-cancel-modal" (click)="closeAssignModal()">Cancel</button>
           <button class="btn-confirm" (click)="confirmAssign()" [disabled]="assignLoading">

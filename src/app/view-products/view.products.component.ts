@@ -23,10 +23,11 @@ export class ViewProductsComponent implements OnInit {
   loading = false;
   toast = '';
   editingId: string | null = null;
-  editPrice = 0;        // admin: supplier price
-  editDealerPrice = 0;  // dealer: dealer price
+  editPrice = 0;
+  editDealerPrice = 0;
   editQuantity = 0;
-  brandFilter = '';
+  brandFilter    = '';
+  categoryFilter = '';
   cartQuantities: { [key: string]: number } = {};
 
   // Dealer tabs
@@ -34,6 +35,17 @@ export class ViewProductsComponent implements OnInit {
   dealerSearchAssigned = '';
   dealerSearchApproved = '';
   dealerSearchRejected = '';
+  dealerBrandFilter    = '';
+  dealerCategoryFilter = '';
+
+  // Dealer pagination
+  dealerPageAssigned = 1;
+  dealerPageApproved = 1;
+  dealerPageRejected = 1;
+  readonly PAGE_SIZE = 10;
+
+  // Admin pagination
+  adminPage = 1;
 
   // Assign to dealer modal
   showAssignModal = false;
@@ -42,6 +54,7 @@ export class ViewProductsComponent implements OnInit {
   selectedProductIds: Set<number> = new Set();
   assignPrice: number | null = null;
   assignLoading = false;
+  assignProductSearch = '';
 
   constructor(
     private productService: ProductService,
@@ -69,8 +82,21 @@ export class ViewProductsComponent implements OnInit {
 
   loadProducts() {
     this.loading = true;
-    const isGuest = !localStorage.getItem('token');
-    const request = isGuest ? this.productService.getPublic() : this.productService.getAll();
+    const role = localStorage.getItem('role');
+
+    // Admin → all products
+    // Dealer → all products (filtered client-side by their dealerProducts entries)
+    // PRIVILEGE_USER → approved products only
+    // USER / Guest → public bypass endpoint
+    let request;
+    if (role === 'ADMIN' || role === 'DEALER') {
+      request = this.productService.getAll();
+    } else if (role === 'PRIVILEGE_USER') {
+      request = this.productService.getApproved();
+    } else {
+      request = this.productService.getPublic();
+    }
+
     request.subscribe({
       next: (data) => {
         this.zone.run(() => {
@@ -94,6 +120,17 @@ export class ViewProductsComponent implements OnInit {
 
   refresh() {
     this.searchText = '';
+    this.brandFilter = '';
+    this.categoryFilter = '';
+    this.dealerSearchAssigned = '';
+    this.dealerSearchApproved = '';
+    this.dealerSearchRejected = '';
+    this.dealerBrandFilter    = '';
+    this.dealerCategoryFilter = '';
+    this.adminPage = 1;
+    this.dealerPageAssigned = 1;
+    this.dealerPageApproved = 1;
+    this.dealerPageRejected = 1;
     this.loadProducts();
   }
 
@@ -178,11 +215,18 @@ export class ViewProductsComponent implements OnInit {
 
   /** Products eligible for dealer assignment — excludes approved, assigned and rejected ones */
   get assignableProducts(): any[] {
-    return this.products.filter(p =>
+    const q = this.assignProductSearch.toLowerCase();
+    const base = this.products.filter(p =>
       p.status !== 'APPROVED' &&
       p.status !== 'ASSIGNED' &&
       p.status !== 'REJECTED'
     );
+    return q ? base.filter(p =>
+      p.productName?.toLowerCase().includes(q) ||
+      p.brand?.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q)
+    ) : base;
   }
 
   get isGuest(): boolean {
@@ -263,38 +307,104 @@ export class ViewProductsComponent implements OnInit {
   }
 
   get dealerAssigned(): any[] {
-    const q = this.dealerSearchAssigned.toLowerCase();
-    const list = this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'ASSIGNED');
-    return q ? list.filter(p => this.matchesSearch(p, q)) : list;
+    return this.applyDealerFilters(
+      this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'ASSIGNED'),
+      this.dealerSearchAssigned
+    );
   }
 
   get dealerApproved(): any[] {
-    const q = this.dealerSearchApproved.toLowerCase();
-    const list = this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'APPROVED');
-    return q ? list.filter(p => this.matchesSearch(p, q)) : list;
+    return this.applyDealerFilters(
+      this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'APPROVED'),
+      this.dealerSearchApproved
+    );
   }
 
   get dealerRejected(): any[] {
-    const q = this.dealerSearchRejected.toLowerCase();
-    const list = this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'REJECTED');
-    return q ? list.filter(p => this.matchesSearch(p, q)) : list;
+    return this.applyDealerFilters(
+      this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'REJECTED'),
+      this.dealerSearchRejected
+    );
+  }
+
+  private applyDealerFilters(list: any[], search: string): any[] {
+    let result = list;
+    if (this.dealerBrandFilter) {
+      const b = this.dealerBrandFilter.toLowerCase();
+      result = result.filter(p => p.brand?.toLowerCase().includes(b));
+    }
+    if (this.dealerCategoryFilter) {
+      const c = this.dealerCategoryFilter.toLowerCase();
+      result = result.filter(p => p.category?.toLowerCase().includes(c));
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(p => this.matchesSearch(p, q));
+    }
+    return result;
   }
 
   private matchesSearch(p: any, q: string): boolean {
     return p.productName?.toLowerCase().includes(q) ||
            p.sku?.toLowerCase().includes(q) ||
-           p.category?.toLowerCase().includes(q);
+           p.category?.toLowerCase().includes(q) ||
+           p.brand?.toLowerCase().includes(q);
+  }
+
+  get uniqueDealerBrands(): string[] {
+    return [...new Set(this.dealerOwnProducts.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
   }
 
   get dealerAssignedCount(): number { return this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'ASSIGNED').length; }
   get dealerApprovedCount(): number { return this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'APPROVED').length; }
   get dealerRejectedCount(): number { return this.dealerOwnProducts.filter(p => this.getProductStatus(p) === 'REJECTED').length; }
 
-  /** Gets the dealer price for the logged-in dealer from a product's dealerProducts array */
+  // ── Pagination helpers ────────────────────────────────────────────
+
+  paginate<T>(list: T[], page: number): T[] {
+    const start = (page - 1) * this.PAGE_SIZE;
+    return list.slice(start, start + this.PAGE_SIZE);
+  }
+
+  totalPages(total: number): number {
+    return Math.max(1, Math.ceil(total / this.PAGE_SIZE));
+  }
+
+  pageNumbers(total: number): number[] {
+    return Array.from({ length: this.totalPages(total) }, (_, i) => i + 1);
+  }
+
+  // Paginated dealer lists
+  get pagedDealerAssigned(): any[] { return this.paginate(this.dealerAssigned, this.dealerPageAssigned); }
+  get pagedDealerApproved(): any[] { return this.paginate(this.dealerApproved, this.dealerPageApproved); }
+  get pagedDealerRejected(): any[] { return this.paginate(this.dealerRejected, this.dealerPageRejected); }
+
+  // Paginated admin list
+  get pagedAdminProducts(): any[] { return this.paginate(this.getProductsByCategory('All Products'), this.adminPage); }
+  get adminTotalPages(): number    { return this.totalPages(this.getProductsByCategory('All Products').length); }
+
+  /** Gets the dealer price for the logged-in dealer from a product's dealerProducts array,
+   *  falling back to p.dealerPrice on the product itself if no matching entry is found */
   getDealerPrice(p: any): number | null {
     const myId = Number(localStorage.getItem('dealerId') || 0);
     const entry = (p.dealerProducts ?? []).find((d: any) => d.dealerId === myId);
-    return entry?.dealerPrice ?? null;
+    if (entry && entry.dealerPrice != null) return entry.dealerPrice;
+    // Fall back to top-level dealerPrice if present
+    return p.dealerPrice ?? null;
+  }
+
+  /** Gets the best available dealer price for privileged user view —
+   *  first approved dealer price, then any dealer price, then top-level p.dealerPrice */
+  getBestDealerPrice(p: any): number | null {
+    const dealers: any[] = p.dealerProducts ?? [];
+    // Prefer an approved dealer's price
+    const approved = dealers.find((d: any) => d.status === 'APPROVED' && d.dealerPrice != null);
+    if (approved) return approved.dealerPrice;
+    // Any dealer price
+    const any = dealers.find((d: any) => d.dealerPrice != null);
+    if (any) return any.dealerPrice;
+    // Top-level fallback
+    return p.dealerPrice ?? null;
   }
 
   get isPrivilegedUser(): boolean {
@@ -311,9 +421,15 @@ export class ViewProductsComponent implements OnInit {
 
   addToCartWithQty(product: any) {
     const qty = this.cartQuantities[product.productCode] || 1;
+    // Privileged user → dealer price; regular user → supplier price
+    const price = this.isPrivilegedUser
+      ? (this.getBestDealerPrice(product) ?? product.supplierPrice)
+      : product.supplierPrice;
     this.showToast(`Adding ${product.productName} x${qty} to cart...`);
-    this.cartService.addItem(product.productCode, qty).subscribe({
+    this.cartService.addItem(product.productCode, qty, price).subscribe({
       next: () => {
+        // Store productCode → productId mapping for checkout
+        this.cartService.storeProductCode(product.id, product.productCode);
         this.cartQuantities[product.productCode] = 1;
         this.showToast(`✅ ${product.productName} x${qty} added to cart`);
       },
@@ -321,26 +437,29 @@ export class ViewProductsComponent implements OnInit {
     });
   }
 
+  get uniqueAdminBrands(): string[] {
+    return [...new Set(this.products.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
+  }
+
   getProductsByCategory(category: string): any[] {
     let filtered = this.products;
 
-    // Dealers should not see products in PENDING state (derived from dealerProducts)
-    if (this.isDealer) {
-      filtered = filtered.filter(p => this.getProductStatus(p) !== 'PENDING');
+    if (this.brandFilter) {
+      const b = this.brandFilter.toLowerCase();
+      filtered = filtered.filter(p => p.brand?.toLowerCase().includes(b));
     }
 
-    if (this.brandFilter) {
-      filtered = filtered.filter(p =>
-        p.brand?.toLowerCase().includes(this.brandFilter.toLowerCase()) ||
-        p.category?.toLowerCase().includes(this.brandFilter.toLowerCase())
-      );
+    if (this.categoryFilter) {
+      const c = this.categoryFilter.toLowerCase();
+      filtered = filtered.filter(p => p.category?.toLowerCase().includes(c));
     }
 
     if (this.searchText) {
       filtered = filtered.filter(p =>
         p.productName?.toLowerCase().includes(this.searchText.toLowerCase()) ||
         p.sku?.toLowerCase().includes(this.searchText.toLowerCase()) ||
-        p.category?.toLowerCase().includes(this.searchText.toLowerCase())
+        p.category?.toLowerCase().includes(this.searchText.toLowerCase()) ||
+        p.brand?.toLowerCase().includes(this.searchText.toLowerCase())
       );
     }
 

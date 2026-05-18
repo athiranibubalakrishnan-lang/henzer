@@ -1,11 +1,84 @@
 <div class="cart-page">
 
+  <!-- Delete Confirmation Modal -->
+  @if (itemToDelete) {
+    <div class="confirm-overlay" (click)="cancelDelete()">
+      <div class="confirm-box" (click)="$event.stopPropagation()">
+        <div class="confirm-icon">🗑️</div>
+        <h3>Remove Item?</h3>
+        <p>Are you sure you want to remove <strong>{{ itemToDelete.productName }}</strong> from your cart?</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel-confirm" (click)="cancelDelete()">Cancel</button>
+          <button class="btn-delete-confirm" (click)="doDelete()">Yes, Remove</button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (showThankYou) {
     <div class="thankyou-overlay">
       <div class="thankyou-box">
         <div class="thankyou-icon">✅</div>
         <h2>Thank You!</h2>
         <p>Your order has been placed successfully.</p>
+      </div>
+    </div>
+  }
+
+  <!-- Address / Checkout Modal -->
+  @if (showAddressForm) {
+    <div class="modal-overlay" (click)="closeAddressForm()">
+      <div class="modal" (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <h3>📦 Delivery Address</h3>
+          <button class="modal-close" (click)="closeAddressForm()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (orderError) {
+            <div class="order-error">{{ orderError }}</div>
+          }
+
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Address Line 1 <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="address.addressLine1" placeholder="Street, building, flat no." />
+            </div>
+            <div class="form-group full">
+              <label>Address Line 2</label>
+              <input type="text" [(ngModel)]="address.addressLine2" placeholder="Apartment, suite, etc. (optional)" />
+            </div>
+            <div class="form-group">
+              <label>Landmark</label>
+              <input type="text" [(ngModel)]="address.landMark" placeholder="Near landmark (optional)" />
+            </div>
+            <div class="form-group">
+              <label>City <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="address.city" placeholder="City" />
+            </div>
+            <div class="form-group">
+              <label>State <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="address.state" placeholder="State" />
+            </div>
+            <div class="form-group">
+              <label>Pin Code <span class="req">*</span></label>
+              <input type="text" [(ngModel)]="address.pinCode" placeholder="6-digit pin code" maxlength="6" />
+            </div>
+            <div class="form-group full">
+              <label>Mobile Number <span class="req">*</span></label>
+              <input type="tel" [(ngModel)]="address.mobile" placeholder="10-digit mobile number" maxlength="10" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel-modal" (click)="closeAddressForm()">Cancel</button>
+          <button class="btn-place-order" (click)="placeOrder()" [disabled]="orderLoading">
+            {{ orderLoading ? 'Placing Order...' : '✓ Place Order' }}
+          </button>
+        </div>
+
       </div>
     </div>
   }
@@ -34,12 +107,14 @@
             </div>
 
             <div class="qty-controls">
-              <span class="qty-value">Qty: {{ item.quantity }}</span>
+              <button class="qty-btn" (click)="decreaseQty(item)">−</button>
+              <span class="qty-value">{{ item.quantity }}</span>
+              <button class="qty-btn" (click)="increaseQty(item)">+</button>
             </div>
 
             <div class="item-subtotal">¥{{ item.totalPrice.toFixed(2) }}</div>
 
-            <button class="btn-remove" (click)="remove(item)" title="Remove">🗑️ Delete</button>
+            <button class="btn-remove" (click)="confirmDelete(item)" title="Remove">🗑️ Delete</button>
           </div>
         }
       </div>

@@ -36,13 +36,16 @@
     </button>
   </div>
 
+
   <!-- ══════════════════════════════════════════════════ -->
   <!-- TAB 1: PENDING                                    -->
   <!-- ══════════════════════════════════════════════════ -->
   @if (activeTab === 'pending') {
     <div class="toolbar">
-      <input type="text" [(ngModel)]="searchPending"
-        placeholder="Search by name, SKU or category..." class="search-input" />
+      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="pagePending = 1" class="filter-input" />
+      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="pagePending = 1" class="filter-input" />
+      <input type="text" [(ngModel)]="searchPending" (ngModelChange)="pagePending = 1"
+        placeholder="Search by Name or SKU" class="search-input" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -54,7 +57,7 @@
       </div>
     } @else {
       <div class="card-list">
-        @for (card of filteredPending; track card.productCode) {
+        @for (card of pagedPending; track card.productCode) {
           <div class="product-card">
             <div class="card-header" (click)="toggle(card)">
               <div class="card-header-left">
@@ -123,6 +126,14 @@
           </div>
         }
       </div>
+      <div class="pagination">
+        <button class="page-btn" (click)="pagePending = pagePending - 1" [disabled]="pagePending === 1">‹</button>
+        @for (n of pageNumbers(filteredPending.length); track n) {
+          <button class="page-btn" [class.active]="pagePending === n" (click)="pagePending = n">{{ n }}</button>
+        }
+        <button class="page-btn" (click)="pagePending = pagePending + 1" [disabled]="pagePending === totalPages(filteredPending.length)">›</button>
+        <span class="page-info">{{ filteredPending.length }} items</span>
+      </div>
     }
   }
 
@@ -131,8 +142,10 @@
   <!-- ══════════════════════════════════════════════════ -->
   @if (activeTab === 'approved') {
     <div class="toolbar">
-      <input type="text" [(ngModel)]="searchApproved"
-        placeholder="Search by name, SKU or category..." class="search-input" />
+      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="pageApproved = 1" class="filter-input" />
+      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="pageApproved = 1" class="filter-input" />
+      <input type="text" [(ngModel)]="searchApproved" (ngModelChange)="pageApproved = 1"
+        placeholder="Search by Name or SKU" class="search-input" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -142,7 +155,7 @@
       <div class="empty-state"><p>{{ searchApproved ? 'No products match your search.' : 'No approved products yet.' }}</p></div>
     } @else {
       <div class="card-list">
-        @for (card of filteredApproved; track card.productCode) {
+        @for (card of pagedApproved; track card.productCode) {
           <div class="product-card">
             <div class="card-header" (click)="toggle(card)">
               <div class="card-header-left">
@@ -181,6 +194,14 @@
           </div>
         }
       </div>
+      <div class="pagination">
+        <button class="page-btn" (click)="pageApproved = pageApproved - 1" [disabled]="pageApproved === 1">‹</button>
+        @for (n of pageNumbers(filteredApproved.length); track n) {
+          <button class="page-btn" [class.active]="pageApproved === n" (click)="pageApproved = n">{{ n }}</button>
+        }
+        <button class="page-btn" (click)="pageApproved = pageApproved + 1" [disabled]="pageApproved === totalPages(filteredApproved.length)">›</button>
+        <span class="page-info">{{ filteredApproved.length }} items</span>
+      </div>
     }
   }
 
@@ -189,8 +210,10 @@
   <!-- ══════════════════════════════════════════════════ -->
   @if (activeTab === 'rejected') {
     <div class="toolbar">
-      <input type="text" [(ngModel)]="searchRejected"
-        placeholder="Search by name, SKU or category..." class="search-input" />
+      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="pageRejected = 1" class="filter-input" />
+      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="pageRejected = 1" class="filter-input" />
+      <input type="text" [(ngModel)]="searchRejected" (ngModelChange)="pageRejected = 1"
+        placeholder="Search by Name or SKU" class="search-input" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -198,7 +221,7 @@
       <div class="empty-state"><p>{{ searchRejected ? 'No products match your search.' : 'No rejected products.' }}</p></div>
     } @else {
       <div class="card-list">
-        @for (card of filteredRejected; track card.productCode) {
+        @for (card of pagedRejected; track card.productCode) {
           <div class="product-card rejected-card">
             <div class="card-header" (click)="toggle(card)">
               <div class="card-header-left">
@@ -239,6 +262,14 @@
             }
           </div>
         }
+      </div>
+      <div class="pagination">
+        <button class="page-btn" (click)="pageRejected = pageRejected - 1" [disabled]="pageRejected === 1">‹</button>
+        @for (n of pageNumbers(filteredRejected.length); track n) {
+          <button class="page-btn" [class.active]="pageRejected === n" (click)="pageRejected = n">{{ n }}</button>
+        }
+        <button class="page-btn" (click)="pageRejected = pageRejected + 1" [disabled]="pageRejected === totalPages(filteredRejected.length)">›</button>
+        <span class="page-info">{{ filteredRejected.length }} items</span>
       </div>
     }
   }

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, HostListener, NgZone } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { CartService } from '../services/cart.service';
 
 @Component({
   selector: 'app-header',
@@ -20,7 +21,7 @@ export class HeaderComponent {
   showAdminDropdown = false;
   showReviewDropdown = false;
 
-  constructor(private router: Router, private zone: NgZone) {}
+  constructor(private router: Router, private zone: NgZone, public cartService: CartService) {}
 
   get isAdmin(): boolean {
     return localStorage.getItem('role') === 'ADMIN';

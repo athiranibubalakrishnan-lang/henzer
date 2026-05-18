@@ -73,6 +73,7 @@ export class AddUserComponent implements OnInit {
     const hasAddress = Object.values(this.address).some(v => v.trim() !== '');
     const payload = {
       ...this.user,
+      createdByAdmin: true,
       addresses: hasAddress ? [this.address] : []
     };
 

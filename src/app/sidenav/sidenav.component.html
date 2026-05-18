@@ -47,6 +47,9 @@
       <li (click)="navigate('/product-approval')">
         <span class="icon">✅</span> Product Approval
       </li>
+      <li (click)="navigate('/order-history')">
+        <span class="icon">📋</span> Order History
+      </li>
     }
 
 
@@ -54,6 +57,18 @@
     @if (isUser || isGuest) {
       <li (click)="navigate('/about')">
         <span class="icon">ℹ️</span> About
+      </li>
+    }
+
+    @if (isUser) {
+      <li (click)="navigate('/order-history')">
+        <span class="icon">📋</span> Order History
+      </li>
+    }
+
+    @if (isDealer) {
+      <li (click)="navigate('/order-history')">
+        <span class="icon">📋</span> Order History
       </li>
     }
   </ul>
@@ -94,6 +109,9 @@
     </div>
     <div class="nav-dropdown-body" [class.open]="showProductsDropdown">
       <ul>
+        <li (click)="navigate('/view-products')">
+          <span class="icon">📋</span> All Products
+        </li>
         <li (click)="navigate('/view-products', 'HENZER')">
           <span class="icon">🔵</span> Henzer
         </li>

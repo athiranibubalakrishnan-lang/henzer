@@ -45,7 +45,7 @@
     @if (activeTab === 'assigned') {
       <div class="toolbar">
         <input type="text" [(ngModel)]="searchAssigned"
-          placeholder="Search by name, SKU or category..." class="search-input" />
+          placeholder="Search by name, SKU, brand or category..." class="search-input" />
       </div>
 
       @if (filteredAssigned.length === 0) {
@@ -105,7 +105,7 @@
     @if (activeTab === 'approved') {
       <div class="toolbar">
         <input type="text" [(ngModel)]="searchApproved"
-          placeholder="Search by name, SKU or category..." class="search-input" />
+          placeholder="Search by name, SKU, brand or category..." class="search-input" />
       </div>
 
       @if (filteredApproved.length === 0) {
@@ -148,7 +148,7 @@
     @if (activeTab === 'rejected') {
       <div class="toolbar">
         <input type="text" [(ngModel)]="searchRejected"
-          placeholder="Search by name, SKU or category..." class="search-input" />
+          placeholder="Search by name, SKU, brand or category..." class="search-input" />
       </div>
 
       @if (filteredRejected.length === 0) {

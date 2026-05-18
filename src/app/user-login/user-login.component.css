@@ -163,3 +163,68 @@ label {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ── Single card layout ──────────────────────────── */
+.login-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 36px 40px;
+  width: 400px;
+  max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Auth tabs ───────────────────────────────────── */
+.auth-tabs {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 24px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.auth-tab:hover { color: #1b5e20; }
+
+.auth-tab.active {
+  color: #1b5e20;
+  border-bottom-color: #1b5e20;
+}
+
+/* ── Alerts ──────────────────────────────────────── */
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.alert-error   { background: #fce4ec; color: #c62828; }
+.alert-success { background: #e8f5e9; color: #2e7d32; }
+
+/* ── Switch link ─────────────────────────────────── */
+.switch-link {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-top: 16px;
+}
+
+.switch-link span {
+  color: #1b5e20;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}

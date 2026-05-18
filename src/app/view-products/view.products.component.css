@@ -58,7 +58,10 @@
   text-align: left;
   padding: 10px 12px;
   font-size: 13px;
-  color: #555;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .product-table td {
@@ -163,6 +166,56 @@
 .badge.pending   { background: #fff8e1; color: #f57f17; }
 .badge.rejected  { background: #fce4ec; color: #c62828; }
 .badge.assigned  { background: #e3f2fd; color: #1565c0; }
+
+/* ── Filter bar ──────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.brand-select {
+  padding: 8px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: #fafafa;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-width: 160px;
+}
+
+.brand-select:focus { border-color: #6a1b9a; }
+
+.brand-input {
+  padding: 8px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: #fafafa;
+  color: #333;
+  transition: border-color 0.2s;
+  min-width: 200px;
+}
+
+.brand-input:focus { border-color: #6a1b9a; }
+
+.btn-clear-filter {
+  padding: 7px 14px;
+  background: none;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-clear-filter:hover { border-color: #c62828; color: #c62828; }
 
 /* ── Dealer tabs ─────────────────────────────────── */
 .tabs {
@@ -517,3 +570,123 @@
   justify-content: flex-end;
   gap: 12px;
 }
+
+/* ── Pagination ──────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 16px 0 8px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.page-btn:hover:not(:disabled) { border-color: #6a1b9a; color: #6a1b9a; }
+.page-btn.active { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.page-info {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* ── Assign modal search ─────────────────────────── */
+.assign-search {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.assign-search:focus { border-color: #6a1b9a; }
+
+/* ── Inline qty + add to cart ────────────────────── */
+.qty-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qty-controls-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 3px 6px;
+}
+
+.qty-btn-sm {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  color: #6a1b9a;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.qty-btn-sm:hover { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+
+.qty-input-sm {
+  width: 40px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 3px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.qty-input-sm:focus { border-color: #6a1b9a; }
+
+/* ── Dual filter bar ─────────────────────────────── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  padding: 9px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: #fafafa;
+  transition: border-color 0.2s;
+  min-width: 120px;
+  width: 150px;
+}
+
+.filter-input.flex-grow { flex: 1; min-width: 180px; }
+.filter-input:focus { border-color: #6a1b9a; background: #fff; }

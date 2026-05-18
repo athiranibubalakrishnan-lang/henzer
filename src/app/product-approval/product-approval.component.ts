@@ -49,6 +49,14 @@ export class ProductApprovalComponent implements OnInit {
   searchPending  = '';
   searchApproved = '';
   searchRejected = '';
+  brandFilter    = '';
+  categoryFilter = '';
+
+  // Pagination
+  pagePending  = 1;
+  pageApproved = 1;
+  pageRejected = 1;
+  readonly PAGE_SIZE = 10;
 
   toast     = '';
   toastType: 'success' | 'error' = 'success';
@@ -194,25 +202,64 @@ export class ProductApprovalComponent implements OnInit {
   // ── Filtered lists ────────────────────────────────────────────────
 
   get filteredPending(): ProductCard[] {
-    const q = this.searchPending.toLowerCase();
-    return q ? this.pending.filter(p => this.matchesSearch(p, q)) : this.pending;
+    return this.applyFilters(this.pending, this.searchPending);
   }
 
   get filteredApproved(): ProductCard[] {
-    const q = this.searchApproved.toLowerCase();
-    return q ? this.approved.filter(p => this.matchesSearch(p, q)) : this.approved;
+    return this.applyFilters(this.approved, this.searchApproved);
   }
 
   get filteredRejected(): ProductCard[] {
-    const q = this.searchRejected.toLowerCase();
-    return q ? this.rejected.filter(p => this.matchesSearch(p, q)) : this.rejected;
+    return this.applyFilters(this.rejected, this.searchRejected);
+  }
+
+  private applyFilters(list: ProductCard[], search: string): ProductCard[] {
+    let result = list;
+    if (this.brandFilter) {
+      const b = this.brandFilter.toLowerCase();
+      result = result.filter(p => p.brand?.toLowerCase().includes(b));
+    }
+    if (this.categoryFilter) {
+      const c = this.categoryFilter.toLowerCase();
+      result = result.filter(p => p.category?.toLowerCase().includes(c));
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(p => this.matchesSearch(p, q));
+    }
+    return result;
   }
 
   private matchesSearch(p: ProductCard, q: string): boolean {
     return p.productName?.toLowerCase().includes(q) ||
            p.sku?.toLowerCase().includes(q) ||
-           p.category?.toLowerCase().includes(q);
+           p.category?.toLowerCase().includes(q) ||
+           p.brand?.toLowerCase().includes(q);
   }
+
+  get uniqueBrands(): string[] {
+    const all = [...this.pending, ...this.approved, ...this.rejected];
+    return [...new Set(all.map(p => p.brand).filter(Boolean))].sort();
+  }
+
+  // ── Pagination ────────────────────────────────────────────────────
+
+  paginate<T>(list: T[], page: number): T[] {
+    const start = (page - 1) * this.PAGE_SIZE;
+    return list.slice(start, start + this.PAGE_SIZE);
+  }
+
+  totalPages(total: number): number {
+    return Math.max(1, Math.ceil(total / this.PAGE_SIZE));
+  }
+
+  pageNumbers(total: number): number[] {
+    return Array.from({ length: this.totalPages(total) }, (_, i) => i + 1);
+  }
+
+  get pagedPending():  ProductCard[] { return this.paginate(this.filteredPending,  this.pagePending);  }
+  get pagedApproved(): ProductCard[] { return this.paginate(this.filteredApproved, this.pageApproved); }
+  get pagedRejected(): ProductCard[] { return this.paginate(this.filteredRejected, this.pageRejected); }
 
   toggle(card: ProductCard) { card.expanded = !card.expanded; }
 

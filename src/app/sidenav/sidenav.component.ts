@@ -31,6 +31,10 @@ export class SidenavComponent {
     return role === 'USER' || role === 'PRIVILEGE_USER';
   }
 
+  get isPrivilegedUser(): boolean {
+    return localStorage.getItem('role') === 'PRIVILEGE_USER';
+  }
+
   get isGuest(): boolean {
     return !localStorage.getItem('token');
   }

@@ -56,9 +56,14 @@
         <span class="dropdown-title">📋 Review ▾</span>
         <div class="dropdown-menu" [class.show]="showReviewDropdown">
           <a routerLink="/product-approval">✅ Product Approval</a>
+          <a routerLink="/order-history">📋 Order History</a>
           <!-- <a routerLink="/price-review">💰 Price Review</a> -->
         </div>
       </div>
+    }
+
+    @if (isDealer) {
+      <a routerLink="/order-history" routerLinkActive="active-link">📋 Order History</a>
     }
 
     <!-- User/Guest: Home, About, Products dropdown (brands), Contact, Cart -->
@@ -67,17 +72,26 @@
       <div class="dropdown" (click)="toggleBrandDropdown($event)">
         <span class="dropdown-title">📦 Products ▾</span>
         <div class="dropdown-menu" [class.show]="showBrandDropdown">
+          <a routerLink="/view-products">📋 All Products</a>
           <a routerLink="/view-products" [queryParams]="{brand: 'HENZER'}">🔵 Henzer</a>
           <a routerLink="/view-products" [queryParams]="{brand: 'SILICA'}">🟢 Silica</a>
           <a routerLink="/view-products" [queryParams]="{brand: 'SILICA LITE'}">🟡 Silica Lite</a>
         </div>
       </div>
+      @if (isUser) {
+        <a routerLink="/order-history" routerLinkActive="active-link">📋 My Orders</a>
+      }
     }
 
     <a routerLink="/contact" routerLinkActive="active-link">📞 Contact</a>
 
     @if (isUser || isGuest) {
-      <a routerLink="/cart" routerLinkActive="active-link" class="cart-link">🛒 Cart</a>
+      <a routerLink="/cart" routerLinkActive="active-link" class="cart-link">
+        🛒 Cart
+        @if (cartService.count > 0) {
+          <span class="cart-badge">{{ cartService.count }}</span>
+        }
+      </a>
     }
 
   </nav>
