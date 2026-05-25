@@ -1,0 +1,84 @@
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h2>📤 Bulk Upload Products</h2>
+    <p>Upload an Excel file (.xlsx / .xls) to create multiple products at once</p>
+  </div>
+
+  <div class="card">
+
+    <!-- Drop Zone -->
+    <div class="drop-zone"
+      [class.drag-over]="dragOver"
+      [class.has-file]="selectedFile"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()">
+
+      @if (!selectedFile) {
+        <div class="drop-content">
+          <div class="drop-icon">📂</div>
+          <p class="drop-title">Drag & drop your Excel file here</p>
+          <p class="drop-sub">or click to browse</p>
+          <span class="drop-hint">Supported formats: .xlsx, .xls</span>
+        </div>
+      } @else {
+        <div class="file-selected">
+          <div class="file-icon">📊</div>
+          <div class="file-info">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">{{ (selectedFile.size / 1024).toFixed(1) }} KB</span>
+          </div>
+          <button class="btn-clear" (click)="clearFile(); $event.stopPropagation()">✕</button>
+        </div>
+      }
+    </div>
+
+    <input #fileInput type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" hidden />
+
+    <!-- Result message -->
+    @if (result) {
+      <div class="result-box" [class.success]="result.success" [class.error]="!result.success">
+        <span class="result-icon">{{ result.success ? '✅' : '❌' }}</span>
+        <div class="result-text">
+          <strong>{{ result.success ? 'Upload Successful' : 'Upload Failed' }}</strong>
+          <p>{{ result.message }}</p>
+          @if (result.success && result.count) {
+            <p class="result-count">{{ result.count }} product(s) created.</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-secondary" (click)="goToProducts()">← View Products</button>
+      <button class="btn-primary" (click)="upload()"
+        [disabled]="!selectedFile || uploading">
+        @if (uploading) {
+          <span class="spinner-sm"></span> Uploading...
+        } @else {
+          📤 Upload
+        }
+      </button>
+    </div>
+
+    <!-- Template hint -->
+    <div class="template-hint">
+      <p>💡 Make sure your Excel file has the correct column headers. Expected columns:</p>
+      <div class="columns-list">
+        <span>productName</span>
+        <span>category</span>
+        <span>brand</span>
+        <span>sku</span>
+        <span>supplierPrice</span>
+        <span>supplierCode</span>
+        <span>shortDescription</span>
+        <span>description</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>

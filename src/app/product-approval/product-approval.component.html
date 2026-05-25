@@ -42,8 +42,18 @@
   <!-- ══════════════════════════════════════════════════ -->
   @if (activeTab === 'pending') {
     <div class="toolbar">
-      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="pagePending = 1" class="filter-input" />
-      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="pagePending = 1" class="filter-input" />
+      <select [(ngModel)]="categoryFilter" (ngModelChange)="onCategoryChange()" class="filter-input filter-select">
+        <option value="">All Categories</option>
+        <option value="HENZER">HENZER</option>
+        <option value="SILICA">SILICA</option>
+        <option value="SILICALITE">SILICALITE</option>
+      </select>
+      <select [(ngModel)]="brandFilter" (ngModelChange)="pagePending = 1" class="filter-input filter-select">
+        <option value="">All Brands</option>
+        @for (b of categoryBrands; track b) {
+          <option [value]="b">{{ b }}</option>
+        }
+      </select>
       <input type="text" [(ngModel)]="searchPending" (ngModelChange)="pagePending = 1"
         placeholder="Search by Name or SKU" class="search-input" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
@@ -142,8 +152,18 @@
   <!-- ══════════════════════════════════════════════════ -->
   @if (activeTab === 'approved') {
     <div class="toolbar">
-      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="pageApproved = 1" class="filter-input" />
-      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="pageApproved = 1" class="filter-input" />
+      <select [(ngModel)]="categoryFilter" (ngModelChange)="onCategoryChange()" class="filter-input filter-select">
+        <option value="">All Categories</option>
+        <option value="HENZER">HENZER</option>
+        <option value="SILICA">SILICA</option>
+        <option value="SILICALITE">SILICALITE</option>
+      </select>
+      <select [(ngModel)]="brandFilter" (ngModelChange)="pageApproved = 1" class="filter-input filter-select">
+        <option value="">All Brands</option>
+        @for (b of categoryBrands; track b) {
+          <option [value]="b">{{ b }}</option>
+        }
+      </select>
       <input type="text" [(ngModel)]="searchApproved" (ngModelChange)="pageApproved = 1"
         placeholder="Search by Name or SKU" class="search-input" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
@@ -210,8 +230,18 @@
   <!-- ══════════════════════════════════════════════════ -->
   @if (activeTab === 'rejected') {
     <div class="toolbar">
-      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="pageRejected = 1" class="filter-input" />
-      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="pageRejected = 1" class="filter-input" />
+      <select [(ngModel)]="categoryFilter" (ngModelChange)="onCategoryChange()" class="filter-input filter-select">
+        <option value="">All Categories</option>
+        <option value="HENZER">HENZER</option>
+        <option value="SILICA">SILICA</option>
+        <option value="SILICALITE">SILICALITE</option>
+      </select>
+      <select [(ngModel)]="brandFilter" (ngModelChange)="pageRejected = 1" class="filter-input filter-select">
+        <option value="">All Brands</option>
+        @for (b of categoryBrands; track b) {
+          <option [value]="b">{{ b }}</option>
+        }
+      </select>
       <input type="text" [(ngModel)]="searchRejected" (ngModelChange)="pageRejected = 1"
         placeholder="Search by Name or SKU" class="search-input" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>

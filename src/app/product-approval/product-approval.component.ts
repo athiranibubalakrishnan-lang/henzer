@@ -51,6 +51,7 @@ export class ProductApprovalComponent implements OnInit {
   searchRejected = '';
   brandFilter    = '';
   categoryFilter = '';
+  categoryBrands: string[] = [];  // brands loaded from API based on selected category
 
   // Pagination
   pagePending  = 1;
@@ -64,6 +65,26 @@ export class ProductApprovalComponent implements OnInit {
   constructor(private http: HttpClient, private zone: NgZone) {}
 
   ngOnInit() { this.loadAll(); }
+
+  onCategoryChange() {
+    this.brandFilter = '';
+    this.pagePending  = 1;
+    this.pageApproved = 1;
+    this.pageRejected = 1;
+    this.categoryBrands = [];
+    if (this.categoryFilter) {
+      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.categoryFilter}`).subscribe({
+        next: (data) => {
+          if (!Array.isArray(data) || data.length === 0) { this.categoryBrands = []; return; }
+          // Handle both string[] and product object[] responses
+          this.categoryBrands = typeof data[0] === 'string'
+            ? [...new Set(data.filter(Boolean))].sort() as string[]
+            : [...new Set(data.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
+        },
+        error: () => {}
+      });
+    }
+  }
 
   showToast(msg: string, type: 'success' | 'error' = 'success') {
     this.toast     = msg;

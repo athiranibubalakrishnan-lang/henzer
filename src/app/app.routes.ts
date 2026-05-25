@@ -19,6 +19,7 @@ import { DealerProductsComponent } from './dealer-products/dealer-products.compo
 import { AdminPriceReviewComponent } from './admin-price-review/admin-price-review.component';
 import { ProductApprovalComponent } from './product-approval/product-approval.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
+import { BulkUploadComponent } from './bulk-upload/bulk-upload.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -43,5 +44,6 @@ export const routes: Routes = [
   // { path: 'price-review', component: AdminPriceReviewComponent, canActivate: [authGuard] },
   { path: 'product-approval', component: ProductApprovalComponent, canActivate: [authGuard] },
   { path: 'order-history', component: OrderHistoryComponent, canActivate: [authGuard] },
+  { path: 'bulk-upload', component: BulkUploadComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'userlogin' }
 ];

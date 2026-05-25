@@ -690,3 +690,66 @@
 
 .filter-input.flex-grow { flex: 1; min-width: 180px; }
 .filter-input:focus { border-color: #6a1b9a; background: #fff; }
+
+.filter-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  appearance: none;
+}
+
+/* ── Assign modal filter bar ─────────────────────── */
+.assign-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.assign-filter-select {
+  padding: 8px 28px 8px 10px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #fafafa;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-width: 130px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.assign-filter-select:focus { border-color: #6a1b9a; }
+
+/* ── Select All row ──────────────────────────────── */
+.select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f3e5f5;
+  border: 1.5px solid #ce93d8;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6a1b9a;
+  transition: background 0.15s;
+}
+
+.select-all-row:hover { background: #e1bee7; }
+
+.select-all-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #6a1b9a;
+  cursor: pointer;
+  flex-shrink: 0;
+}

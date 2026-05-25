@@ -44,8 +44,18 @@
     <!-- ── TAB: ASSIGNED ── -->
     @if (dealerActiveTab === 'assigned') {
       <div class="filter-bar">
-        <input type="text" placeholder="Category" [(ngModel)]="dealerCategoryFilter" (ngModelChange)="dealerPageAssigned = 1" class="filter-input" />
-        <input type="text" placeholder="Brand" [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageAssigned = 1" class="filter-input" />
+        <select [(ngModel)]="dealerCategoryFilter" (ngModelChange)="onDealerCategoryChange()" class="filter-input filter-select">
+          <option value="">All Categories</option>
+          <option value="HENZER">HENZER</option>
+          <option value="SILICA">SILICA</option>
+          <option value="SILICALITE">SILICALITE</option>
+        </select>
+        <select [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageAssigned = 1" class="filter-input filter-select">
+          <option value="">All Brands</option>
+          @for (b of dealerBrands; track b) {
+            <option [value]="b">{{ b }}</option>
+          }
+        </select>
         <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchAssigned" (ngModelChange)="dealerPageAssigned = 1" class="filter-input flex-grow" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
@@ -105,8 +115,18 @@
     <!-- ── TAB: APPROVED ── -->
     @if (dealerActiveTab === 'approved') {
       <div class="filter-bar">
-        <input type="text" placeholder="Category" [(ngModel)]="dealerCategoryFilter" (ngModelChange)="dealerPageApproved = 1" class="filter-input" />
-        <input type="text" placeholder="Brand" [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageApproved = 1" class="filter-input" />
+        <select [(ngModel)]="dealerCategoryFilter" (ngModelChange)="onDealerCategoryChange()" class="filter-input filter-select">
+          <option value="">All Categories</option>
+          <option value="HENZER">HENZER</option>
+          <option value="SILICA">SILICA</option>
+          <option value="SILICALITE">SILICALITE</option>
+        </select>
+        <select [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageApproved = 1" class="filter-input filter-select">
+          <option value="">All Brands</option>
+          @for (b of dealerBrands; track b) {
+            <option [value]="b">{{ b }}</option>
+          }
+        </select>
         <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchApproved" (ngModelChange)="dealerPageApproved = 1" class="filter-input flex-grow" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
@@ -152,8 +172,18 @@
     <!-- ── TAB: REJECTED ── -->
     @if (dealerActiveTab === 'rejected') {
       <div class="filter-bar">
-        <input type="text" placeholder="Category" [(ngModel)]="dealerCategoryFilter" (ngModelChange)="dealerPageRejected = 1" class="filter-input" />
-        <input type="text" placeholder="Brand" [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageRejected = 1" class="filter-input" />
+        <select [(ngModel)]="dealerCategoryFilter" (ngModelChange)="onDealerCategoryChange()" class="filter-input filter-select">
+          <option value="">All Categories</option>
+          <option value="HENZER">HENZER</option>
+          <option value="SILICA">SILICA</option>
+          <option value="SILICALITE">SILICALITE</option>
+        </select>
+        <select [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageRejected = 1" class="filter-input filter-select">
+          <option value="">All Brands</option>
+          @for (b of dealerBrands; track b) {
+            <option [value]="b">{{ b }}</option>
+          }
+        </select>
         <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchRejected" (ngModelChange)="dealerPageRejected = 1" class="filter-input flex-grow" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
@@ -201,8 +231,18 @@
   <!-- ════════════════════════════════════════════════════════ -->
   } @else {
     <div class="filter-bar">
-      <input type="text" placeholder="Category" [(ngModel)]="categoryFilter" (ngModelChange)="adminPage = 1" class="filter-input" />
-      <input type="text" placeholder="Brand" [(ngModel)]="brandFilter" (ngModelChange)="adminPage = 1" class="filter-input" />
+      <select [(ngModel)]="categoryFilter" (ngModelChange)="onAdminCategoryChange()" class="filter-input filter-select">
+        <option value="">All Categories</option>
+        <option value="HENZER">HENZER</option>
+        <option value="SILICA">SILICA</option>
+        <option value="SILICALITE">SILICALITE</option>
+      </select>
+      <select [(ngModel)]="brandFilter" (ngModelChange)="adminPage = 1" class="filter-input filter-select">
+        <option value="">All Brands</option>
+        @for (b of adminBrands; track b) {
+          <option [value]="b">{{ b }}</option>
+        }
+      </select>
       <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="searchText" (ngModelChange)="adminPage = 1" class="filter-input flex-grow" />
       <button class="search-btn" (click)="refresh()">Refresh</button>
     </div>
@@ -229,8 +269,6 @@
                 <td>
                   @if (editingId === p.productCode && isAdmin) {
                     <input class="inline-input" type="number" [(ngModel)]="editPrice" min="0" />
-                  } @else if (isPrivilegedUser) {
-                    ¥{{ getBestDealerPrice(p) ?? p.supplierPrice }}
                   } @else {
                     ¥{{ p.supplierPrice }}
                   }
@@ -320,9 +358,37 @@
 
         <div class="product-list">
           <p class="list-label">Select Products <span class="count">({{ selectedProductIds.size }} selected)</span></p>
-          <input type="text" [(ngModel)]="assignProductSearch"
-            placeholder="Search by Product Name, SKU, Brand or Category"
-            class="assign-search" />
+          <div class="assign-filter-bar">
+            <select [(ngModel)]="assignCategoryFilter" (ngModelChange)="onAssignCategoryChange()" class="assign-filter-select">
+              <option value="">All Categories</option>
+              <option value="HENZER">HENZER</option>
+              <option value="SILICA">SILICA</option>
+              <option value="SILICALITE">SILICALITE</option>
+            </select>
+            <select [(ngModel)]="assignBrandFilter" class="assign-filter-select">
+              <option value="">All Brands</option>
+              @for (b of assignBrands; track b) {
+                <option [value]="b">{{ b }}</option>
+              }
+            </select>
+            <input type="text" [(ngModel)]="assignProductSearch"
+              placeholder="Search by Name or SKU"
+              class="assign-search" />
+          </div>
+
+          <!-- Select All row -->
+          @if (assignableProducts.length > 0) {
+            <div class="select-all-row" (click)="toggleSelectAllProducts()">
+              <input type="checkbox"
+                [checked]="isAllProductsSelected"
+                (click)="$event.stopPropagation()"
+                (change)="toggleSelectAllProducts()" />
+              <span>{{ isAllProductsSelected ? 'Deselect All' : 'Select All' }}
+                ({{ assignableProducts.length }} product{{ assignableProducts.length !== 1 ? 's' : '' }})
+              </span>
+            </div>
+          }
+
           @for (p of assignableProducts; track p.id) {
             <div class="product-row" [class.selected]="isSelected(p.id)" (click)="toggleProductSelection(p.id)">
               <div class="product-info">
@@ -333,7 +399,7 @@
             </div>
           }
           @if (assignableProducts.length === 0) {
-            <p class="empty-list">{{ assignProductSearch ? 'No products match your search.' : 'No products available to assign.' }}</p>
+            <p class="empty-list">{{ (assignProductSearch || assignCategoryFilter || assignBrandFilter) ? 'No products match your filters.' : 'No products available to assign.' }}</p>
           }
         </div>
       </div>

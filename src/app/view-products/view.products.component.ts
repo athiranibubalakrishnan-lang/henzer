@@ -28,6 +28,7 @@ export class ViewProductsComponent implements OnInit {
   editQuantity = 0;
   brandFilter    = '';
   categoryFilter = '';
+  adminBrands:  string[] = [];   // brands for admin/user flat table
   cartQuantities: { [key: string]: number } = {};
 
   // Dealer tabs
@@ -37,6 +38,7 @@ export class ViewProductsComponent implements OnInit {
   dealerSearchRejected = '';
   dealerBrandFilter    = '';
   dealerCategoryFilter = '';
+  dealerBrands:  string[] = [];  // brands for dealer tabs
 
   // Dealer pagination
   dealerPageAssigned = 1;
@@ -54,7 +56,10 @@ export class ViewProductsComponent implements OnInit {
   selectedProductIds: Set<number> = new Set();
   assignPrice: number | null = null;
   assignLoading = false;
-  assignProductSearch = '';
+  assignProductSearch  = '';
+  assignCategoryFilter = '';
+  assignBrandFilter    = '';
+  assignBrands:  string[] = [];
 
   constructor(
     private productService: ProductService,
@@ -71,6 +76,9 @@ export class ViewProductsComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.brandFilter = params['brand'] || '';
+      if (params['uploadSuccess'] === '1') {
+        setTimeout(() => this.showToast('✅ Bulk upload successful! Products have been added.'), 300);
+      }
     });
     this.loadProducts();
   }
@@ -122,11 +130,13 @@ export class ViewProductsComponent implements OnInit {
     this.searchText = '';
     this.brandFilter = '';
     this.categoryFilter = '';
+    this.adminBrands = [];
     this.dealerSearchAssigned = '';
     this.dealerSearchApproved = '';
     this.dealerSearchRejected = '';
     this.dealerBrandFilter    = '';
     this.dealerCategoryFilter = '';
+    this.dealerBrands = [];
     this.adminPage = 1;
     this.dealerPageAssigned = 1;
     this.dealerPageApproved = 1;
@@ -135,6 +145,45 @@ export class ViewProductsComponent implements OnInit {
   }
 
   get categories(): string[] { return ['All Products']; }
+
+  /** Extracts brand strings from API response — handles both string[] and product object[] */
+  private extractBrands(data: any[]): string[] {
+    if (!Array.isArray(data) || data.length === 0) return [];
+    // If first item is a string, the API returned brand strings directly
+    if (typeof data[0] === 'string') {
+      return [...new Set(data.filter(Boolean))].sort() as string[];
+    }
+    // Otherwise treat as product objects and extract .brand
+    return [...new Set(data.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
+  }
+
+  /** Called when admin/user category dropdown changes */
+  onAdminCategoryChange() {
+    this.brandFilter = '';
+    this.adminPage   = 1;
+    this.adminBrands = [];
+    if (this.categoryFilter) {
+      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.categoryFilter}`).subscribe({
+        next: (data) => { this.adminBrands = this.extractBrands(data); },
+        error: () => {}
+      });
+    }
+  }
+
+  /** Called when dealer category dropdown changes */
+  onDealerCategoryChange() {
+    this.dealerBrandFilter = '';
+    this.dealerPageAssigned = 1;
+    this.dealerPageApproved = 1;
+    this.dealerPageRejected = 1;
+    this.dealerBrands = [];
+    if (this.dealerCategoryFilter) {
+      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.dealerCategoryFilter}`).subscribe({
+        next: (data) => { this.dealerBrands = this.extractBrands(data); },
+        error: () => {}
+      });
+    }
+  }
 
   get isDealer(): boolean {
     return localStorage.getItem('role') === 'DEALER';
@@ -182,11 +231,42 @@ export class ViewProductsComponent implements OnInit {
     return this.selectedProductIds.has(id);
   }
 
+  get isAllProductsSelected(): boolean {
+    const list = this.assignableProducts;
+    return list.length > 0 && list.every(p => this.selectedProductIds.has(p.id));
+  }
+
+  toggleSelectAllProducts() {
+    const list = this.assignableProducts;
+    if (this.isAllProductsSelected) {
+      // Deselect all currently filtered products
+      list.forEach(p => this.selectedProductIds.delete(p.id));
+    } else {
+      // Select all currently filtered products
+      list.forEach(p => this.selectedProductIds.add(p.id));
+    }
+  }
+
   closeAssignModal() {
     this.showAssignModal = false;
     this.selectedProductIds.clear();
     this.selectedDealerIds.clear();
     this.assignPrice = null;
+    this.assignProductSearch  = '';
+    this.assignCategoryFilter = '';
+    this.assignBrandFilter    = '';
+    this.assignBrands = [];
+  }
+
+  onAssignCategoryChange() {
+    this.assignBrandFilter = '';
+    this.assignBrands = [];
+    if (this.assignCategoryFilter) {
+      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.assignCategoryFilter}`).subscribe({
+        next: (data) => { this.assignBrands = this.extractBrands(data); },
+        error: () => {}
+      });
+    }
   }
 
   confirmAssign() {
@@ -215,18 +295,29 @@ export class ViewProductsComponent implements OnInit {
 
   /** Products eligible for dealer assignment — excludes approved, assigned and rejected ones */
   get assignableProducts(): any[] {
-    const q = this.assignProductSearch.toLowerCase();
-    const base = this.products.filter(p =>
+    let base = this.products.filter(p =>
       p.status !== 'APPROVED' &&
       p.status !== 'ASSIGNED' &&
       p.status !== 'REJECTED'
     );
-    return q ? base.filter(p =>
-      p.productName?.toLowerCase().includes(q) ||
-      p.brand?.toLowerCase().includes(q) ||
-      p.sku?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q)
-    ) : base;
+    if (this.assignCategoryFilter) {
+      const c = this.assignCategoryFilter.toLowerCase();
+      base = base.filter(p => p.category?.toLowerCase().includes(c));
+    }
+    if (this.assignBrandFilter) {
+      const b = this.assignBrandFilter.toLowerCase();
+      base = base.filter(p => p.brand?.toLowerCase().includes(b));
+    }
+    if (this.assignProductSearch) {
+      const q = this.assignProductSearch.toLowerCase();
+      base = base.filter(p =>
+        p.productName?.toLowerCase().includes(q) ||
+        p.brand?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q)
+      );
+    }
+    return base;
   }
 
   get isGuest(): boolean {
@@ -421,10 +512,8 @@ export class ViewProductsComponent implements OnInit {
 
   addToCartWithQty(product: any) {
     const qty = this.cartQuantities[product.productCode] || 1;
-    // Privileged user → dealer price; regular user → supplier price
-    const price = this.isPrivilegedUser
-      ? (this.getBestDealerPrice(product) ?? product.supplierPrice)
-      : product.supplierPrice;
+    // Both privileged and regular users use supplier price as the base price
+    const price = product.supplierPrice;
     this.showToast(`Adding ${product.productName} x${qty} to cart...`);
     this.cartService.addItem(product.productCode, qty, price).subscribe({
       next: () => {
