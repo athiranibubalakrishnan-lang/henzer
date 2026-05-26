@@ -66,11 +66,36 @@
         <p>{{ searchPending ? 'No products match your search.' : 'No products pending approval.' }}</p>
       </div>
     } @else {
+      <!-- Bulk action bar -->
+      <div class="bulk-bar">
+        <label class="select-all-label" (click)="toggleSelectAllPending()">
+          <input type="checkbox" [checked]="isAllPendingSelected"
+            (click)="$event.stopPropagation()" (change)="toggleSelectAllPending()" />
+          <span>{{ isAllPendingSelected ? 'Deselect All' : 'Select All' }}</span>
+        </label>
+        @if (selectedCount > 0) {
+          <span class="selected-count">{{ selectedCount }} selected</span>
+          <button class="btn-approve sm" (click)="bulkApprove()" [disabled]="bulkProcessing">
+            {{ bulkProcessing ? '...' : '✓ Approve Selected' }}
+          </button>
+          <button class="btn-reject sm" (click)="bulkReject()" [disabled]="bulkProcessing">
+            {{ bulkProcessing ? '...' : '✕ Reject Selected' }}
+          </button>
+        }
+      </div>
+
       <div class="card-list">
         @for (card of pagedPending; track card.productCode) {
-          <div class="product-card">
+          <div class="product-card" [class.card-selected]="card.dealerProducts.length === 0 && isItemSelected(card.id, 0)">
             <div class="card-header" (click)="toggle(card)">
               <div class="card-header-left">
+                <!-- Checkbox for products with no dealers -->
+                @if (card.dealerProducts.length === 0) {
+                  <input type="checkbox" class="card-checkbox"
+                    [checked]="isItemSelected(card.id, 0)"
+                    (click)="$event.stopPropagation()"
+                    (change)="toggleItem(card.id, 0)" />
+                }
                 <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
                 <div class="card-info">
                   <span class="card-name">{{ card.productName }}</span>
@@ -102,20 +127,40 @@
               <div class="dealer-section">
                 <table class="dealer-table">
                   <thead>
-                    <tr><th>Dealer Name</th><th>Email</th><th>Dealer Price</th><th>Actions</th></tr>
+                    <tr><th></th><th>Dealer Name</th><th>Email</th><th>Price</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     @for (d of card.dealerProducts; track d.id) {
-                      <tr>
+                      <tr [class.row-selected]="isItemSelected(card.id, d.dealerId)">
+                        <td style="width:30px">
+                          @if (d.status !== 'APPROVED' && d.status !== 'REJECTED') {
+                            <input type="checkbox"
+                              [checked]="isItemSelected(card.id, d.dealerId)"
+                              (change)="toggleItem(card.id, d.dealerId)"
+                              style="accent-color:#6a1b9a;width:15px;height:15px;cursor:pointer;" />
+                          }
+                        </td>
                         <td class="dealer-name-cell">{{ d.dealerName }}</td>
                         <td class="dealer-email-cell">{{ d.dealerCode }}</td>
-                        <td>{{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}</td>
+                        <td>
+                          @if (d.editing) {
+                            <input class="price-edit-input" type="number" [(ngModel)]="d.editingPrice" min="0" />
+                          } @else {
+                            {{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}
+                          }
+                        </td>
                         <td class="dealer-actions">
                           @if (d.status === 'APPROVED') {
                             <span class="badge approved">Approved</span>
                           } @else if (d.status === 'REJECTED') {
                             <span class="badge rejected">Rejected</span>
+                          } @else if (d.editing) {
+                            <button class="btn-approve sm" (click)="approveWithPrice(card, d)" [disabled]="d.processing">
+                              {{ d.processing ? '...' : '✓ Approve' }}
+                            </button>
+                            <button class="btn-cancel-edit sm" (click)="cancelEditPrice(d)">✕</button>
                           } @else {
+                            <button class="btn-edit-price sm" (click)="startEditPrice(d)">✏️ Edit</button>
                             <button class="btn-approve sm" (click)="approveDealer(card, d)" [disabled]="d.processing">
                               {{ d.processing ? '...' : '✓ Approve' }}
                             </button>
@@ -197,14 +242,36 @@
               <div class="dealer-section">
                 <table class="dealer-table">
                   <thead>
-                    <tr><th>Dealer Name</th><th>Email</th><th>Dealer Price</th></tr>
+                    <tr><th>Dealer Name</th><th>Email</th><th>Price</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     @for (d of card.dealerProducts; track d.id) {
                       <tr>
                         <td class="dealer-name-cell">{{ d.dealerName }}</td>
                         <td class="dealer-email-cell">{{ d.dealerCode }}</td>
-                        <td>{{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}</td>
+                        <td>
+                          @if (d.editing) {
+                            <input class="price-edit-input" type="number" [(ngModel)]="d.editingPrice" min="0" />
+                          } @else {
+                            {{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}
+                          }
+                        </td>
+                        <td class="dealer-actions">
+                          @if (d.editing) {
+                            <button class="btn-approve sm" (click)="saveApprovedPrice(card, d)" [disabled]="d.processing">
+                              {{ d.processing ? '...' : '💾 Save' }}
+                            </button>
+                            <button class="btn-cancel-edit sm" (click)="cancelEditPrice(d)">✕</button>
+                          } @else {
+                            <button class="btn-edit-price sm" (click)="startEditPrice(d)">✏️ Edit</button>
+                            <button class="btn-approve sm" (click)="approveDealer(card, d)" [disabled]="d.processing">
+                              {{ d.processing ? '...' : '✓ Approve' }}
+                            </button>
+                            <button class="btn-reject sm" (click)="rejectDealer(card, d)" [disabled]="d.processing">
+                              {{ d.processing ? '...' : '✕ Reject' }}
+                            </button>
+                          }
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -273,7 +340,7 @@
               <div class="dealer-section rejected-section">
                 <table class="dealer-table">
                   <thead>
-                    <tr><th>Dealer Name</th><th>Email</th><th>Dealer Price</th></tr>
+                    <tr><th>Dealer Name</th><th>Email</th><th>Price</th></tr>
                   </thead>
                   <tbody>
                     @for (d of card.dealerProducts; track d.id) {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { ProductManagementService } from '../services/product-management.service';
 
 export interface DealerProduct {
   id: number;
@@ -10,6 +11,8 @@ export interface DealerProduct {
   dealerCode: string;
   dealerName: string;
   dealerPrice: number | null;
+  editingPrice: number | null;  // admin's in-progress edit
+  editing: boolean;
   processing: boolean;
   status?: string;
 }
@@ -59,10 +62,14 @@ export class ProductApprovalComponent implements OnInit {
   pageRejected = 1;
   readonly PAGE_SIZE = 10;
 
+  // Bulk selection (pending tab) — tracks {productId, dealerId} pairs
+  selectedItems: Set<string> = new Set(); // key = "productId:dealerId"
+  bulkProcessing = false;
+
   toast     = '';
   toastType: 'success' | 'error' = 'success';
 
-  constructor(private http: HttpClient, private zone: NgZone) {}
+  constructor(private http: HttpClient, private zone: NgZone, private productMgmt: ProductManagementService) {}
 
   ngOnInit() { this.loadAll(); }
 
@@ -209,14 +216,18 @@ export class ProductApprovalComponent implements OnInit {
   }
 
   private mapDealer(d: any): DealerProduct {
+    // Read price from all possible field names the backend might return
+    const price = d.dealerPrice ?? d.price ?? d.assignedPrice ?? d.proposedPrice ?? null;
     return {
-      id:          d.id,
-      dealerId:    d.dealerId,
-      dealerCode:  d.dealerCode,
-      dealerName:  d.dealerName,
-      dealerPrice: d.dealerPrice ?? null,
-      processing:  false,
-      status:      d.status ?? undefined
+      id:           d.id,
+      dealerId:     d.dealerId,
+      dealerCode:   d.dealerCode,
+      dealerName:   d.dealerName,
+      dealerPrice:  price,
+      editingPrice: price,
+      editing:      false,
+      processing:   false,
+      status:       d.status ?? undefined
     };
   }
 
@@ -288,16 +299,16 @@ export class ProductApprovalComponent implements OnInit {
 
   approveProduct(card: ProductCard) {
     card.processing = true;
-    this.http.put(
-      `${environment.apiUrl}/api/products/${card.productCode}/approve`, {},
+    const body = [{ productId: card.id, dealerId: null }];
+    this.http.put(`${environment.apiUrl}/api/products/approve`, body,
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: () => this.zone.run(() => {
+      next: (res: any) => this.zone.run(() => {
         card.processing = false;
         card.status     = 'APPROVED';
         this.pending    = this.pending.filter(p => p.productCode !== card.productCode);
         this.approved   = [{ ...card, status: 'APPROVED' }, ...this.approved];
-        this.showToast(`"${card.productName}" approved`, 'success');
+        this.showToast(res || 'Product(s) approved by admin', 'success');
       }),
       error: () => this.zone.run(() => {
         card.processing = false;
@@ -308,16 +319,16 @@ export class ProductApprovalComponent implements OnInit {
 
   rejectProduct(card: ProductCard) {
     card.processing = true;
-    this.http.put(
-      `${environment.apiUrl}/api/products/${card.productCode}/reject`, {},
+    const body = [{ productId: card.id, dealerId: null }];
+    this.http.put(`${environment.apiUrl}/api/products/reject`, body,
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: () => this.zone.run(() => {
+      next: (res: any) => this.zone.run(() => {
         card.processing = false;
         card.status     = 'REJECTED';
         this.pending    = this.pending.filter(p => p.productCode !== card.productCode);
         this.rejected   = [{ ...card, status: 'REJECTED' }, ...this.rejected];
-        this.showToast(`"${card.productName}" rejected`, 'success');
+        this.showToast(res || 'Product(s) rejected by admin', 'success');
       }),
       error: () => this.zone.run(() => {
         card.processing = false;
@@ -330,50 +341,52 @@ export class ProductApprovalComponent implements OnInit {
 
   approveDealer(card: ProductCard, dealer: DealerProduct) {
     dealer.processing = true;
-    this.http.put(
-      `${environment.apiUrl}/api/products/${card.productCode}/approve`, {},
-      { params: { dealerId: dealer.dealerId }, responseType: 'text' as 'json' }
-    ).subscribe({
-      next: () => this.zone.run(() => {
-        dealer.processing = false;
-        dealer.status     = 'APPROVED';
-
-        // Remove dealer from pending card
-        card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
-
-        // Add to approved tab
-        const approvedCard = this.approved.find(a => a.productCode === card.productCode);
-        if (approvedCard) {
-          approvedCard.dealerProducts.push({ ...dealer, status: 'APPROVED' });
-        } else {
-          this.approved = [
-            { ...card, dealerProducts: [{ ...dealer, status: 'APPROVED' }], status: 'APPROVED', expanded: false },
-            ...this.approved
-          ];
-        }
-        this.showToast(`Approved for ${dealer.dealerName}`, 'success');
-      }),
+    // Step 1: FINALIZE_PRICE (no price needed)
+    this.productMgmt.finalizePrice(dealer.dealerId, card.id).subscribe({
+      next: () => {
+        // Step 2: approve
+        const body = [{ productId: card.id, dealerId: dealer.dealerId }];
+        this.http.put(`${environment.apiUrl}/api/products/approve`, body,
+          { responseType: 'text' as 'json' }
+        ).subscribe({
+          next: (res: any) => this.zone.run(() => {
+            dealer.processing = false;
+            dealer.status     = 'APPROVED';
+            card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
+            const approvedCard = this.approved.find(a => a.productCode === card.productCode);
+            if (approvedCard) {
+              approvedCard.dealerProducts.push({ ...dealer, status: 'APPROVED' });
+            } else {
+              this.approved = [
+                { ...card, dealerProducts: [{ ...dealer, status: 'APPROVED' }], status: 'APPROVED', expanded: false },
+                ...this.approved
+              ];
+            }
+            this.showToast(res || 'Product(s) approved by admin', 'success');
+          }),
+          error: () => this.zone.run(() => {
+            dealer.processing = false;
+            this.showToast(`Failed to approve for ${dealer.dealerName}`, 'error');
+          })
+        });
+      },
       error: () => this.zone.run(() => {
         dealer.processing = false;
-        this.showToast(`Failed to approve for ${dealer.dealerName}`, 'error');
+        this.showToast(`Failed to finalize price for ${dealer.dealerName}`, 'error');
       })
     });
   }
 
   rejectDealer(card: ProductCard, dealer: DealerProduct) {
     dealer.processing = true;
-    this.http.put(
-      `${environment.apiUrl}/api/products/${card.productCode}/reject`, {},
-      { params: { dealerId: dealer.dealerId }, responseType: 'text' as 'json' }
+    const body = [{ productId: card.id, dealerId: dealer.dealerId }];
+    this.http.put(`${environment.apiUrl}/api/products/reject`, body,
+      { responseType: 'text' as 'json' }
     ).subscribe({
-      next: () => this.zone.run(() => {
+      next: (res: any) => this.zone.run(() => {
         dealer.processing = false;
         dealer.status     = 'REJECTED';
-
-        // Remove dealer from pending card
         card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
-
-        // Add to rejected tab
         const rejectedCard = this.rejected.find(r => r.productCode === card.productCode);
         if (rejectedCard) {
           rejectedCard.dealerProducts.push({ ...dealer, status: 'REJECTED' });
@@ -383,7 +396,7 @@ export class ProductApprovalComponent implements OnInit {
             ...this.rejected
           ];
         }
-        this.showToast(`Rejected for ${dealer.dealerName}`, 'success');
+        this.showToast(res || 'Product(s) rejected by admin', 'success');
       }),
       error: () => this.zone.run(() => {
         dealer.processing = false;
@@ -395,4 +408,173 @@ export class ProductApprovalComponent implements OnInit {
   get pendingCount():  number { return this.pending.length; }
   get approvedCount(): number { return this.approved.length; }
   get rejectedCount(): number { return this.rejected.length; }
+
+  // ── Bulk selection ────────────────────────────────────────────────
+
+  private itemKey(productId: number, dealerId: number): string {
+    return `${productId}:${dealerId}`;
+  }
+
+  isItemSelected(productId: number, dealerId: number): boolean {
+    return this.selectedItems.has(this.itemKey(productId, dealerId));
+  }
+
+  toggleItem(productId: number, dealerId: number) {
+    const key = this.itemKey(productId, dealerId);
+    if (this.selectedItems.has(key)) {
+      this.selectedItems.delete(key);
+    } else {
+      this.selectedItems.add(key);
+    }
+  }
+
+  /** All selectable dealer entries from the current filtered+paged pending list */
+  private get selectablePendingItems(): { productId: number; dealerId: number }[] {
+    const items: { productId: number; dealerId: number }[] = [];
+    this.filteredPending.forEach(card => {
+      if (card.dealerProducts.length > 0) {
+        card.dealerProducts
+          .filter(d => d.status !== 'APPROVED' && d.status !== 'REJECTED')
+          .forEach(d => items.push({ productId: card.id, dealerId: d.dealerId }));
+      } else {
+        items.push({ productId: card.id, dealerId: 0 });
+      }
+    });
+    return items;
+  }
+
+  get isAllPendingSelected(): boolean {
+    const items = this.selectablePendingItems;
+    return items.length > 0 && items.every(i => this.selectedItems.has(this.itemKey(i.productId, i.dealerId)));
+  }
+
+  toggleSelectAllPending() {
+    const items = this.selectablePendingItems;
+    if (this.isAllPendingSelected) {
+      items.forEach(i => this.selectedItems.delete(this.itemKey(i.productId, i.dealerId)));
+    } else {
+      items.forEach(i => this.selectedItems.add(this.itemKey(i.productId, i.dealerId)));
+    }
+  }
+
+  get selectedCount(): number { return this.selectedItems.size; }
+
+  private buildBulkBody(): { productId: number; dealerId: number }[] {
+    return Array.from(this.selectedItems).map(key => {
+      const [productId, dealerId] = key.split(':').map(Number);
+      return { productId, dealerId: dealerId || null } as any;
+    });
+  }
+
+  bulkApprove() {
+    if (this.selectedItems.size === 0) return;
+    this.bulkProcessing = true;
+    this.http.put(`${environment.apiUrl}/api/products/approve`, this.buildBulkBody(),
+      { responseType: 'text' as 'json' }
+    ).subscribe({
+      next: (res: any) => this.zone.run(() => {
+        this.bulkProcessing = false;
+        this.selectedItems.clear();
+        this.showToast(res || 'Product(s) approved by admin', 'success');
+        this.loadAll();
+      }),
+      error: () => this.zone.run(() => {
+        this.bulkProcessing = false;
+        this.showToast('Bulk approve failed', 'error');
+      })
+    });
+  }
+
+  bulkReject() {
+    if (this.selectedItems.size === 0) return;
+    this.bulkProcessing = true;
+    this.http.put(`${environment.apiUrl}/api/products/reject`, this.buildBulkBody(),
+      { responseType: 'text' as 'json' }
+    ).subscribe({
+      next: (res: any) => this.zone.run(() => {
+        this.bulkProcessing = false;
+        this.selectedItems.clear();
+        this.showToast(res || 'Product(s) rejected by admin', 'success');
+        this.loadAll();
+      }),
+      error: () => this.zone.run(() => {
+        this.bulkProcessing = false;
+        this.showToast('Bulk reject failed', 'error');
+      })
+    });
+  }
+
+  // ── Admin price editing ───────────────────────────────────────────
+
+  startEditPrice(dealer: DealerProduct) {
+    dealer.editingPrice = dealer.dealerPrice;
+    dealer.editing = true;
+  }
+
+  cancelEditPrice(dealer: DealerProduct) {
+    dealer.editingPrice = dealer.dealerPrice;
+    dealer.editing = false;
+  }
+
+  /** Admin updates dealer price then approves in one step */
+  approveWithPrice(card: ProductCard, dealer: DealerProduct) {
+    dealer.processing = true;
+    const price = dealer.editingPrice ?? dealer.dealerPrice ?? 0;
+    // Step 1: FINALIZE_PRICE (no price in this call)
+    this.productMgmt.finalizePrice(dealer.dealerId, card.id).subscribe({
+      next: () => {
+        // Step 2: approve with price
+        const body = [{ productId: card.id, dealerId: dealer.dealerId, price }];
+        this.http.put(`${environment.apiUrl}/api/products/approve`, body,
+          { responseType: 'text' as 'json' }
+        ).subscribe({
+          next: (res: any) => this.zone.run(() => {
+            dealer.processing   = false;
+            dealer.editing      = false;
+            dealer.dealerPrice  = price;
+            dealer.editingPrice = price;
+            dealer.status       = 'APPROVED';
+            card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
+            const approvedCard = this.approved.find(a => a.productCode === card.productCode);
+            if (approvedCard) {
+              approvedCard.dealerProducts.push({ ...dealer, status: 'APPROVED' });
+            } else {
+              this.approved = [
+                { ...card, dealerProducts: [{ ...dealer, status: 'APPROVED' }], status: 'APPROVED', expanded: false },
+                ...this.approved
+              ];
+            }
+            this.showToast(res || 'Product(s) approved by admin', 'success');
+          }),
+          error: () => this.zone.run(() => {
+            dealer.processing = false;
+            this.showToast(`Failed to approve for ${dealer.dealerName}`, 'error');
+          })
+        });
+      },
+      error: () => this.zone.run(() => {
+        dealer.processing = false;
+        this.showToast(`Failed to finalize price for ${dealer.dealerName}`, 'error');
+      })
+    });
+  }
+
+  /** Admin edits price on an already-approved dealer entry — calls UPDATE_PRICE */
+  saveApprovedPrice(card: ProductCard, dealer: DealerProduct) {
+    dealer.processing = true;
+    const price = dealer.editingPrice ?? dealer.dealerPrice ?? 0;
+    this.productMgmt.updatePrice(dealer.dealerId, card.id, price).subscribe({
+      next: () => this.zone.run(() => {
+        dealer.processing   = false;
+        dealer.editing      = false;
+        dealer.dealerPrice  = price;
+        dealer.editingPrice = price;
+        this.showToast('Price updated successfully', 'success');
+      }),
+      error: () => this.zone.run(() => {
+        dealer.processing = false;
+        this.showToast(`Failed to update price for ${dealer.dealerName}`, 'error');
+      })
+    });
+  }
 }

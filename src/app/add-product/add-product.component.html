@@ -17,12 +17,13 @@
 
         <div class="form-group full-width">
           <label>Product Name <span class="required">*</span></label>
-          <input type="text" [(ngModel)]="productName" name="productName" placeholder="Enter product name" required />
+          <input type="text" [(ngModel)]="productName" name="productName"
+            placeholder="Enter product name" required />
         </div>
 
         <div class="form-group">
-          <label>Category</label>
-          <select [(ngModel)]="category" name="category">
+          <label>Category <span class="required">*</span></label>
+          <select [(ngModel)]="category" name="category" required>
             <option value="">-- Select Category --</option>
             <option value="HENZER">HENZER</option>
             <option value="SILICA">SILICA</option>
@@ -31,13 +32,14 @@
         </div>
 
         <div class="form-group">
-          <label>Brand</label>
-          <input type="text" [(ngModel)]="brand" name="brand" />
+          <label>Brand <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="brand" name="brand" placeholder="Enter brand" required />
         </div>
 
         <div class="form-group">
-          <label>SKU</label>
-          <input type="text" [(ngModel)]="sku" name="sku" placeholder="e.g. SKU-001" />
+          <label>SKU <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="sku" name="sku"
+            placeholder="e.g. SKU-001" required />
         </div>
 
         <div class="form-group">
@@ -52,8 +54,9 @@
       <div class="form-grid">
 
         <div class="form-group">
-          <label>Supplier Price (¥)</label>
-          <input type="number" [(ngModel)]="supplierPrice" name="supplierPrice" min="0" placeholder="0.00" />
+          <label>Supplier Price (¥) <span class="required">*</span></label>
+          <input type="number" [(ngModel)]="supplierPrice" name="supplierPrice"
+            min="0.01" step="0.01" placeholder="0.00" required />
         </div>
 
       </div>
@@ -80,47 +83,6 @@
         <div class="form-group full-width">
           <label>Remarks</label>
           <textarea [(ngModel)]="remarks" name="remarks" rows="2" placeholder="Internal remarks or notes"></textarea>
-        </div>
-
-      </div>
-
-      <!-- Settings -->
-      <h3 class="section-title">Settings</h3>
-      <div class="form-grid">
-
-        <div class="form-group">
-          <label>Visibility</label>
-          <select [(ngModel)]="visibility" name="visibility">
-            <option value="PUBLIC">PUBLIC</option>
-            <option value="PRIVATE">PRIVATE</option>
-            <option value="HIDDEN">HIDDEN</option>
-          </select>
-        </div>
-
-        @if (!isDealer) {
-          <div class="form-group">
-            <label>Approval Status</label>
-            <select [(ngModel)]="status" name="status">
-              <option value="PENDING">PENDING</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="REJECTED">REJECTED</option>
-            </select>
-          </div>
-        }
-
-        <div class="form-group toggles">
-          <label class="toggle-label">
-            <input type="checkbox" [(ngModel)]="inStock" name="inStock" />
-            <span>In Stock</span>
-          </label>
-          <label class="toggle-label">
-            <input type="checkbox" [(ngModel)]="publishedStatus" name="publishedStatus" />
-            <span>Published</span>
-          </label>
-          <label class="toggle-label">
-            <input type="checkbox" [(ngModel)]="active" name="active" />
-            <span>Active</span>
-          </label>
         </div>
 
       </div>

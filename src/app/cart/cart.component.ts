@@ -160,6 +160,7 @@ export class CartComponent implements OnInit {
           this.showThankYou = false;
           this.cartService.clear();
           this.cartService.clearProductCodeMap();
+          this.cartService.clearSupplierPriceMap();
           this.router.navigate(['/home']);
         }, 2500);
       },

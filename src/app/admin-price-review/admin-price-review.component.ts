@@ -211,7 +211,7 @@ export class AdminPriceReviewComponent implements OnInit {
 
   approve(proposal: PriceProposal) {
     proposal.processing = true;
-    this.productMgmt.finalizePrice(proposal.dealerId, proposal.productId, proposal.proposedPrice).subscribe({
+    this.productMgmt.finalizePrice(proposal.dealerId, proposal.productId).subscribe({
       next: () => {
         this.zone.run(() => {
           proposal.processing = false;

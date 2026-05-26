@@ -41,10 +41,10 @@ export class ProductManagementService {
   }
 
   /**
-   * FINALIZE_PRICE — scalar productId + dealerId (never lists).
+   * FINALIZE_PRICE — scalar productId + dealerId, no price needed.
    */
-  finalizePrice(dealerId: number, productId: number, price: number): Observable<any> {
-    const body: ProductManagementRequest = { action: 'FINALIZE_PRICE', dealerId, productId, price };
+  finalizePrice(dealerId: number, productId: number): Observable<any> {
+    const body: ProductManagementRequest = { action: 'FINALIZE_PRICE', dealerId, productId };
     return this.http.post(this.base, body, { responseType: 'text' });
   }
 }

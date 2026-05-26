@@ -140,19 +140,33 @@
             <thead>
               <tr>
                 <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
-                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th>
+                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
               @for (p of pagedDealerApproved; track p.productCode) {
-                <tr>
+                <tr [class.editing-row]="editingId === p.productCode">
                   <td>{{ p.productName }}</td>
                   <td>{{ p.brand || '—' }}</td>
                   <td>{{ p.category }}</td>
                   <td>{{ p.sku || '—' }}</td>
                   <td>¥{{ p.supplierPrice }}</td>
-                  <td>{{ getDealerPrice(p) !== null ? ('¥' + getDealerPrice(p)) : '—' }}</td>
+                  <td>
+                    @if (editingId === p.productCode) {
+                      <input class="inline-input" type="number" [(ngModel)]="editDealerPrice" min="0" />
+                    } @else {
+                      {{ getDealerPrice(p) !== null ? ('¥' + getDealerPrice(p)) : '—' }}
+                    }
+                  </td>
                   <td><span class="badge approved">APPROVED</span></td>
+                  <td class="actions">
+                    @if (editingId === p.productCode) {
+                      <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Submit</button>
+                      <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
+                    } @else {
+                      <button class="btn-edit" (click)="startEdit(p); $event.stopPropagation()">Update Price</button>
+                    }
+                  </td>
                 </tr>
               }
             </tbody>

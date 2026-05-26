@@ -103,7 +103,9 @@
           <div class="cart-item">
             <div class="item-info">
               <p class="item-name">{{ item.productName }}</p>
-              <p class="item-unit-price">¥{{ item.unitPrice.toFixed(2) }} each</p>
+              <p class="item-unit-price">
+                ¥{{ cartService.getSupplierPrice(item.productCode) ?? item.unitPrice | number:'1.2-2' }} each
+              </p>
             </div>
 
             <div class="qty-controls">

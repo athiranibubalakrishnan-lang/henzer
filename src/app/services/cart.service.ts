@@ -82,6 +82,27 @@ export class CartService {
     localStorage.removeItem('cartProductCodes');
   }
 
+  /** Store supplier price keyed by productCode for cart display */
+  storeSupplierPrice(productCode: string, price: number) {
+    const map = this.getSupplierPriceMap();
+    map[productCode] = price;
+    localStorage.setItem('cartSupplierPrices', JSON.stringify(map));
+  }
+
+  getSupplierPrice(productCode: string): number | null {
+    return this.getSupplierPriceMap()[productCode] ?? null;
+  }
+
+  private getSupplierPriceMap(): Record<string, number> {
+    try {
+      return JSON.parse(localStorage.getItem('cartSupplierPrices') || '{}');
+    } catch { return {}; }
+  }
+
+  clearSupplierPriceMap() {
+    localStorage.removeItem('cartSupplierPrices');
+  }
+
   updateQty(cartItemId: number, quantity: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/update/${cartItemId}`, null, {
       params: { quantity: quantity.toString() }

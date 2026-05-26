@@ -24,7 +24,7 @@ export class ViewProductsComponent implements OnInit {
   toast = '';
   editingId: string | null = null;
   editPrice = 0;
-  editDealerPrice = 0;
+  editDealerPrice: number | null = null;
   editQuantity = 0;
   brandFilter    = '';
   categoryFilter = '';
@@ -109,11 +109,11 @@ export class ViewProductsComponent implements OnInit {
       next: (data) => {
         this.zone.run(() => {
           this.loading = false;
-          this.products = Array.isArray(data) ? data : [];
+          this.products = (Array.isArray(data) ? data : [])
+            .sort((a: any, b: any) => (b.id ?? 0) - (a.id ?? 0));
+          // Always reset qty inputs to 1 on fresh load
           this.products.forEach(p => {
-            if (!this.cartQuantities[p.productCode]) {
-              this.cartQuantities[p.productCode] = 1;
-            }
+            this.cartQuantities[p.productCode] = 1;
           });
         });
       },
@@ -474,28 +474,33 @@ export class ViewProductsComponent implements OnInit {
   get pagedAdminProducts(): any[] { return this.paginate(this.getProductsByCategory('All Products'), this.adminPage); }
   get adminTotalPages(): number    { return this.totalPages(this.getProductsByCategory('All Products').length); }
 
-  /** Gets the dealer price for the logged-in dealer from a product's dealerProducts array,
-   *  falling back to p.dealerPrice on the product itself if no matching entry is found */
+  /** Gets the dealer's price from dealerProducts entry.
+   *  Reads 'price' field first (set by UPDATE_PRICE/FINALIZE_PRICE),
+   *  falls back to 'dealerPrice', then top-level p.dealerPrice */
   getDealerPrice(p: any): number | null {
     const myId = Number(localStorage.getItem('dealerId') || 0);
     const entry = (p.dealerProducts ?? []).find((d: any) => d.dealerId === myId);
-    if (entry && entry.dealerPrice != null) return entry.dealerPrice;
-    // Fall back to top-level dealerPrice if present
-    return p.dealerPrice ?? null;
+    if (entry) {
+      // 'price' is the field set by UPDATE_PRICE/FINALIZE_PRICE actions
+      if (entry.price != null) return entry.price;
+      if (entry.dealerPrice != null) return entry.dealerPrice;
+    }
+    // Fall back to top-level price fields
+    return p.price ?? p.dealerPrice ?? null;
   }
 
-  /** Gets the best available dealer price for privileged user view —
-   *  first approved dealer price, then any dealer price, then top-level p.dealerPrice */
+  /** Gets the best available price for privileged user view —
+   *  reads 'price' field (set by FINALIZE_PRICE), then 'dealerPrice', then top-level */
   getBestDealerPrice(p: any): number | null {
     const dealers: any[] = p.dealerProducts ?? [];
-    // Prefer an approved dealer's price
-    const approved = dealers.find((d: any) => d.status === 'APPROVED' && d.dealerPrice != null);
-    if (approved) return approved.dealerPrice;
-    // Any dealer price
-    const any = dealers.find((d: any) => d.dealerPrice != null);
-    if (any) return any.dealerPrice;
+    // Prefer an approved dealer's price field
+    const approved = dealers.find((d: any) => d.status === 'APPROVED' && (d.price != null || d.dealerPrice != null));
+    if (approved) return approved.price ?? approved.dealerPrice;
+    // Any dealer with a price
+    const any = dealers.find((d: any) => d.price != null || d.dealerPrice != null);
+    if (any) return any.price ?? any.dealerPrice;
     // Top-level fallback
-    return p.dealerPrice ?? null;
+    return p.price ?? p.dealerPrice ?? null;
   }
 
   get isPrivilegedUser(): boolean {
@@ -512,13 +517,14 @@ export class ViewProductsComponent implements OnInit {
 
   addToCartWithQty(product: any) {
     const qty = this.cartQuantities[product.productCode] || 1;
-    // Both privileged and regular users use supplier price as the base price
     const price = product.supplierPrice;
     this.showToast(`Adding ${product.productName} x${qty} to cart...`);
+    // Reset qty immediately before the API call so it doesn't show stale value
+    this.cartQuantities[product.productCode] = 1;
     this.cartService.addItem(product.productCode, qty, price).subscribe({
       next: () => {
-        // Store productCode → productId mapping for checkout
         this.cartService.storeProductCode(product.id, product.productCode);
+        this.cartService.storeSupplierPrice(product.productCode, product.supplierPrice);
         this.cartQuantities[product.productCode] = 1;
         this.showToast(`✅ ${product.productName} x${qty} added to cart`);
       },
@@ -556,10 +562,10 @@ export class ViewProductsComponent implements OnInit {
   }
 
   startEdit(p: any) {
-    this.editingId      = p.productCode;
-    this.editPrice      = p.supplierPrice;   // admin edits this
-    this.editDealerPrice = p.dealerPrice ?? 0; // dealer edits this
-    this.editQuantity   = p.quantity;
+    this.editingId       = p.productCode;
+    this.editPrice       = p.supplierPrice;   // admin edits this
+    this.editDealerPrice = p.dealerPrice ?? null; // dealer edits this — null means empty input
+    this.editQuantity    = p.quantity;
   }
 
   cancelEdit() { this.editingId = null; }
@@ -575,6 +581,11 @@ export class ViewProductsComponent implements OnInit {
       const dealerId  = Number(localStorage.getItem('dealerId') || 0);
       // Backend needs the numeric DB primary key (ProductEntity.id), not productCode
       const productId = Number(p.id ?? p.productId ?? 0);
+
+      if (!this.editDealerPrice || this.editDealerPrice <= 0) {
+        this.showToast('Please enter a valid price greater than 0');
+        return;
+      }
 
       console.log('UPDATE_PRICE → dealerId:', dealerId, '| productId:', productId, '| price:', this.editDealerPrice, '| full product object:', p);
 
@@ -605,7 +616,42 @@ export class ViewProductsComponent implements OnInit {
       return;
     }
 
-    // Admin: full product PUT with updated supplier price
+    // Admin: if product has dealer assignments, call process API with UPDATE_PRICE
+    // Otherwise do a full product PUT with updated supplier price
+    const dealers: any[] = p.dealerProducts ?? [];
+    const hasDealer = dealers.length > 0;
+
+    if (hasDealer) {
+      // Call process API for each dealer with the new price
+      const requests = dealers.map((d: any) =>
+        this.productMgmt.updatePrice(d.dealerId, p.id, this.editPrice)
+      );
+      // Use forkJoin-like sequential calls — or just call for all dealers
+      let completed = 0;
+      requests.forEach(req => {
+        req.subscribe({
+          next: () => {
+            completed++;
+            if (completed === requests.length) {
+              this.zone.run(() => {
+                p.supplierPrice = this.editPrice;
+                this.editingId  = null;
+                this.showToast('Price updated successfully');
+              });
+            }
+          },
+          error: (err: any) => {
+            this.zone.run(() => {
+              console.error('Update failed', err);
+              this.showToast('Failed to update price');
+            });
+          }
+        });
+      });
+      return;
+    }
+
+    // No dealers — full product PUT with updated supplier price
     const payload = {
       productCode:        p.productCode,
       productName:        p.productName,

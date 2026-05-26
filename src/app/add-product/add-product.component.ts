@@ -58,7 +58,11 @@ export class AddProductComponent implements OnInit {
   }
 
   addProduct() {
-    if (!this.productName.trim()) { this.showToast('Product name is required'); return; }
+    if (!this.productName.trim())  { this.showToast('Product name is required'); return; }
+    if (!this.category)            { this.showToast('Category is required'); return; }
+    if (!this.brand.trim())        { this.showToast('Brand is required'); return; }
+    if (!this.sku.trim())          { this.showToast('SKU is required'); return; }
+    if (!this.supplierPrice || this.supplierPrice <= 0) { this.showToast('Supplier price must be greater than 0'); return; }
     const payload = {
       productName: this.productName,
       category: this.category,
