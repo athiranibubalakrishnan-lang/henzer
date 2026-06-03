@@ -20,6 +20,7 @@ import { AdminPriceReviewComponent } from './admin-price-review/admin-price-revi
 import { ProductApprovalComponent } from './product-approval/product-approval.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
 import { BulkUploadComponent } from './bulk-upload/bulk-upload.component';
+import { PriceHistoryComponent } from './price-history/price-history.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -45,5 +46,6 @@ export const routes: Routes = [
   { path: 'product-approval', component: ProductApprovalComponent, canActivate: [authGuard] },
   { path: 'order-history', component: OrderHistoryComponent, canActivate: [authGuard] },
   { path: 'bulk-upload', component: BulkUploadComponent, canActivate: [authGuard] },
+  { path: 'price-history/:dealerId/:productId', component: PriceHistoryComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'userlogin' }
 ];

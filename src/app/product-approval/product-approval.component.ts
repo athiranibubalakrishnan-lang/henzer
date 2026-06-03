@@ -2,6 +2,7 @@ import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { ProductManagementService } from '../services/product-management.service';
 
@@ -69,7 +70,7 @@ export class ProductApprovalComponent implements OnInit {
   toast     = '';
   toastType: 'success' | 'error' = 'success';
 
-  constructor(private http: HttpClient, private zone: NgZone, private productMgmt: ProductManagementService) {}
+  constructor(private http: HttpClient, private zone: NgZone, private productMgmt: ProductManagementService, private router: Router) {}
 
   ngOnInit() { this.loadAll(); }
 
@@ -506,6 +507,13 @@ export class ProductApprovalComponent implements OnInit {
 
   // ── Admin price editing ───────────────────────────────────────────
 
+  viewPriceHistory(card: ProductCard, dealer: DealerProduct) {
+    this.router.navigate(
+      ['/price-history', dealer.dealerId, card.id],
+      { queryParams: { dealerName: dealer.dealerName, productName: card.productName } }
+    );
+  }
+
   startEditPrice(dealer: DealerProduct) {
     dealer.editingPrice = dealer.dealerPrice;
     dealer.editing = true;
@@ -514,6 +522,29 @@ export class ProductApprovalComponent implements OnInit {
   cancelEditPrice(dealer: DealerProduct) {
     dealer.editingPrice = dealer.dealerPrice;
     dealer.editing = false;
+  }
+
+  /** Admin saves updated price via UPDATE_PRICE (pending tab) */
+  savePendingPrice(card: ProductCard, dealer: DealerProduct) {
+    if (!dealer.editingPrice || dealer.editingPrice <= 0) {
+      this.showToast('Please enter a valid price', 'error');
+      return;
+    }
+    dealer.processing = true;
+    const price = dealer.editingPrice;
+    this.productMgmt.updatePrice(dealer.dealerId, card.id, price).subscribe({
+      next: () => this.zone.run(() => {
+        dealer.processing   = false;
+        dealer.editing      = false;
+        dealer.dealerPrice  = price;
+        dealer.editingPrice = price;
+        this.showToast('Price updated successfully', 'success');
+      }),
+      error: () => this.zone.run(() => {
+        dealer.processing = false;
+        this.showToast('Failed to update price', 'error');
+      })
+    });
   }
 
   /** Admin updates dealer price then approves in one step */

@@ -542,3 +542,18 @@
 .row-selected td {
   background: #f3e5f5;
 }
+
+.btn-history {
+  padding: 4px 10px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1.5px solid #90caf9;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-history:hover { background: #bbdefb; border-color: #1565c0; }

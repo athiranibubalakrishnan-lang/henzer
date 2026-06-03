@@ -4,20 +4,33 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
-interface OrderRow {
+interface OrderItem {
+  id:            number;
+  quantity:      number;
+  unitPrice:     number;
+  lineTotal:     number | null;
+  productName:   string;
+  productCode:   string;
+  sku:           string;
+  brand:         string;
+  category:      string;
+  supplierPrice: number;
+}
+
+interface OrderCard {
   orderId:     number;
   status:      string;
   totalAmount: number;
+  packageFee:  number | null;
   createdAt:   string;
   userName:    string;
   userEmail:   string;
-  productName: string;
-  brand:       string;
-  sku:         string;
+  userAddress: any;
   dealerName:  string;
   dealerEmail: string;
-  quantity:    number;
-  unitPrice:   number;
+  items:       OrderItem[];
+  expanded:    boolean;
+  selected:    boolean;
 }
 
 @Component({
@@ -29,12 +42,15 @@ interface OrderRow {
 })
 export class OrderHistoryComponent implements OnInit {
 
-  orders: OrderRow[] = [];
+  orders: OrderCard[] = [];
   loading = false;
   error   = '';
-  searchText = '';
-  currentPage = 1;
+  searchText   = '';
+  currentPage  = 1;
   readonly PAGE_SIZE = 10;
+  bulkApproving    = false;
+  approveToast     = '';
+  approveToastType: 'success' | 'error' = 'success';
 
   constructor(private http: HttpClient, private zone: NgZone) {}
 
@@ -45,97 +61,102 @@ export class OrderHistoryComponent implements OnInit {
     return role === 'USER' || role === 'PRIVILEGE_USER';
   }
 
-  get isAdmin(): boolean {
-    return localStorage.getItem('role') === 'ADMIN';
-  }
+  get isAdmin():  boolean { return localStorage.getItem('role') === 'ADMIN'; }
+  get isDealer(): boolean { return localStorage.getItem('role') === 'DEALER'; }
 
   loadOrders() {
     this.loading = true;
     this.error   = '';
-    // Admin/Dealer use /api/orders/all; users use /api/orders
-    const url = this.isUser
-      ? `${environment.apiUrl}/api/orders`
-      : `${environment.apiUrl}/api/orders/all`;
+    const role = localStorage.getItem('role');
+    let url: string;
+    if (role === 'ADMIN') {
+      url = `${environment.apiUrl}/api/orders/all`;
+    } else {
+      // Dealer, USER, PRIVILEGE_USER → all use confirmed orders endpoint
+      url = `${environment.apiUrl}/api/orders/status/CONFIRMED`;
+    }
 
     this.http.get<any[]>(url).subscribe({
       next: (data) => {
         this.zone.run(() => {
           this.loading = false;
-          this.orders  = this.flattenOrders(Array.isArray(data) ? data : []);
+          this.orders  = this.mapOrders(Array.isArray(data) ? data : []);
         });
       },
       error: (err) => {
         this.zone.run(() => {
           this.loading = false;
-          this.error   = `Failed to load orders (${err?.status ?? 'unknown error'}): ${err?.error?.message || err?.message || 'Please try again.'}`;
-          console.error('Order history error:', err);
+          this.error   = `Failed to load orders (${err?.status ?? 'error'}): ${err?.error?.message || err?.message || 'Please try again.'}`;
         });
       }
     });
   }
 
-  private flattenOrders(data: any[]): OrderRow[] {
-    const rows: OrderRow[] = [];
+  private mapOrders(data: any[]): OrderCard[] {
+    const cards: OrderCard[] = [];
     data.forEach(entry => {
-      const user    = entry.userDetails ?? {};
-      const order   = entry.order ?? {};
-      const items: any[] = order.items ?? [];
+      const user  = entry.userDetails ?? {};
+      const order = entry.order ?? {};
+      const rawItems: any[] = order.items ?? [];
 
-      items.forEach(item => {
-        const product = item.product ?? {};
+      const firstItem   = rawItems[0] ?? {};
+      const dealerRaw   = firstItem.dealerDetails ?? firstItem.dealer ?? {};
+      const dealerName  = dealerRaw.userName ?? dealerRaw.username ?? dealerRaw.dealerName ?? '—';
+      const dealerEmail = dealerRaw.email ?? dealerRaw.dealerCode ?? '—';
 
-        // dealerDetails can be at item level or inside product's dealerProducts
-        const dealer = item.dealerDetails ?? item.dealer ?? {};
+      const items: OrderItem[] = rawItems.map(item => {
+        const p = item.product ?? {};
+        return {
+          id:            item.id,
+          quantity:      item.quantity ?? 0,
+          unitPrice:     item.unitPrice ?? 0,
+          lineTotal:     item.lineTotal ?? null,
+          productName:   p.productName ?? '—',
+          productCode:   p.productCode ?? '—',
+          sku:           p.sku ?? '—',
+          brand:         p.brand ?? '—',
+          category:      p.category ?? '—',
+          supplierPrice: p.supplierPrice ?? 0
+        };
+      });
 
-        // Try multiple field name patterns the backend might use
-        const dealerName  = dealer.userName
-          ?? dealer.username
-          ?? dealer.dealerName
-          ?? dealer.name
-          ?? (product.dealerProducts?.[0]?.dealerName)
-          ?? '—';
-
-        const dealerEmail = dealer.email
-          ?? dealer.dealerCode
-          ?? dealer.dealerEmail
-          ?? (product.dealerProducts?.[0]?.dealerCode)
-          ?? '—';
-
-        rows.push({
-          orderId:     order.id,
-          status:      order.status ?? '—',
-          totalAmount: order.totalAmount ?? 0,
-          createdAt:   order.createdAt ?? '',
-          userName:    user.userName ?? user.username ?? user.name ?? '—',
-          userEmail:   user.email ?? '—',
-          productName: product.productName ?? '—',
-          brand:       product.brand ?? '—',
-          sku:         product.sku ?? '—',
-          dealerName,
-          dealerEmail,
-          quantity:    item.quantity ?? 0,
-          unitPrice:   item.unitPrice ?? 0
-        });
+      cards.push({
+        orderId:     order.id,
+        status:      order.status ?? '—',
+        totalAmount: order.totalAmount ?? 0,
+        packageFee:  order.packageFee ?? null,
+        createdAt:   order.createdAt ?? '',
+        userName:    user.userName ?? user.username ?? '—',
+        userEmail:   user.email ?? '—',
+        userAddress: user.address ?? null,
+        dealerName,
+        dealerEmail,
+        items,
+        expanded: false,
+        selected: false
       });
     });
-    console.log('Flattened orders:', rows);
-    return rows;
+    return cards;
   }
 
-  get filtered(): OrderRow[] {
+  toggle(card: OrderCard) { card.expanded = !card.expanded; }
+
+  get filtered(): OrderCard[] {
     const q = this.searchText.toLowerCase();
     if (!q) return this.orders;
     return this.orders.filter(r =>
-      r.productName?.toLowerCase().includes(q) ||
-      r.brand?.toLowerCase().includes(q) ||
-      r.sku?.toLowerCase().includes(q) ||
       r.userName?.toLowerCase().includes(q) ||
       r.dealerName?.toLowerCase().includes(q) ||
-      r.status?.toLowerCase().includes(q)
+      r.status?.toLowerCase().includes(q) ||
+      r.items.some(i =>
+        i.productName?.toLowerCase().includes(q) ||
+        i.brand?.toLowerCase().includes(q) ||
+        i.sku?.toLowerCase().includes(q)
+      )
     );
   }
 
-  get paged(): OrderRow[] {
+  get paged(): OrderCard[] {
     const start = (this.currentPage - 1) * this.PAGE_SIZE;
     return this.filtered.slice(start, start + this.PAGE_SIZE);
   }
@@ -146,5 +167,46 @@ export class OrderHistoryComponent implements OnInit {
 
   get pageNumbers(): number[] {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  // ── Bulk approve (admin only) ─────────────────────────────────────
+
+  get selectedOrders(): OrderCard[] { return this.filtered.filter(r => r.selected); }
+  get selectedCount():  number       { return this.selectedOrders.length; }
+
+  get isAllSelected(): boolean {
+    const f = this.filtered;
+    return f.length > 0 && f.every(r => r.selected);
+  }
+
+  toggleSelectAll() {
+    const all = this.isAllSelected;
+    this.filtered.forEach(r => r.selected = !all);
+  }
+
+  showApproveToast(msg: string, type: 'success' | 'error' = 'success') {
+    this.approveToast     = msg;
+    this.approveToastType = type;
+    setTimeout(() => this.approveToast = '', 3000);
+  }
+
+  bulkApprove() {
+    const ids = this.selectedOrders.map(r => r.orderId);
+    if (ids.length === 0) return;
+    this.bulkApproving = true;
+    this.http.put(
+      `${environment.apiUrl}/api/orders/bulk-status/CONFIRMED`, ids,
+      { responseType: 'text' as 'json' }
+    ).subscribe({
+      next: (res: any) => this.zone.run(() => {
+        this.bulkApproving = false;
+        this.selectedOrders.forEach(r => { r.status = 'CONFIRMED'; r.selected = false; });
+        this.showApproveToast(res || `${ids.length} order(s) confirmed`, 'success');
+      }),
+      error: (err) => this.zone.run(() => {
+        this.bulkApproving = false;
+        this.showApproveToast(err?.error || 'Failed to confirm orders', 'error');
+      })
+    });
   }
 }

@@ -155,8 +155,8 @@
                           } @else if (d.status === 'REJECTED') {
                             <span class="badge rejected">Rejected</span>
                           } @else if (d.editing) {
-                            <button class="btn-approve sm" (click)="approveWithPrice(card, d)" [disabled]="d.processing">
-                              {{ d.processing ? '...' : '✓ Approve' }}
+                            <button class="btn-approve sm" (click)="savePendingPrice(card, d)" [disabled]="d.processing">
+                              {{ d.processing ? '...' : '💾 Save' }}
                             </button>
                             <button class="btn-cancel-edit sm" (click)="cancelEditPrice(d)">✕</button>
                           } @else {
@@ -253,7 +253,7 @@
                           @if (d.editing) {
                             <input class="price-edit-input" type="number" [(ngModel)]="d.editingPrice" min="0" />
                           } @else {
-                            {{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}
+                            {{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : ('¥' + card.supplierPrice) }}
                           }
                         </td>
                         <td class="dealer-actions">
@@ -269,6 +269,9 @@
                             </button>
                             <button class="btn-reject sm" (click)="rejectDealer(card, d)" [disabled]="d.processing">
                               {{ d.processing ? '...' : '✕ Reject' }}
+                            </button>
+                            <button class="btn-history sm" (click)="viewPriceHistory(card, d); $event.stopPropagation()">
+                              📜 History
                             </button>
                           }
                         </td>

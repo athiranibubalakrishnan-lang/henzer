@@ -1,106 +1,163 @@
 <div class="container">
 
+  @if (approveToast) {
+    <div class="toast" [class.toast-error]="approveToastType === 'error'">{{ approveToast }}</div>
+  }
+
   <div class="page-header-row">
     <div>
       <h2 class="title">Order History</h2>
-      <p class="subtitle">{{ isUser ? 'Your placed orders' : 'All purchased products' }}</p>
+      <p class="subtitle">{{ isUser ? 'Your placed orders' : isDealer ? 'Confirmed orders' : 'All orders' }}</p>
     </div>
     <button class="btn-refresh" (click)="loadOrders()">↻ Refresh</button>
   </div>
 
   <div class="toolbar">
     <input type="text" [(ngModel)]="searchText" (ngModelChange)="currentPage = 1"
-      placeholder="Search by Product Name, Brand or SKU"
+      placeholder="Search by User, Dealer, Product, Brand or SKU"
       class="search-input" />
   </div>
 
   @if (loading) {
-    <div class="loading-wrap">
-      <div class="spinner"></div>
-      <p>Loading orders...</p>
-    </div>
+    <div class="loading-wrap"><div class="spinner"></div><p>Loading orders...</p></div>
   } @else if (error) {
     <div class="error-state">
       <p>{{ error }}</p>
       <button class="btn-refresh" (click)="loadOrders()">↻ Retry</button>
     </div>
   } @else if (filtered.length === 0) {
-    <div class="empty-state">
-      <p>{{ searchText ? 'No orders match your search.' : 'No orders found.' }}</p>
-    </div>
+    <div class="empty-state"><p>{{ searchText ? 'No orders match your search.' : 'No orders found.' }}</p></div>
   } @else {
-    <div class="table-wrapper">
-      <table class="order-table">
-        <thead>
-          @if (!isUser) {
-            <!-- Admin / Dealer view -->
-            <tr>
-              <th>Product Name</th>
-              <th>Brand</th>
-              <th>SKU</th>
-              <th>Qty</th>
-              <th>Total Price</th>
-              <th>Dealer</th>
-              <th>Status</th>
-            </tr>
-          } @else {
-            <!-- User view -->
-            <tr>
-              <th>Product Name</th>
-              <th>Brand</th>
-              <th>SKU</th>
-              <th>Qty</th>
-              <th>Unit Price</th>
-              <th>Status</th>
-            </tr>
-          }
-        </thead>
-        <tbody>
-          @for (row of paged; track row.orderId + row.productName) {
-            @if (!isUser) {
-              <!-- Admin / Dealer row -->
-              <tr>
-                <td class="product-name">{{ row.productName }}</td>
-                <td>{{ row.brand }}</td>
-                <td>{{ row.sku }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>¥{{ row.totalAmount }}</td>
-                <td>
-                  <div class="user-cell">
-                    <span class="name">{{ row.dealerName }}</span>
-                    <span class="email">{{ row.dealerEmail }}</span>
+
+    <!-- Bulk bar — admin only -->
+    @if (isAdmin) {
+      <div class="bulk-bar">
+        <label class="select-all-label" (click)="toggleSelectAll()">
+          <input type="checkbox" [checked]="isAllSelected"
+            (click)="$event.stopPropagation()" (change)="toggleSelectAll()" />
+          <span>{{ isAllSelected ? 'Deselect All' : 'Select All' }}</span>
+        </label>
+        @if (selectedCount > 0) {
+          <span class="selected-count">{{ selectedCount }} selected</span>
+          <button class="btn-approve-bulk" (click)="bulkApprove()" [disabled]="bulkApproving">
+            {{ bulkApproving ? 'Approving...' : '✓ Approve Selected' }}
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Order cards -->
+    <div class="card-list">
+      @for (card of paged; track card.orderId) {
+        <div class="order-card" [class.card-selected]="card.selected" [class.expanded]="card.expanded">
+
+          <!-- Summary row — always visible -->
+          <div class="card-summary" (click)="toggle(card)">
+            <div class="summary-left">
+              @if (isAdmin) {
+                <input type="checkbox" [(ngModel)]="card.selected"
+                  (click)="$event.stopPropagation()"
+                  style="accent-color:#6a1b9a;width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
+              }
+              <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
+              <div class="summary-info">
+                <span class="order-id">#{{ card.orderId }}</span>
+                @if (!isUser) {
+                  <span class="summary-meta">{{ card.userName }} · {{ card.dealerName }}</span>
+                }
+                @if (isUser) {
+                  <span class="summary-meta">{{ card.items.length }} item{{ card.items.length !== 1 ? 's' : '' }}</span>
+                }
+              </div>
+            </div>
+            <div class="summary-right">
+              <span class="total-amount">¥{{ card.totalAmount }}</span>
+              <span class="badge"
+                [class.processing]="card.status === 'PROCESSING'"
+                [class.completed]="card.status === 'COMPLETED' || card.status === 'CONFIRMED'"
+                [class.cancelled]="card.status === 'CANCELLED'">
+                {{ card.status }}
+              </span>
+              <span class="order-date">{{ card.createdAt | date:'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+
+          <!-- Detail section — shown when expanded -->
+          @if (card.expanded) {
+            <div class="card-detail">
+
+              <!-- User & Dealer info -->
+              <div class="detail-grid">
+                <div class="detail-section">
+                  <h4>Customer</h4>
+                  <p><strong>{{ card.userName }}</strong></p>
+                  <p class="text-muted">{{ card.userEmail }}</p>
+                  @if (card.userAddress) {
+                    <p class="text-muted">
+                      {{ card.userAddress.addressLine1 }}
+                      @if (card.userAddress.addressLine2) { , {{ card.userAddress.addressLine2 }} }
+                    </p>
+                    <p class="text-muted">
+                      {{ card.userAddress.city }}, {{ card.userAddress.state }} - {{ card.userAddress.pinCode }}
+                    </p>
+                    <p class="text-muted">📞 {{ card.userAddress.mobile }}</p>
+                  }
+                </div>
+                @if (!isUser) {
+                  <div class="detail-section">
+                    <h4>Dealer</h4>
+                    <p><strong>{{ card.dealerName }}</strong></p>
+                    <p class="text-muted">{{ card.dealerEmail }}</p>
                   </div>
-                </td>
-                <td>
-                  <span class="badge"
-                    [class.processing]="row.status === 'PROCESSING'"
-                    [class.completed]="row.status === 'COMPLETED'"
-                    [class.cancelled]="row.status === 'CANCELLED'">
-                    {{ row.status }}
-                  </span>
-                </td>
-              </tr>
-            } @else {
-              <!-- User row -->
-              <tr>
-                <td class="product-name">{{ row.productName }}</td>
-                <td>{{ row.brand }}</td>
-                <td>{{ row.sku }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>¥{{ row.unitPrice }}</td>
-                <td>
-                  <span class="badge"
-                    [class.processing]="row.status === 'PROCESSING'"
-                    [class.completed]="row.status === 'COMPLETED'"
-                    [class.cancelled]="row.status === 'CANCELLED'">
-                    {{ row.status }}
-                  </span>
-                </td>
-              </tr>
-            }
+                }
+                <div class="detail-section">
+                  <h4>Order Info</h4>
+                  <p>Status: <span class="badge sm"
+                    [class.processing]="card.status === 'PROCESSING'"
+                    [class.completed]="card.status === 'COMPLETED' || card.status === 'CONFIRMED'"
+                    [class.cancelled]="card.status === 'CANCELLED'">{{ card.status }}</span></p>
+                  <p>Date: {{ card.createdAt | date:'dd MMM yyyy, HH:mm' }}</p>
+                  <p>Total: <strong>¥{{ card.totalAmount }}</strong></p>
+                  @if (card.packageFee !== null) {
+                    <p>Package Fee: ¥{{ card.packageFee }}</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Items table -->
+              <h4 class="items-heading">Items</h4>
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Brand</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of card.items; track item.id) {
+                    <tr>
+                      <td class="product-name">{{ item.productName }}</td>
+                      <td>{{ item.brand }}</td>
+                      <td>{{ item.sku }}</td>
+                      <td>{{ item.category }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>¥{{ item.unitPrice }}</td>
+                      <td>¥{{ item.lineTotal ?? (item.unitPrice * item.quantity) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+            </div>
           }
-        </tbody>
-      </table>
+
+        </div>
+      }
     </div>
 
     <!-- Pagination -->

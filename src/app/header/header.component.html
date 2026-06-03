@@ -86,7 +86,7 @@
 
     <a routerLink="/contact" routerLinkActive="active-link">📞 Contact</a>
 
-    @if (isUser || isGuest) {
+    @if (isUser) {
       <a routerLink="/cart" routerLinkActive="active-link" class="cart-link">
         🛒 Cart
         @if (cartService.count > 0) {

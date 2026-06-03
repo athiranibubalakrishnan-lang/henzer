@@ -75,7 +75,12 @@ export class ViewProductsComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      this.brandFilter = params['brand'] || '';
+      // 'brand' query param from header nav filters by category
+      // Map "SILICA LITE" → "SILICALITE" to match backend category values
+      if (params['brand']) {
+        const val = params['brand'].toUpperCase();
+        this.categoryFilter = val === 'SILICA LITE' ? 'SILICALITE' : val;
+      }
       if (params['uploadSuccess'] === '1') {
         setTimeout(() => this.showToast('✅ Bulk upload successful! Products have been added.'), 300);
       }
