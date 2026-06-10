@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -12,7 +12,7 @@ export interface DealerProduct {
   dealerCode: string;
   dealerName: string;
   dealerPrice: number | null;
-  editingPrice: number | null;  // admin's in-progress edit
+  editingPrice: number | null;
   editing: boolean;
   processing: boolean;
   status?: string;
@@ -55,22 +55,26 @@ export class ProductApprovalComponent implements OnInit {
   searchRejected = '';
   brandFilter    = '';
   categoryFilter = '';
-  categoryBrands: string[] = [];  // brands loaded from API based on selected category
+  categoryBrands: string[] = [];
+  priceSort: 'none' | 'asc' | 'desc' = 'none';
 
-  // Pagination
   pagePending  = 1;
   pageApproved = 1;
   pageRejected = 1;
   readonly PAGE_SIZE = 10;
 
-  // Bulk selection (pending tab) — tracks {productId, dealerId} pairs
-  selectedItems: Set<string> = new Set(); // key = "productId:dealerId"
+  selectedItems: Set<string> = new Set();
   bulkProcessing = false;
 
   toast     = '';
   toastType: 'success' | 'error' = 'success';
 
-  constructor(private http: HttpClient, private zone: NgZone, private productMgmt: ProductManagementService, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private productMgmt: ProductManagementService,
+    private router: Router
+  ) {}
 
   ngOnInit() { this.loadAll(); }
 
@@ -84,10 +88,10 @@ export class ProductApprovalComponent implements OnInit {
       this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.categoryFilter}`).subscribe({
         next: (data) => {
           if (!Array.isArray(data) || data.length === 0) { this.categoryBrands = []; return; }
-          // Handle both string[] and product object[] responses
           this.categoryBrands = typeof data[0] === 'string'
             ? [...new Set(data.filter(Boolean))].sort() as string[]
             : [...new Set(data.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
+          this.cdr.markForCheck();
         },
         error: () => {}
       });
@@ -108,7 +112,7 @@ export class ProductApprovalComponent implements OnInit {
     this.pendingLoading  = true;
     this.approvedLoading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/products/pending`).subscribe({
-      next: (data) => this.zone.run(() => {
+      next: (data) => {
         this.pendingLoading = false;
         const raw = Array.isArray(data) ? data : [];
 
@@ -121,23 +125,16 @@ export class ProductApprovalComponent implements OnInit {
 
           const approvedDealers = dealers.filter((d: any) => d.status === 'APPROVED');
           const rejectedDealers = dealers.filter((d: any) => d.status === 'REJECTED');
-          // Pending dealers: empty array OR dealers with null status
           const pendingDealers  = dealers.filter((d: any) => d.status == null);
 
-          // Products with APPROVED dealers → Approved tab
           if (approvedDealers.length > 0) {
             approvedFromPending.push({ ...this.mapCard(p, approvedDealers), status: 'APPROVED' });
           }
 
-          // Products with REJECTED dealers → Rejected tab
           if (rejectedDealers.length > 0) {
             rejectedFromPending.push({ ...this.mapCard(p, rejectedDealers), status: 'REJECTED' });
           }
 
-          // Pending tab:
-          //   - dealerProducts is empty (no dealers assigned yet) → PENDING
-          //   - has dealers but all statuses are null (assigned, not yet actioned) → ASSIGNED
-          //   - has some pending (null-status) dealers alongside actioned ones → show only pending dealers
           const hasPendingDealers = dealers.length === 0 || pendingDealers.length > 0;
           if (hasPendingDealers) {
             const derivedStatus = dealers.length === 0 ? 'PENDING' : 'ASSIGNED';
@@ -150,10 +147,10 @@ export class ProductApprovalComponent implements OnInit {
 
         this.pending  = pendingCards;
         this.rejected = rejectedFromPending;
+        this.cdr.markForCheck();
 
-        // Load approved from API and merge with those derived from pending response
         this.http.get<any[]>(`${environment.apiUrl}/api/products/approved`).subscribe({
-          next: (approvedData) => this.zone.run(() => {
+          next: (approvedData) => {
             this.approvedLoading = false;
             const fromApi = this.mapCards(Array.isArray(approvedData) ? approvedData : []);
             const merged  = [...fromApi];
@@ -163,34 +160,39 @@ export class ProductApprovalComponent implements OnInit {
               }
             });
             this.approved = merged;
-          }),
-          error: () => this.zone.run(() => {
+            this.cdr.markForCheck();
+          },
+          error: () => {
             this.approvedLoading = false;
             this.approved = approvedFromPending;
             this.showToast('Failed to load approved products', 'error');
-          })
+            this.cdr.markForCheck();
+          }
         });
-      }),
-      error: () => this.zone.run(() => {
+      },
+      error: () => {
         this.pendingLoading  = false;
         this.approvedLoading = false;
         this.showToast('Failed to load pending products', 'error');
+        this.cdr.markForCheck();
         this.loadApproved();
-      })
+      }
     });
   }
 
   loadApproved() {
     this.approvedLoading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/products/approved`).subscribe({
-      next: (data) => this.zone.run(() => {
+      next: (data) => {
         this.approvedLoading = false;
         this.approved = this.mapCards(Array.isArray(data) ? data : []);
-      }),
-      error: () => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: () => {
         this.approvedLoading = false;
         this.showToast('Failed to load approved products', 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -217,7 +219,6 @@ export class ProductApprovalComponent implements OnInit {
   }
 
   private mapDealer(d: any): DealerProduct {
-    // Read price from all possible field names the backend might return
     const price = d.dealerPrice ?? d.price ?? d.assignedPrice ?? d.proposedPrice ?? null;
     return {
       id:           d.id,
@@ -250,15 +251,20 @@ export class ProductApprovalComponent implements OnInit {
     let result = list;
     if (this.brandFilter) {
       const b = this.brandFilter.toLowerCase();
-      result = result.filter(p => p.brand?.toLowerCase().includes(b));
+      result = result.filter(p => p.brand?.toLowerCase() === b);
     }
     if (this.categoryFilter) {
       const c = this.categoryFilter.toLowerCase();
-      result = result.filter(p => p.category?.toLowerCase().includes(c));
+      result = result.filter(p => p.category?.toLowerCase() === c);
     }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(p => this.matchesSearch(p, q));
+    }
+    if (this.priceSort === 'asc') {
+      result = [...result].sort((a, b) => (a.supplierPrice ?? 0) - (b.supplierPrice ?? 0));
+    } else if (this.priceSort === 'desc') {
+      result = [...result].sort((a, b) => (b.supplierPrice ?? 0) - (a.supplierPrice ?? 0));
     }
     return result;
   }
@@ -304,17 +310,19 @@ export class ProductApprovalComponent implements OnInit {
     this.http.put(`${environment.apiUrl}/api/products/approve`, body,
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: (res: any) => this.zone.run(() => {
+      next: (res: any) => {
         card.processing = false;
         card.status     = 'APPROVED';
         this.pending    = this.pending.filter(p => p.productCode !== card.productCode);
         this.approved   = [{ ...card, status: 'APPROVED' }, ...this.approved];
         this.showToast(res || 'Product(s) approved by admin', 'success');
-      }),
-      error: () => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: () => {
         card.processing = false;
         this.showToast(`Failed to approve "${card.productName}"`, 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -324,17 +332,19 @@ export class ProductApprovalComponent implements OnInit {
     this.http.put(`${environment.apiUrl}/api/products/reject`, body,
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: (res: any) => this.zone.run(() => {
+      next: (res: any) => {
         card.processing = false;
         card.status     = 'REJECTED';
         this.pending    = this.pending.filter(p => p.productCode !== card.productCode);
         this.rejected   = [{ ...card, status: 'REJECTED' }, ...this.rejected];
         this.showToast(res || 'Product(s) rejected by admin', 'success');
-      }),
-      error: () => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: () => {
         card.processing = false;
         this.showToast(`Failed to reject "${card.productName}"`, 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -342,15 +352,13 @@ export class ProductApprovalComponent implements OnInit {
 
   approveDealer(card: ProductCard, dealer: DealerProduct) {
     dealer.processing = true;
-    // Step 1: FINALIZE_PRICE (no price needed)
     this.productMgmt.finalizePrice(dealer.dealerId, card.id).subscribe({
       next: () => {
-        // Step 2: approve
         const body = [{ productId: card.id, dealerId: dealer.dealerId }];
         this.http.put(`${environment.apiUrl}/api/products/approve`, body,
           { responseType: 'text' as 'json' }
         ).subscribe({
-          next: (res: any) => this.zone.run(() => {
+          next: (res: any) => {
             dealer.processing = false;
             dealer.status     = 'APPROVED';
             card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
@@ -364,17 +372,20 @@ export class ProductApprovalComponent implements OnInit {
               ];
             }
             this.showToast(res || 'Product(s) approved by admin', 'success');
-          }),
-          error: () => this.zone.run(() => {
+            this.cdr.markForCheck();
+          },
+          error: () => {
             dealer.processing = false;
             this.showToast(`Failed to approve for ${dealer.dealerName}`, 'error');
-          })
+            this.cdr.markForCheck();
+          }
         });
       },
-      error: () => this.zone.run(() => {
+      error: () => {
         dealer.processing = false;
         this.showToast(`Failed to finalize price for ${dealer.dealerName}`, 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -384,7 +395,7 @@ export class ProductApprovalComponent implements OnInit {
     this.http.put(`${environment.apiUrl}/api/products/reject`, body,
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: (res: any) => this.zone.run(() => {
+      next: (res: any) => {
         dealer.processing = false;
         dealer.status     = 'REJECTED';
         card.dealerProducts = card.dealerProducts.filter(d => d.id !== dealer.id);
@@ -398,11 +409,13 @@ export class ProductApprovalComponent implements OnInit {
           ];
         }
         this.showToast(res || 'Product(s) rejected by admin', 'success');
-      }),
-      error: () => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: () => {
         dealer.processing = false;
         this.showToast(`Failed to reject for ${dealer.dealerName}`, 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -429,7 +442,6 @@ export class ProductApprovalComponent implements OnInit {
     }
   }
 
-  /** All selectable dealer entries from the current filtered+paged pending list */
   private get selectablePendingItems(): { productId: number; dealerId: number }[] {
     const items: { productId: number; dealerId: number }[] = [];
     this.filteredPending.forEach(card => {
@@ -473,16 +485,18 @@ export class ProductApprovalComponent implements OnInit {
     this.http.put(`${environment.apiUrl}/api/products/approve`, this.buildBulkBody(),
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: (res: any) => this.zone.run(() => {
+      next: (res: any) => {
         this.bulkProcessing = false;
         this.selectedItems.clear();
         this.showToast(res || 'Product(s) approved by admin', 'success');
+        this.cdr.markForCheck();
         this.loadAll();
-      }),
-      error: () => this.zone.run(() => {
+      },
+      error: () => {
         this.bulkProcessing = false;
         this.showToast('Bulk approve failed', 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -492,16 +506,18 @@ export class ProductApprovalComponent implements OnInit {
     this.http.put(`${environment.apiUrl}/api/products/reject`, this.buildBulkBody(),
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: (res: any) => this.zone.run(() => {
+      next: (res: any) => {
         this.bulkProcessing = false;
         this.selectedItems.clear();
         this.showToast(res || 'Product(s) rejected by admin', 'success');
+        this.cdr.markForCheck();
         this.loadAll();
-      }),
-      error: () => this.zone.run(() => {
+      },
+      error: () => {
         this.bulkProcessing = false;
         this.showToast('Bulk reject failed', 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -524,7 +540,6 @@ export class ProductApprovalComponent implements OnInit {
     dealer.editing = false;
   }
 
-  /** Admin saves updated price via UPDATE_PRICE (pending tab) */
   savePendingPrice(card: ProductCard, dealer: DealerProduct) {
     if (!dealer.editingPrice || dealer.editingPrice <= 0) {
       this.showToast('Please enter a valid price', 'error');
@@ -533,33 +548,32 @@ export class ProductApprovalComponent implements OnInit {
     dealer.processing = true;
     const price = dealer.editingPrice;
     this.productMgmt.updatePrice(dealer.dealerId, card.id, price).subscribe({
-      next: () => this.zone.run(() => {
+      next: () => {
         dealer.processing   = false;
         dealer.editing      = false;
         dealer.dealerPrice  = price;
         dealer.editingPrice = price;
         this.showToast('Price updated successfully', 'success');
-      }),
-      error: () => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: () => {
         dealer.processing = false;
         this.showToast('Failed to update price', 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
-  /** Admin updates dealer price then approves in one step */
   approveWithPrice(card: ProductCard, dealer: DealerProduct) {
     dealer.processing = true;
     const price = dealer.editingPrice ?? dealer.dealerPrice ?? 0;
-    // Step 1: FINALIZE_PRICE (no price in this call)
     this.productMgmt.finalizePrice(dealer.dealerId, card.id).subscribe({
       next: () => {
-        // Step 2: approve with price
         const body = [{ productId: card.id, dealerId: dealer.dealerId, price }];
         this.http.put(`${environment.apiUrl}/api/products/approve`, body,
           { responseType: 'text' as 'json' }
         ).subscribe({
-          next: (res: any) => this.zone.run(() => {
+          next: (res: any) => {
             dealer.processing   = false;
             dealer.editing      = false;
             dealer.dealerPrice  = price;
@@ -576,36 +590,40 @@ export class ProductApprovalComponent implements OnInit {
               ];
             }
             this.showToast(res || 'Product(s) approved by admin', 'success');
-          }),
-          error: () => this.zone.run(() => {
+            this.cdr.markForCheck();
+          },
+          error: () => {
             dealer.processing = false;
             this.showToast(`Failed to approve for ${dealer.dealerName}`, 'error');
-          })
+            this.cdr.markForCheck();
+          }
         });
       },
-      error: () => this.zone.run(() => {
+      error: () => {
         dealer.processing = false;
         this.showToast(`Failed to finalize price for ${dealer.dealerName}`, 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 
-  /** Admin edits price on an already-approved dealer entry — calls UPDATE_PRICE */
   saveApprovedPrice(card: ProductCard, dealer: DealerProduct) {
     dealer.processing = true;
     const price = dealer.editingPrice ?? dealer.dealerPrice ?? 0;
     this.productMgmt.updatePrice(dealer.dealerId, card.id, price).subscribe({
-      next: () => this.zone.run(() => {
+      next: () => {
         dealer.processing   = false;
         dealer.editing      = false;
         dealer.dealerPrice  = price;
         dealer.editingPrice = price;
         this.showToast('Price updated successfully', 'success');
-      }),
-      error: () => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: () => {
         dealer.processing = false;
         this.showToast(`Failed to update price for ${dealer.dealerName}`, 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 }

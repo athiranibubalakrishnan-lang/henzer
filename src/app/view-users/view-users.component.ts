@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -14,27 +14,24 @@ import { environment } from '../../environments/environment';
 })
 export class ViewUsersComponent implements OnInit {
 
-  activeTab: 'dealers' | 'group-users' = 'dealers';
+  activeTab: 'dealers' | 'group-users' | 'regular-users' = 'dealers';
 
   allUsers: any[] = [];
   loading = false;
   toast = '';
 
-  // Dealers tab
   searchDealers = '';
-
-  // Group users tab
   searchGroupUsers = '';
+  searchRegularUsers = '';
   customerGroups: any[] = [];
   selectedGroupId: number | null = null;
 
-  // Inline group edit
   editingEmail: string | null = null;
   editGroupId: number | null = null;
 
   constructor(
     private userService: UserService,
-    private zone: NgZone,
+    private cdr: ChangeDetectorRef,
     private http: HttpClient
   ) {}
 
@@ -45,7 +42,10 @@ export class ViewUsersComponent implements OnInit {
 
   loadCustomerGroups() {
     this.http.get<any[]>(`${environment.apiUrl}/api/customer-groups`).subscribe({
-      next: (data) => this.customerGroups = Array.isArray(data) ? data : [],
+      next: (data) => {
+        this.customerGroups = Array.isArray(data) ? data : [];
+        this.cdr.markForCheck();
+      },
       error: () => {}
     });
   }
@@ -54,21 +54,17 @@ export class ViewUsersComponent implements OnInit {
     this.loading = true;
     this.userService.getAll().subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.allUsers = Array.isArray(data) ? data : [];
-        });
+        this.loading = false;
+        this.allUsers = Array.isArray(data) ? data : [];
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.zone.run(() => {
-          this.loading = false;
-          console.error('Failed to load users', err);
-        });
+        this.loading = false;
+        console.error('Failed to load users', err);
+        this.cdr.markForCheck();
       }
     });
   }
-
-  // ── Dealers tab ─────────────────────────────────────────────────
 
   get dealers(): any[] {
     const q = this.searchDealers.toLowerCase();
@@ -79,12 +75,10 @@ export class ViewUsersComponent implements OnInit {
         u.email?.toLowerCase().includes(q));
   }
 
-  // ── Group users tab ──────────────────────────────────────────────
-
   get groupUsers(): any[] {
     const q = this.searchGroupUsers.toLowerCase();
     return this.allUsers
-      .filter(u => u.role === 'USER' && u.customerGroupId != null)
+      .filter(u => u.role === 'USER' && !!u.customerGroupId)
       .filter(u => !this.selectedGroupId || u.customerGroupId === this.selectedGroupId)
       .filter(u => !q ||
         u.username?.toLowerCase().includes(q) ||
@@ -92,11 +86,18 @@ export class ViewUsersComponent implements OnInit {
         u.groupName?.toLowerCase().includes(q));
   }
 
+  get regularUsers(): any[] {
+    const q = this.searchRegularUsers.toLowerCase();
+    return this.allUsers
+      .filter(u => u.role === 'USER' && !u.customerGroupId)
+      .filter(u => !q ||
+        u.username?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q));
+  }
+
   groupNameFor(groupId: number): string {
     return this.customerGroups.find(g => g.id === groupId)?.groupName ?? '—';
   }
-
-  // ── Inline group edit ────────────────────────────────────────────
 
   startEditGroup(u: any) {
     this.editingEmail = u.email;
@@ -113,7 +114,6 @@ export class ViewUsersComponent implements OnInit {
       id:              u.id,
       userName:        u.username,
       email:           u.email,
-      password:        u.password || '',
       role:            u.role,
       status:          u.status,
       addresses:       u.addresses || [],
@@ -123,10 +123,15 @@ export class ViewUsersComponent implements OnInit {
       next: () => {
         const group = this.customerGroups.find(g => g.id === this.editGroupId);
         u.groupName       = group?.groupName || '';
-        u.customerGroupId = this.editGroupId;
+        u.customerGroupId = this.editGroupId || null;
         this.editingEmail = null;
         this.editGroupId  = null;
+        // If a group was assigned, switch to group-users tab so the user appears there
+        if (u.customerGroupId) {
+          this.activeTab = 'group-users';
+        }
         this.showToast('Group updated successfully');
+        this.cdr.markForCheck();
       },
       error: () => this.showToast('Failed to update group')
     });
@@ -138,11 +143,13 @@ export class ViewUsersComponent implements OnInit {
   }
 
   refresh() {
-    this.searchDealers    = '';
-    this.searchGroupUsers = '';
+    this.searchDealers      = '';
+    this.searchGroupUsers   = '';
+    this.searchRegularUsers = '';
     this.loadUsers();
   }
 
-  get dealerCount(): number     { return this.allUsers.filter(u => u.role === 'DEALER').length; }
-  get groupUserCount(): number  { return this.allUsers.filter(u => u.role === 'USER' && u.customerGroupId != null).length; }
+  get dealerCount(): number       { return this.allUsers.filter(u => u.role === 'DEALER').length; }
+  get groupUserCount(): number    { return this.allUsers.filter(u => u.role === 'USER' && !!u.customerGroupId).length; }
+  get regularUserCount(): number  { return this.allUsers.filter(u => u.role === 'USER' && !u.customerGroupId).length; }
 }

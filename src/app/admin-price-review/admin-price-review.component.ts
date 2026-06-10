@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -76,7 +76,7 @@ export class AdminPriceReviewComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private productMgmt: ProductManagementService,
-    private zone: NgZone
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -100,39 +100,37 @@ export class AdminPriceReviewComponent implements OnInit {
     this.assignmentsLoading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/products/assignments`).subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.assignmentsLoading = false;
-          this.assignmentGroups = (Array.isArray(data) ? data : []).map(item => ({
-            productId:     item.productId ?? item.id,
-            productName:   item.productName,
-            brand:         item.brand,
-            category:      item.category,
-            sku:           item.sku,
-            supplierPrice: item.supplierPrice ?? item.price,
-            expanded:      false,
-            dealers: (item.dealers ?? []).map((d: any) => ({
-              dealerId:      d.dealerId,
-              dealerName:    d.dealerName ?? d.dealerEmail,
-              dealerEmail:   d.dealerEmail,
-              assignedPrice: d.assignedPrice ?? d.dealerPrice ?? null,
-              proposedPrice: d.proposedPrice ?? null,
-              status:        d.status ?? 'ASSIGNED',
-              processing:    false
-            }))
-          }));
-          const cats = [...new Set(this.assignmentGroups.map(g => g.category).filter(Boolean))];
-          this.assignCategories = ['All', ...cats];
-          const dlrs = [...new Set(
-            this.assignmentGroups.flatMap(g => g.dealers.map(d => d.dealerName)).filter(Boolean)
-          )];
-          this.assignDealers = ['All', ...dlrs];
-        });
+        this.assignmentsLoading = false;
+        this.assignmentGroups = (Array.isArray(data) ? data : []).map(item => ({
+          productId:     item.productId ?? item.id,
+          productName:   item.productName,
+          brand:         item.brand,
+          category:      item.category,
+          sku:           item.sku,
+          supplierPrice: item.supplierPrice ?? item.price,
+          expanded:      false,
+          dealers: (item.dealers ?? []).map((d: any) => ({
+            dealerId:      d.dealerId,
+            dealerName:    d.dealerName ?? d.dealerEmail,
+            dealerEmail:   d.dealerEmail,
+            assignedPrice: d.assignedPrice ?? d.dealerPrice ?? null,
+            proposedPrice: d.proposedPrice ?? null,
+            status:        d.status ?? 'ASSIGNED',
+            processing:    false
+          }))
+        }));
+        const cats = [...new Set(this.assignmentGroups.map(g => g.category).filter(Boolean))];
+        this.assignCategories = ['All', ...cats];
+        const dlrs = [...new Set(
+          this.assignmentGroups.flatMap(g => g.dealers.map(d => d.dealerName)).filter(Boolean)
+        )];
+        this.assignDealers = ['All', ...dlrs];
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => {
-          this.assignmentsLoading = false;
-          this.showToast('Failed to load assignments', 'error');
-        });
+        this.assignmentsLoading = false;
+        this.showToast('Failed to load assignments', 'error');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -168,34 +166,32 @@ export class AdminPriceReviewComponent implements OnInit {
     this.reviewLoading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/products/price-proposals`).subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.reviewLoading = false;
-          this.proposals = (Array.isArray(data) ? data : []).map(p => ({
-            productId:     p.productId ?? p.id,
-            productName:   p.productName,
-            brand:         p.brand,
-            category:      p.category,
-            sku:           p.sku,
-            supplierPrice: p.supplierPrice ?? p.price,
-            dealerPrice:   p.dealerPrice ?? null,
-            proposedPrice: p.proposedPrice,
-            dealerId:      p.dealerId,
-            dealerName:    p.dealerName ?? p.dealerEmail,
-            dealerEmail:   p.dealerEmail,
-            status:        p.status ?? 'PENDING_APPROVAL',
-            processing:    false
-          }));
-          const cats = [...new Set(this.proposals.map(p => p.category).filter(Boolean))];
-          this.reviewCategories = ['All', ...cats];
-          const dlrs = [...new Set(this.proposals.map(p => p.dealerName).filter(Boolean))];
-          this.reviewDealers = ['All', ...dlrs];
-        });
+        this.reviewLoading = false;
+        this.proposals = (Array.isArray(data) ? data : []).map(p => ({
+          productId:     p.productId ?? p.id,
+          productName:   p.productName,
+          brand:         p.brand,
+          category:      p.category,
+          sku:           p.sku,
+          supplierPrice: p.supplierPrice ?? p.price,
+          dealerPrice:   p.dealerPrice ?? null,
+          proposedPrice: p.proposedPrice,
+          dealerId:      p.dealerId,
+          dealerName:    p.dealerName ?? p.dealerEmail,
+          dealerEmail:   p.dealerEmail,
+          status:        p.status ?? 'PENDING_APPROVAL',
+          processing:    false
+        }));
+        const cats = [...new Set(this.proposals.map(p => p.category).filter(Boolean))];
+        this.reviewCategories = ['All', ...cats];
+        const dlrs = [...new Set(this.proposals.map(p => p.dealerName).filter(Boolean))];
+        this.reviewDealers = ['All', ...dlrs];
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => {
-          this.reviewLoading = false;
-          this.showToast('Failed to load price proposals', 'error');
-        });
+        this.reviewLoading = false;
+        this.showToast('Failed to load price proposals', 'error');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -213,21 +209,18 @@ export class AdminPriceReviewComponent implements OnInit {
     proposal.processing = true;
     this.productMgmt.finalizePrice(proposal.dealerId, proposal.productId).subscribe({
       next: () => {
-        this.zone.run(() => {
-          proposal.processing = false;
-          proposal.status = 'FINALIZE_PRICE';
-          this.showToast(`Price approved for ${proposal.productName}`, 'success');
-          // sync status back into assignments tab
-          const group = this.assignmentGroups.find(g => g.productId === proposal.productId);
-          const dealer = group?.dealers.find(d => d.dealerId === proposal.dealerId);
-          if (dealer) dealer.status = 'FINALIZE_PRICE';
-        });
+        proposal.processing = false;
+        proposal.status = 'FINALIZE_PRICE';
+        this.showToast(`Price approved for ${proposal.productName}`, 'success');
+        const group = this.assignmentGroups.find(g => g.productId === proposal.productId);
+        const dealer = group?.dealers.find(d => d.dealerId === proposal.dealerId);
+        if (dealer) dealer.status = 'FINALIZE_PRICE';
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => {
-          proposal.processing = false;
-          this.showToast('Failed to approve price', 'error');
-        });
+        proposal.processing = false;
+        this.showToast('Failed to approve price', 'error');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -240,20 +233,18 @@ export class AdminPriceReviewComponent implements OnInit {
       productId: proposal.productId
     }).subscribe({
       next: () => {
-        this.zone.run(() => {
-          proposal.processing = false;
-          proposal.status = 'REJECTED';
-          this.showToast(`Price rejected for ${proposal.productName}`, 'success');
-          const group = this.assignmentGroups.find(g => g.productId === proposal.productId);
-          const dealer = group?.dealers.find(d => d.dealerId === proposal.dealerId);
-          if (dealer) dealer.status = 'REJECTED';
-        });
+        proposal.processing = false;
+        proposal.status = 'REJECTED';
+        this.showToast(`Price rejected for ${proposal.productName}`, 'success');
+        const group = this.assignmentGroups.find(g => g.productId === proposal.productId);
+        const dealer = group?.dealers.find(d => d.dealerId === proposal.dealerId);
+        if (dealer) dealer.status = 'REJECTED';
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => {
-          proposal.processing = false;
-          this.showToast('Failed to reject price', 'error');
-        });
+        proposal.processing = false;
+        this.showToast('Failed to reject price', 'error');
+        this.cdr.markForCheck();
       }
     });
   }

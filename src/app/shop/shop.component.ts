@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../product.service';
@@ -18,11 +18,12 @@ export class ShopComponent implements OnInit {
   searchText = '';
   toast = '';
   quantities: { [key: string]: number } = {};
+  priceSort: 'none' | 'asc' | 'desc' = 'none';
 
   constructor(
     private productService: ProductService,
     private cartService: CartService,
-    private zone: NgZone
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() { this.loadProducts(); }
@@ -33,26 +34,36 @@ export class ShopComponent implements OnInit {
     const fetch$ = role === 'USER' ? this.productService.getPublic() : this.productService.getAll();
     fetch$.subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.products = Array.isArray(data) ? data : [];
-          this.products.forEach(p => this.quantities[p.productCode] = 1);
-        });
+        this.loading = false;
+        this.products = Array.isArray(data) ? data : [];
+        this.products.forEach(p => this.quantities[p.productCode] = 1);
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => { this.loading = false; });
+        this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   get filtered(): any[] {
-    if (!this.searchText.trim()) return this.products;
+    if (!this.searchText.trim()) {
+      let result = this.products;
+      return this.applyPriceSort(result);
+    }
     const q = this.searchText.toLowerCase();
-    return this.products.filter(p =>
+    const result = this.products.filter(p =>
       p.productName?.toLowerCase().includes(q) ||
       p.brand?.toLowerCase().includes(q) ||
       p.model?.toLowerCase().includes(q)
     );
+    return this.applyPriceSort(result);
+  }
+
+  private applyPriceSort(list: any[]): any[] {
+    if (this.priceSort === 'asc') return [...list].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+    if (this.priceSort === 'desc') return [...list].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+    return list;
   }
 
   addToCart(p: any) {

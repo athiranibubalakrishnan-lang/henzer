@@ -56,6 +56,11 @@
       </select>
       <input type="text" [(ngModel)]="searchPending" (ngModelChange)="pagePending = 1"
         placeholder="Search by Name or SKU" class="search-input" />
+      <select [(ngModel)]="priceSort" (ngModelChange)="pagePending = 1" class="filter-input filter-select">
+        <option value="none">Sort by Price</option>
+        <option value="asc">Price: Low to High</option>
+        <option value="desc">Price: High to Low</option>
+      </select>
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -211,6 +216,11 @@
       </select>
       <input type="text" [(ngModel)]="searchApproved" (ngModelChange)="pageApproved = 1"
         placeholder="Search by Name or SKU" class="search-input" />
+      <select [(ngModel)]="priceSort" (ngModelChange)="pageApproved = 1" class="filter-input filter-select">
+        <option value="none">Sort by Price</option>
+        <option value="asc">Price: Low to High</option>
+        <option value="desc">Price: High to Low</option>
+      </select>
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -314,6 +324,11 @@
       </select>
       <input type="text" [(ngModel)]="searchRejected" (ngModelChange)="pageRejected = 1"
         placeholder="Search by Name or SKU" class="search-input" />
+      <select [(ngModel)]="priceSort" (ngModelChange)="pageRejected = 1" class="filter-input filter-select">
+        <option value="none">Sort by Price</option>
+        <option value="asc">Price: Low to High</option>
+        <option value="desc">Price: High to Low</option>
+      </select>
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -375,3 +390,4 @@
   }
 
 </div>
+

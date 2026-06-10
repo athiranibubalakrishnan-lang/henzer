@@ -2,9 +2,16 @@
 
   <div class="page-header-row">
     <h2 class="title">View Products</h2>
-    @if (isAdmin) {
-      <button class="btn-assign" (click)="assignToDealer()">🤝 Assign to a Dealer</button>
-    }
+    <div class="header-actions">
+      @if (isAdmin) {
+        <button class="btn-export" (click)="exportProducts()" [disabled]="exportExporting">
+          {{ exportExporting ? '⏳ Exporting...' : '📥 Export' }}
+        </button>
+      }
+      @if (isAdmin) {
+        <button class="btn-assign" (click)="assignToDealer()">🤝 Assign to a Dealer</button>
+      }
+    </div>
   </div>
 
   @if (toast) {
@@ -57,6 +64,11 @@
           }
         </select>
         <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchAssigned" (ngModelChange)="dealerPageAssigned = 1" class="filter-input flex-grow" />
+        <select [(ngModel)]="priceSortDealer" (ngModelChange)="dealerPageAssigned = 1" class="filter-input filter-select">
+          <option value="none">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerAssigned.length === 0) {
@@ -69,7 +81,7 @@
             <thead>
               <tr>
                 <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
-                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th><th>Actions</th>
+                <th>Existing Price</th><th>Dealer Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -128,6 +140,11 @@
           }
         </select>
         <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchApproved" (ngModelChange)="dealerPageApproved = 1" class="filter-input flex-grow" />
+        <select [(ngModel)]="priceSortDealer" (ngModelChange)="dealerPageApproved = 1" class="filter-input filter-select">
+          <option value="none">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerApproved.length === 0) {
@@ -140,7 +157,7 @@
             <thead>
               <tr>
                 <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
-                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th><th>Actions</th>
+                <th>Existing Price</th><th>Dealer Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -199,6 +216,11 @@
           }
         </select>
         <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="dealerSearchRejected" (ngModelChange)="dealerPageRejected = 1" class="filter-input flex-grow" />
+        <select [(ngModel)]="priceSortDealer" (ngModelChange)="dealerPageRejected = 1" class="filter-input filter-select">
+          <option value="none">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerRejected.length === 0) {
@@ -211,7 +233,7 @@
             <thead>
               <tr>
                 <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
-                <th>Supplier Price</th><th>Dealer Price</th><th>Status</th>
+                <th>Existing Price</th><th>Dealer Price</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -258,6 +280,11 @@
         }
       </select>
       <input type="text" placeholder="Search by Name or SKU" [(ngModel)]="searchText" (ngModelChange)="adminPage = 1" class="filter-input flex-grow" />
+      <select [(ngModel)]="priceSortAdmin" (ngModelChange)="adminPage = 1" class="filter-input filter-select">
+        <option value="none">Sort by Price</option>
+        <option value="asc">Price: Low to High</option>
+        <option value="desc">Price: High to Low</option>
+      </select>
       <button class="search-btn" (click)="refresh()">Refresh</button>
     </div>
 
@@ -268,7 +295,7 @@
           <thead>
             <tr>
               <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
-              <th>Price</th>
+              <th>Existing Price</th>
               @if (isAdmin) { <th>Status</th> }
               <th>Actions</th>
             </tr>
@@ -430,3 +457,4 @@
     </div>
   </div>
 }
+

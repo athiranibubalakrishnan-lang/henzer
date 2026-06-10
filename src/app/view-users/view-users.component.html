@@ -19,8 +19,12 @@
       <span class="tab-count">{{ dealerCount }}</span>
     </button>
     <button class="tab" [class.active]="activeTab === 'group-users'" (click)="activeTab = 'group-users'">
-      👥 Customer Group Users
+      👥 Group Users
       <span class="tab-count">{{ groupUserCount }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'regular-users'" (click)="activeTab = 'regular-users'">
+      👤 Regular Users
+      <span class="tab-count">{{ regularUserCount }}</span>
     </button>
   </div>
 
@@ -67,7 +71,7 @@
     }
 
     <!-- ══════════════════════════════════════ -->
-    <!-- TAB 2: CUSTOMER GROUP USERS           -->
+    <!-- TAB 2: GROUP USERS                    -->
     <!-- ══════════════════════════════════════ -->
     @if (activeTab === 'group-users') {
       <div class="toolbar">
@@ -91,7 +95,6 @@
                 <th>#</th>
                 <th>Username</th>
                 <th>Email</th>
-                <th>Role</th>
                 <th>Customer Group</th>
                 <th>Actions</th>
               </tr>
@@ -102,7 +105,6 @@
                   <td class="row-num">{{ i + 1 }}</td>
                   <td class="name-cell">{{ u.username }}</td>
                   <td>{{ u.email }}</td>
-                  <td>{{ u.role }}</td>
                   <td>
                     @if (editingEmail === u.email) {
                       <select [(ngModel)]="editGroupId" class="inline-select">
@@ -119,8 +121,58 @@
                     @if (editingEmail === u.email) {
                       <button class="btn-save" (click)="saveGroup(u)">💾 Save</button>
                       <button class="btn-cancel-edit" (click)="cancelEditGroup()">✕</button>
-                    } @else if (u.role === 'USER') {
+                    } @else {
                       <button class="btn-edit" (click)="startEditGroup(u)">✏️ Edit Group</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- TAB 3: REGULAR USERS (no group)       -->
+    <!-- ══════════════════════════════════════ -->
+    @if (activeTab === 'regular-users') {
+      <div class="toolbar">
+        <input type="text" [(ngModel)]="searchRegularUsers"
+          placeholder="Search by name or email..." class="search-input" />
+      </div>
+
+      @if (regularUsers.length === 0) {
+        <div class="empty-state"><p>No users without a customer group.</p></div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of regularUsers; track u.email; let i = $index) {
+                <tr>
+                  <td class="row-num">{{ i + 1 }}</td>
+                  <td class="name-cell">{{ u.username }}</td>
+                  <td>{{ u.email }}</td>
+                  <td class="actions-cell">
+                    @if (editingEmail === u.email) {
+                      <select [(ngModel)]="editGroupId" class="inline-select">
+                        <option [ngValue]="null">— None —</option>
+                        @for (g of customerGroups; track g.id) {
+                          <option [ngValue]="g.id">{{ g.groupName }}</option>
+                        }
+                      </select>
+                      <button class="btn-save" (click)="saveGroup(u)">💾 Save</button>
+                      <button class="btn-cancel-edit" (click)="cancelEditGroup()">✕</button>
+                    } @else {
+                      <button class="btn-edit" (click)="startEditGroup(u)">➕ Assign Group</button>
                     }
                   </td>
                 </tr>

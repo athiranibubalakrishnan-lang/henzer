@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -42,11 +42,11 @@ export class DealerProductsComponent implements OnInit {
   searchAssigned = '';
   searchApproved = '';
   searchRejected = '';
-
+  priceSort: 'none' | 'asc' | 'desc' = 'none';
   constructor(
     private http: HttpClient,
     private productMgmt: ProductManagementService,
-    private zone: NgZone
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -69,76 +69,79 @@ export class DealerProductsComponent implements OnInit {
     this.loading = true;
     this.http.get<any[]>(`${environment.apiUrl}/api/products/pending`).subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.loading = false;
-          const raw = Array.isArray(data) ? data : [];
-          const myId = this.dealerId;
+        this.loading = false;
+        const raw = Array.isArray(data) ? data : [];
+        const myId = this.dealerId;
 
-          const assignedList: DealerProductRow[] = [];
-          const approvedList: DealerProductRow[] = [];
-          const rejectedList: DealerProductRow[] = [];
+        const assignedList: DealerProductRow[] = [];
+        const approvedList: DealerProductRow[] = [];
+        const rejectedList: DealerProductRow[] = [];
 
-          raw.forEach(p => {
-            const dealers: any[] = p.dealerProducts ?? [];
-            // Find the entry that belongs to this dealer
-            const myEntry = dealers.find((d: any) => d.dealerId === myId);
-            if (!myEntry) return; // product not assigned to this dealer — skip
+        raw.forEach(p => {
+          const dealers: any[] = p.dealerProducts ?? [];
+          const myEntry = dealers.find((d: any) => d.dealerId === myId);
+          if (!myEntry) return;
 
-            const row: DealerProductRow = {
-              productId:      p.id,
-              productCode:    p.productCode,
-              productName:    p.productName,
-              brand:          p.brand,
-              category:       p.category,
-              sku:            p.sku,
-              supplierPrice:  p.supplierPrice ?? 0,
-              dealerPrice:    myEntry.dealerPrice ?? null,
-              proposedPrice:  myEntry.dealerPrice ?? null,
-              dealerProductId: myEntry.id,
-              editing:        false,
-              saving:         false
-            };
+          const row: DealerProductRow = {
+            productId:      p.id,
+            productCode:    p.productCode,
+            productName:    p.productName,
+            brand:          p.brand,
+            category:       p.category,
+            sku:            p.sku,
+            supplierPrice:  p.supplierPrice ?? 0,
+            dealerPrice:    myEntry.dealerPrice ?? null,
+            proposedPrice:  myEntry.dealerPrice ?? null,
+            dealerProductId: myEntry.id,
+            editing:        false,
+            saving:         false
+          };
 
-            const status: string | null = myEntry.status ?? null;
-            if (status === 'APPROVED') {
-              approvedList.push(row);
-            } else if (status === 'REJECTED') {
-              rejectedList.push(row);
-            } else {
-              // null status → assigned but not yet actioned
-              assignedList.push(row);
-            }
-          });
-
-          this.assigned = assignedList;
-          this.approved = approvedList;
-          this.rejected = rejectedList;
+          const status: string | null = myEntry.status ?? null;
+          if (status === 'APPROVED') {
+            approvedList.push(row);
+          } else if (status === 'REJECTED') {
+            rejectedList.push(row);
+          } else {
+            assignedList.push(row);
+          }
         });
+
+        this.assigned = assignedList;
+        this.approved = approvedList;
+        this.rejected = rejectedList;
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.showToast('Failed to load products', 'error');
-        });
+        this.loading = false;
+        this.showToast('Failed to load products', 'error');
+        this.cdr.markForCheck();
       }
     });
   }
 
-  // ── Filtered lists ────────────────────────────────────────────────
-
   get filteredAssigned(): DealerProductRow[] {
     const q = this.searchAssigned.toLowerCase();
-    return q ? this.assigned.filter(r => this.matches(r, q)) : this.assigned;
+    const list = q ? this.assigned.filter(r => this.matches(r, q)) : this.assigned;
+    return this.sortByPrice(list);
   }
 
   get filteredApproved(): DealerProductRow[] {
     const q = this.searchApproved.toLowerCase();
-    return q ? this.approved.filter(r => this.matches(r, q)) : this.approved;
+    const list = q ? this.approved.filter(r => this.matches(r, q)) : this.approved;
+    return this.sortByPrice(list);
   }
 
   get filteredRejected(): DealerProductRow[] {
     const q = this.searchRejected.toLowerCase();
-    return q ? this.rejected.filter(r => this.matches(r, q)) : this.rejected;
+    const list = q ? this.rejected.filter(r => this.matches(r, q)) : this.rejected;
+    return this.sortByPrice(list);
+  }
+
+  private sortByPrice(list: DealerProductRow[]): DealerProductRow[] {
+    if (this.priceSort === 'asc') return [...list].sort((a, b) => (a.supplierPrice ?? 0) - (b.supplierPrice ?? 0));
+    if (this.priceSort === 'desc') return [...list].sort((a, b) => (b.supplierPrice ?? 0) - (a.supplierPrice ?? 0));
+    return list;
   }
 
   private matches(r: DealerProductRow, q: string): boolean {
@@ -148,13 +151,9 @@ export class DealerProductsComponent implements OnInit {
            r.brand?.toLowerCase().includes(q);
   }
 
-  // ── Counts ────────────────────────────────────────────────────────
-
   get assignedCount(): number { return this.assigned.length; }
   get approvedCount(): number { return this.approved.length; }
   get rejectedCount(): number { return this.rejected.length; }
-
-  // ── Price editing ─────────────────────────────────────────────────
 
   startEdit(row: DealerProductRow)  { row.editing = true; }
   cancelEdit(row: DealerProductRow) { row.editing = false; }
@@ -167,17 +166,15 @@ export class DealerProductsComponent implements OnInit {
     row.saving = true;
     this.productMgmt.updatePrice(this.dealerId, row.productId, row.proposedPrice).subscribe({
       next: () => {
-        this.zone.run(() => {
-          row.saving  = false;
-          row.editing = false;
-          this.showToast(`Price submitted for ${row.productName}`, 'success');
-        });
+        row.saving  = false;
+        row.editing = false;
+        this.showToast(`Price submitted for ${row.productName}`, 'success');
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.zone.run(() => {
-          row.saving = false;
-          this.showToast('Failed to submit price', 'error');
-        });
+        row.saving = false;
+        this.showToast('Failed to submit price', 'error');
+        this.cdr.markForCheck();
       }
     });
   }

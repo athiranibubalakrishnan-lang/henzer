@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, HostListener, NgZone } from '@angular/core';
+import { Component, EventEmitter, Output, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../services/cart.service';
@@ -21,7 +21,7 @@ export class HeaderComponent {
   showAdminDropdown = false;
   showReviewDropdown = false;
 
-  constructor(private router: Router, private zone: NgZone, public cartService: CartService) {}
+  constructor(private router: Router, private cdr: ChangeDetectorRef, public cartService: CartService) {}
 
   get isAdmin(): boolean {
     return localStorage.getItem('role') === 'ADMIN';
@@ -96,12 +96,11 @@ export class HeaderComponent {
 
   @HostListener('document:click')
   closeAll() {
-    this.zone.run(() => {
-      this.showDropdown = false;
-      this.showBrandDropdown = false;
-      this.showViewProductsDropdown = false;
-      this.showAdminDropdown = false;
-      this.showReviewDropdown = false;
-    });
+    this.showDropdown = false;
+    this.showBrandDropdown = false;
+    this.showViewProductsDropdown = false;
+    this.showAdminDropdown = false;
+    this.showReviewDropdown = false;
+    this.cdr.markForCheck();
   }
 }

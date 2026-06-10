@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -52,7 +52,7 @@ export class OrderHistoryComponent implements OnInit {
   approveToast     = '';
   approveToastType: 'success' | 'error' = 'success';
 
-  constructor(private http: HttpClient, private zone: NgZone) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() { this.loadOrders(); }
 
@@ -72,22 +72,19 @@ export class OrderHistoryComponent implements OnInit {
     if (role === 'ADMIN') {
       url = `${environment.apiUrl}/api/orders/all`;
     } else {
-      // Dealer, USER, PRIVILEGE_USER → all use confirmed orders endpoint
       url = `${environment.apiUrl}/api/orders/status/CONFIRMED`;
     }
 
     this.http.get<any[]>(url).subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.orders  = this.mapOrders(Array.isArray(data) ? data : []);
-        });
+        this.loading = false;
+        this.orders  = this.mapOrders(Array.isArray(data) ? data : []);
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.error   = `Failed to load orders (${err?.status ?? 'error'}): ${err?.error?.message || err?.message || 'Please try again.'}`;
-        });
+        this.loading = false;
+        this.error   = `Failed to load orders (${err?.status ?? 'error'}): ${err?.error?.message || err?.message || 'Please try again.'}`;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -169,8 +166,6 @@ export class OrderHistoryComponent implements OnInit {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
-  // ── Bulk approve (admin only) ─────────────────────────────────────
-
   get selectedOrders(): OrderCard[] { return this.filtered.filter(r => r.selected); }
   get selectedCount():  number       { return this.selectedOrders.length; }
 
@@ -198,15 +193,17 @@ export class OrderHistoryComponent implements OnInit {
       `${environment.apiUrl}/api/orders/bulk-status/CONFIRMED`, ids,
       { responseType: 'text' as 'json' }
     ).subscribe({
-      next: (res: any) => this.zone.run(() => {
+      next: (res: any) => {
         this.bulkApproving = false;
         this.selectedOrders.forEach(r => { r.status = 'CONFIRMED'; r.selected = false; });
         this.showApproveToast(res || `${ids.length} order(s) confirmed`, 'success');
-      }),
-      error: (err) => this.zone.run(() => {
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
         this.bulkApproving = false;
         this.showApproveToast(err?.error || 'Failed to confirm orders', 'error');
-      })
+        this.cdr.markForCheck();
+      }
     });
   }
 }

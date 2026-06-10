@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -28,14 +28,14 @@ export class CartService {
   private cartSubject = new BehaviorSubject<Cart | null>(null);
   cart$ = this.cartSubject.asObservable();
 
-  constructor(private http: HttpClient, private zone: NgZone) {}
+  constructor(private http: HttpClient) {}
 
   loadCart() {
     const token = localStorage.getItem('token');
     if (token) {
       this.http.get<Cart>(this.apiUrl).subscribe({
-        next: (cart) => this.zone.run(() => this.cartSubject.next(cart)),
-        error: () => this.zone.run(() => this.cartSubject.next(null))
+        next: (cart) => this.cartSubject.next(cart),
+        error: () => this.cartSubject.next(null)
       });
     }
   }

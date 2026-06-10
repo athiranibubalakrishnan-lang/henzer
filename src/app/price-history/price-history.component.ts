@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -34,7 +34,7 @@ export class PriceHistoryComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private http: HttpClient,
-    private zone: NgZone
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -56,16 +56,14 @@ export class PriceHistoryComponent implements OnInit {
       `${environment.apiUrl}/api/dealer/dealer/${this.dealerId}/product/${this.productId}/price-history`
     ).subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.records = (Array.isArray(data) ? data : []).map(r => ({ ...r, expanded: false }));
-        });
+        this.loading = false;
+        this.records = (Array.isArray(data) ? data : []).map(r => ({ ...r, expanded: false }));
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.error   = `Failed to load price history (${err?.status ?? 'error'})`;
-        });
+        this.loading = false;
+        this.error   = `Failed to load price history (${err?.status ?? 'error'})`;
+        this.cdr.markForCheck();
       }
     });
   }

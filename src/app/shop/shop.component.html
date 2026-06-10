@@ -6,7 +6,14 @@
 
   <div class="shop-header">
     <h2>Browse Products</h2>
-    <input type="text" [(ngModel)]="searchText" placeholder="Search by name, brand or model..." class="search-input" />
+    <div class="shop-controls">
+      <input type="text" [(ngModel)]="searchText" placeholder="Search by name, brand or model..." class="search-input" />
+      <select [(ngModel)]="priceSort" class="sort-select">
+        <option value="none">Sort by Price</option>
+        <option value="asc">Price: Low to High</option>
+        <option value="desc">Price: High to Low</option>
+      </select>
+    </div>
   </div>
 
   @if (loading) {

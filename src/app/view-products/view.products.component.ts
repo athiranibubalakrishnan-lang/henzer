@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ProductService } from '../product.service';
 import { CategoryService } from '../services/category.service';
 import { CartService } from '../services/cart.service';
@@ -49,6 +49,10 @@ export class ViewProductsComponent implements OnInit {
   // Admin pagination
   adminPage = 1;
 
+  // Price sort
+  priceSortAdmin: 'none' | 'asc' | 'desc' = 'none';
+  priceSortDealer: 'none' | 'asc' | 'desc' = 'none';
+
   // Assign to dealer modal
   showAssignModal = false;
   dealers: any[] = [];
@@ -69,7 +73,6 @@ export class ViewProductsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private zone: NgZone,
     private http: HttpClient
   ) {}
 
@@ -97,12 +100,16 @@ export class ViewProductsComponent implements OnInit {
     this.loading = true;
     const role = localStorage.getItem('role');
 
+    if (role === 'DEALER') {
+      this.loadDealerTabs();
+      return;
+    }
+
     // Admin → all products
-    // Dealer → all products (filtered client-side by their dealerProducts entries)
     // PRIVILEGE_USER → approved products only
     // USER / Guest → public bypass endpoint
     let request;
-    if (role === 'ADMIN' || role === 'DEALER') {
+    if (role === 'ADMIN') {
       request = this.productService.getAll();
     } else if (role === 'PRIVILEGE_USER') {
       request = this.productService.getApproved();
@@ -112,22 +119,56 @@ export class ViewProductsComponent implements OnInit {
 
     request.subscribe({
       next: (data) => {
-        this.zone.run(() => {
-          this.loading = false;
-          this.products = (Array.isArray(data) ? data : [])
-            .sort((a: any, b: any) => (b.id ?? 0) - (a.id ?? 0));
-          // Always reset qty inputs to 1 on fresh load
-          this.products.forEach(p => {
-            this.cartQuantities[p.productCode] = 1;
-          });
+        this.loading = false;
+        this.products = (Array.isArray(data) ? data : [])
+          .sort((a: any, b: any) => (b.id ?? 0) - (a.id ?? 0));
+        // Always reset qty inputs to 1 on fresh load
+        this.products.forEach(p => {
+          this.cartQuantities[p.productCode] = 1;
         });
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.zone.run(() => {
-          this.loading = false;
-          console.error('Failed to load products', err);
-        });
+        this.loading = false;
+        console.error('Failed to load products', err);
+        this.cdr.markForCheck();
       }
+    });
+  }
+
+  private loadDealerTabs() {
+    const myId = Number(localStorage.getItem('dealerId') || 0);
+    // Load pending and approved APIs in parallel
+    this.http.get<any[]>(`${environment.apiUrl}/api/products/pending`).subscribe({
+      next: (pendingData) => {
+        this.http.get<any[]>(`${environment.apiUrl}/api/products/approved`).subscribe({
+          next: (approvedData) => {
+            this.loading = false;
+            const all = [
+              ...(Array.isArray(pendingData)  ? pendingData  : []),
+              ...(Array.isArray(approvedData) ? approvedData : [])
+            ];
+            // Deduplicate by id
+            const seen = new Set<number>();
+            this.products = all
+              .filter(p => {
+                if (seen.has(p.id)) return false;
+                seen.add(p.id);
+                return true;
+              })
+              // Only products that have a dealerProducts entry for this dealer
+              .filter(p => (p.dealerProducts ?? []).some((d: any) => d.dealerId === myId))
+              .sort((a: any, b: any) => (b.id ?? 0) - (a.id ?? 0));
+
+            this.products.forEach(p => {
+              this.cartQuantities[p.productCode] = 1;
+            });
+            this.cdr.markForCheck();
+          },
+          error: () => { this.loading = false; this.cdr.markForCheck(); }
+        });
+      },
+      error: () => { this.loading = false; this.cdr.markForCheck(); }
     });
   }
 
@@ -307,11 +348,11 @@ export class ViewProductsComponent implements OnInit {
     );
     if (this.assignCategoryFilter) {
       const c = this.assignCategoryFilter.toLowerCase();
-      base = base.filter(p => p.category?.toLowerCase().includes(c));
+      base = base.filter(p => p.category?.toLowerCase() === c);
     }
     if (this.assignBrandFilter) {
       const b = this.assignBrandFilter.toLowerCase();
-      base = base.filter(p => p.brand?.toLowerCase().includes(b));
+      base = base.filter(p => p.brand?.toLowerCase() === b);
     }
     if (this.assignProductSearch) {
       const q = this.assignProductSearch.toLowerCase();
@@ -427,15 +468,20 @@ export class ViewProductsComponent implements OnInit {
     let result = list;
     if (this.dealerBrandFilter) {
       const b = this.dealerBrandFilter.toLowerCase();
-      result = result.filter(p => p.brand?.toLowerCase().includes(b));
+      result = result.filter(p => p.brand?.toLowerCase() === b);
     }
     if (this.dealerCategoryFilter) {
       const c = this.dealerCategoryFilter.toLowerCase();
-      result = result.filter(p => p.category?.toLowerCase().includes(c));
+      result = result.filter(p => p.category?.toLowerCase() === c);
     }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(p => this.matchesSearch(p, q));
+    }
+    if (this.priceSortDealer === 'asc') {
+      result = [...result].sort((a, b) => (a.supplierPrice ?? 0) - (b.supplierPrice ?? 0));
+    } else if (this.priceSortDealer === 'desc') {
+      result = [...result].sort((a, b) => (b.supplierPrice ?? 0) - (a.supplierPrice ?? 0));
     }
     return result;
   }
@@ -546,12 +592,12 @@ export class ViewProductsComponent implements OnInit {
 
     if (this.brandFilter) {
       const b = this.brandFilter.toLowerCase();
-      filtered = filtered.filter(p => p.brand?.toLowerCase().includes(b));
+      filtered = filtered.filter(p => p.brand?.toLowerCase() === b);
     }
 
     if (this.categoryFilter) {
       const c = this.categoryFilter.toLowerCase();
-      filtered = filtered.filter(p => p.category?.toLowerCase().includes(c));
+      filtered = filtered.filter(p => p.category?.toLowerCase() === c);
     }
 
     if (this.searchText) {
@@ -561,6 +607,12 @@ export class ViewProductsComponent implements OnInit {
         p.category?.toLowerCase().includes(this.searchText.toLowerCase()) ||
         p.brand?.toLowerCase().includes(this.searchText.toLowerCase())
       );
+    }
+
+    if (this.priceSortAdmin === 'asc') {
+      filtered = [...filtered].sort((a, b) => (a.supplierPrice ?? 0) - (b.supplierPrice ?? 0));
+    } else if (this.priceSortAdmin === 'desc') {
+      filtered = [...filtered].sort((a, b) => (b.supplierPrice ?? 0) - (a.supplierPrice ?? 0));
     }
 
     return filtered;
@@ -605,17 +657,15 @@ export class ViewProductsComponent implements OnInit {
 
       this.productMgmt.updatePrice(dealerId, productId, this.editDealerPrice).subscribe({
         next: () => {
-          this.zone.run(() => {
-            p.dealerPrice  = this.editDealerPrice;
-            this.editingId = null;
-            this.showToast('Dealer price submitted for admin approval');
-          });
+          p.dealerPrice  = this.editDealerPrice;
+          this.editingId = null;
+          this.showToast('Dealer price submitted for admin approval');
+          this.cdr.markForCheck();
         },
         error: (err) => {
-          this.zone.run(() => {
-            console.error('Update failed', err);
-            this.showToast('Failed to submit dealer price');
-          });
+          console.error('Update failed', err);
+          this.showToast('Failed to submit dealer price');
+          this.cdr.markForCheck();
         }
       });
       return;
@@ -638,18 +688,16 @@ export class ViewProductsComponent implements OnInit {
           next: () => {
             completed++;
             if (completed === requests.length) {
-              this.zone.run(() => {
-                p.supplierPrice = this.editPrice;
-                this.editingId  = null;
-                this.showToast('Price updated successfully');
-              });
+              p.supplierPrice = this.editPrice;
+              this.editingId  = null;
+              this.showToast('Price updated successfully');
+              this.cdr.markForCheck();
             }
           },
           error: (err: any) => {
-            this.zone.run(() => {
-              console.error('Update failed', err);
-              this.showToast('Failed to update price');
-            });
+            console.error('Update failed', err);
+            this.showToast('Failed to update price');
+            this.cdr.markForCheck();
           }
         });
       });
@@ -679,18 +727,16 @@ export class ViewProductsComponent implements OnInit {
 
     this.productService.update(p.productCode, payload).subscribe({
       next: () => {
-        this.zone.run(() => {
-          p.supplierPrice = this.editPrice;
-          p.quantity      = this.editQuantity;
-          this.editingId  = null;
-          this.showToast('Product updated successfully');
-        });
+        p.supplierPrice = this.editPrice;
+        p.quantity      = this.editQuantity;
+        this.editingId  = null;
+        this.showToast('Product updated successfully');
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.zone.run(() => {
-          console.error('Update failed', err);
-          this.showToast('Failed to update product');
-        });
+        console.error('Update failed', err);
+        this.showToast('Failed to update product');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -704,16 +750,39 @@ export class ViewProductsComponent implements OnInit {
     }
     this.productService.delete(p.productCode).subscribe({
       next: () => {
-        this.zone.run(() => {
-          this.products = this.products.filter(x => x.productCode !== p.productCode);
-          this.showToast('Product deleted successfully');
-        });
+        this.products = this.products.filter(x => x.productCode !== p.productCode);
+        this.showToast('Product deleted successfully');
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.zone.run(() => {
-          console.error('Delete failed', err);
-          this.showToast('Failed to delete product');
-        });
+        console.error('Delete failed', err);
+        this.showToast('Failed to delete product');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  exportExporting = false;
+
+  exportProducts() {
+    this.exportExporting = true;
+    this.http.get(`${environment.apiUrl}/api/products/export`, {
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        this.exportExporting = false;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'products.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.exportExporting = false;
+        this.showToast('Failed to export products');
+        this.cdr.markForCheck();
       }
     });
   }

@@ -46,6 +46,11 @@
       <div class="toolbar">
         <input type="text" [(ngModel)]="searchAssigned"
           placeholder="Search by name, SKU, brand or category..." class="search-input" />
+        <select [(ngModel)]="priceSort" class="sort-select">
+          <option value="none">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
       </div>
 
       @if (filteredAssigned.length === 0) {
@@ -60,7 +65,7 @@
                 <th>Product Name</th>
                 <th>Category</th>
                 <th>SKU</th>
-                <th>Supplier Price</th>
+                <th>Existing Price</th>
                 <th>Dealer Price</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -106,6 +111,11 @@
       <div class="toolbar">
         <input type="text" [(ngModel)]="searchApproved"
           placeholder="Search by name, SKU, brand or category..." class="search-input" />
+        <select [(ngModel)]="priceSort" class="sort-select">
+          <option value="none">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
       </div>
 
       @if (filteredApproved.length === 0) {
@@ -120,7 +130,7 @@
                 <th>Product Name</th>
                 <th>Category</th>
                 <th>SKU</th>
-                <th>Supplier Price</th>
+                <th>Existing Price</th>
                 <th>Dealer Price</th>
                 <th>Status</th>
               </tr>
@@ -149,6 +159,11 @@
       <div class="toolbar">
         <input type="text" [(ngModel)]="searchRejected"
           placeholder="Search by name, SKU, brand or category..." class="search-input" />
+        <select [(ngModel)]="priceSort" class="sort-select">
+          <option value="none">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
       </div>
 
       @if (filteredRejected.length === 0) {
@@ -163,7 +178,7 @@
                 <th>Product Name</th>
                 <th>Category</th>
                 <th>SKU</th>
-                <th>Supplier Price</th>
+                <th>Existing Price</th>
                 <th>Dealer Price</th>
                 <th>Status</th>
               </tr>
@@ -188,3 +203,4 @@
   }
 
 </div>
+

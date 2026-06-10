@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, NgZone, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CartService } from '../services/cart.service';
@@ -14,7 +14,7 @@ export class HomeComponent implements OnDestroy {
 
   private slideInterval: any;
 
-  constructor(private router: Router, private zone: NgZone, private cartService: CartService) {}
+  constructor(private router: Router, private cdr: ChangeDetectorRef, private cartService: CartService) {}
 
   get isUser(): boolean {
     const role = localStorage.getItem('role');
@@ -36,7 +36,8 @@ export class HomeComponent implements OnDestroy {
 
   ngOnInit() {
     this.slideInterval = setInterval(() => {
-      this.zone.run(() => this.nextSlide());
+      this.nextSlide();
+      this.cdr.markForCheck();
     }, 3000);
   }
 

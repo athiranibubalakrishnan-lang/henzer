@@ -65,21 +65,21 @@ export class ManageUserGroupsComponent implements OnInit {
   startEdit(g: CustomerGroup) {
     this.editingId = g.id;
     this.editGroupName  = g.groupName;
-    this.editGst        = this.fmt(g.gstPercentage);
-    this.editCommission = this.fmt(g.commissionPercentage);
-    this.editDiscount   = this.fmt(g.discount);
+    this.editGst        = Math.round(g.gstPercentage ?? 0).toString();
+    this.editCommission = Math.round(g.commissionPercentage ?? 0).toString();
+    this.editDiscount   = Math.round(g.discount ?? 0).toString();
   }
 
   cancelEdit() {
     this.editingId = null;
   }
 
-  /** On blur: reformat the text field to always show 2 decimal places */
+  /** On blur: reformat the text field to a whole number */
   formatField(field: 'gst' | 'commission' | 'discount') {
     const map = { gst: 'editGst', commission: 'editCommission', discount: 'editDiscount' } as const;
     const key = map[field];
     const parsed = parseFloat((this as any)[key]);
-    (this as any)[key] = isNaN(parsed) ? '0.00' : parsed.toFixed(2);
+    (this as any)[key] = isNaN(parsed) ? '0' : Math.round(parsed).toString();
   }
 
   saveEdit(g: CustomerGroup) {
@@ -117,9 +117,9 @@ export class ManageUserGroupsComponent implements OnInit {
     });
   }
 
-  /** Format a number for display: always 2 decimal places */
+  /** Format a number for display: whole number, no decimals */
   fmt(v: number | undefined | null): string {
-    if (v === undefined || v === null) return '0.00';
-    return Number(v).toFixed(2);
+    if (v === undefined || v === null) return '0';
+    return Math.round(Number(v)).toString();
   }
 }

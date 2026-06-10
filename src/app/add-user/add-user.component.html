@@ -61,19 +61,21 @@
           }
         </div>
 
-        <div class="form-group">
-          <label>Select Customer Group</label>
-          <select [(ngModel)]="user.customerGroupId" name="customerGroupId">
-            <option [ngValue]="undefined">— None —</option>
-            @if (groupsLoading) {
-              <option disabled>Loading groups...</option>
-            }
-            @for (g of customerGroups; track g.id) {
-              <option [ngValue]="g.id">{{ g.groupName }}</option>
-            }
-          </select>
-          <span class="hint">Assign this user to a pricing group (optional)</span>
-        </div>
+        @if (user.role !== 'DEALER') {
+          <div class="form-group">
+            <label>Select Customer Group</label>
+            <select [(ngModel)]="user.customerGroupId" name="customerGroupId">
+              <option [ngValue]="undefined">— None —</option>
+              @if (groupsLoading) {
+                <option disabled>Loading groups...</option>
+              }
+              @for (g of customerGroups; track g.id) {
+                <option [ngValue]="g.id">{{ g.groupName }}</option>
+              }
+            </select>
+            <span class="hint">Assign this user to a pricing group (optional)</span>
+          </div>
+        }
 
       </div>
 

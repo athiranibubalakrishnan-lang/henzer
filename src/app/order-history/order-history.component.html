@@ -134,8 +134,6 @@
                     <th>SKU</th>
                     <th>Category</th>
                     <th>Qty</th>
-                    <th>Unit Price</th>
-                    <th>Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -146,8 +144,6 @@
                       <td>{{ item.sku }}</td>
                       <td>{{ item.category }}</td>
                       <td>{{ item.quantity }}</td>
-                      <td>¥{{ item.unitPrice }}</td>
-                      <td>¥{{ item.lineTotal ?? (item.unitPrice * item.quantity) }}</td>
                     </tr>
                   }
                 </tbody>
