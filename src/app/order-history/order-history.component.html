@@ -16,6 +16,7 @@
     <input type="text" [(ngModel)]="searchText" (ngModelChange)="currentPage = 1"
       placeholder="Search by User, Dealer, Product, Brand or SKU"
       class="search-input" />
+    <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
   </div>
 
   @if (loading) {

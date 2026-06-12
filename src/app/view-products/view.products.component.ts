@@ -44,7 +44,18 @@ export class ViewProductsComponent implements OnInit {
   dealerPageAssigned = 1;
   dealerPageApproved = 1;
   dealerPageRejected = 1;
-  readonly PAGE_SIZE = 10;
+  pageSize = 10;
+
+  get PAGE_SIZE(): number { return this.pageSize; }
+
+  onPageSizeChange() {
+    const val = Number(this.pageSize);
+    this.pageSize = (!val || val < 1) ? 10 : val;
+    this.adminPage = 1;
+    this.dealerPageAssigned = 1;
+    this.dealerPageApproved = 1;
+    this.dealerPageRejected = 1;
+  }
 
   // Admin pagination
   adminPage = 1;
@@ -78,15 +89,19 @@ export class ViewProductsComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      // 'brand' query param from header nav filters by category
-      // Map "SILICA LITE" → "SILICALITE" to match backend category values
       if (params['brand']) {
         const val = params['brand'].toUpperCase();
-        this.categoryFilter = val === 'SILICA LITE' ? 'SILICALITE' : val;
+        this.categoryFilter = val;
       }
       if (params['uploadSuccess'] === '1') {
         setTimeout(() => this.showToast('✅ Bulk upload successful! Products have been added.'), 300);
       }
+    });
+    // Load all brands into dropdown on page init
+    this.fetchBrands('', (brands) => {
+      this.adminBrands  = brands;
+      this.dealerBrands = brands;
+      this.cdr.markForCheck();
     });
     this.loadProducts();
   }
@@ -192,6 +207,17 @@ export class ViewProductsComponent implements OnInit {
 
   get categories(): string[] { return ['All Products']; }
 
+  /** Fetches brands — if category provided uses ?category=X, otherwise fetches all brands */
+  private fetchBrands(category: string, callback: (brands: string[]) => void) {
+    const url = category
+      ? `${environment.apiUrl}/api/products/category?category=${encodeURIComponent(category)}`
+      : `${environment.apiUrl}/api/products/category`;
+    this.http.get<any[]>(url).subscribe({
+      next: (data) => { callback(this.extractBrands(data)); },
+      error: () => { callback([]); }
+    });
+  }
+
   /** Extracts brand strings from API response — handles both string[] and product object[] */
   private extractBrands(data: any[]): string[] {
     if (!Array.isArray(data) || data.length === 0) return [];
@@ -207,13 +233,10 @@ export class ViewProductsComponent implements OnInit {
   onAdminCategoryChange() {
     this.brandFilter = '';
     this.adminPage   = 1;
-    this.adminBrands = [];
-    if (this.categoryFilter) {
-      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.categoryFilter}`).subscribe({
-        next: (data) => { this.adminBrands = this.extractBrands(data); },
-        error: () => {}
-      });
-    }
+    this.fetchBrands(this.categoryFilter, (brands) => {
+      this.adminBrands = brands;
+      this.cdr.markForCheck();
+    });
   }
 
   /** Called when dealer category dropdown changes */
@@ -222,13 +245,10 @@ export class ViewProductsComponent implements OnInit {
     this.dealerPageAssigned = 1;
     this.dealerPageApproved = 1;
     this.dealerPageRejected = 1;
-    this.dealerBrands = [];
-    if (this.dealerCategoryFilter) {
-      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.dealerCategoryFilter}`).subscribe({
-        next: (data) => { this.dealerBrands = this.extractBrands(data); },
-        error: () => {}
-      });
-    }
+    this.fetchBrands(this.dealerCategoryFilter, (brands) => {
+      this.dealerBrands = brands;
+      this.cdr.markForCheck();
+    });
   }
 
   get isDealer(): boolean {
@@ -306,33 +326,51 @@ export class ViewProductsComponent implements OnInit {
 
   onAssignCategoryChange() {
     this.assignBrandFilter = '';
-    this.assignBrands = [];
-    if (this.assignCategoryFilter) {
-      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.assignCategoryFilter}`).subscribe({
-        next: (data) => { this.assignBrands = this.extractBrands(data); },
-        error: () => {}
-      });
-    }
+    this.fetchBrands(this.assignCategoryFilter, (brands) => {
+      this.assignBrands = brands;
+      this.cdr.markForCheck();
+    });
   }
 
   confirmAssign() {
     if (this.selectedDealerIds.size === 0) { this.showToast('Please select at least one dealer'); return; }
     if (this.selectedProductIds.size === 0) { this.showToast('Please select at least one product'); return; }
     this.assignLoading = true;
-    const productIds = Array.from(this.selectedProductIds);
-    const dealerIds  = Array.from(this.selectedDealerIds);
-    const price = this.assignPrice !== null ? this.assignPrice : undefined;
+    const productIds  = Array.from(this.selectedProductIds);
+    const dealerIds   = Array.from(this.selectedDealerIds);
+    const price       = this.assignPrice !== null ? this.assignPrice : undefined;
+
+    // Collect dealer names for the success message
+    const selectedDealerNames = this.dealers
+      .filter(d => this.selectedDealerIds.has(d.id))
+      .map(d => d.username || d.email);
+
     this.productMgmt.assign(productIds, dealerIds, price).subscribe({
       next: () => {
         this.assignLoading = false;
         this.closeAssignModal();
-        this.showToast('Products assigned to dealer(s) successfully');
+        const productCount = productIds.length;
+        const dealerList   = selectedDealerNames.join(', ');
+        this.showAssignSuccess(
+          `✅ ${productCount} product${productCount !== 1 ? 's' : ''} successfully assigned to: ${dealerList}`
+        );
       },
       error: () => {
         this.assignLoading = false;
         this.showToast('Failed to assign products');
       }
     });
+  }
+
+  assignSuccessMsg = '';
+
+  showAssignSuccess(msg: string) {
+    this.assignSuccessMsg = msg;
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.assignSuccessMsg = '';
+      this.cdr.markForCheck();
+    }, 5000);
   }
 
   get isRegularUser(): boolean {

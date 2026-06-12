@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { UserService } from '../user.service';
 import { environment } from '../../environments/environment';
 
@@ -28,6 +28,16 @@ export class ViewUsersComponent implements OnInit {
 
   editingEmail: string | null = null;
   editGroupId: number | null = null;
+
+  // Reset password
+  resetEmail: string | null = null;
+  resetUsername = '';
+  newPassword = '';
+  confirmPassword = '';
+  resetLoading = false;
+  resetError = '';
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private userService: UserService,
@@ -126,7 +136,6 @@ export class ViewUsersComponent implements OnInit {
         u.customerGroupId = this.editGroupId || null;
         this.editingEmail = null;
         this.editGroupId  = null;
-        // If a group was assigned, switch to group-users tab so the user appears there
         if (u.customerGroupId) {
           this.activeTab = 'group-users';
         }
@@ -137,9 +146,66 @@ export class ViewUsersComponent implements OnInit {
     });
   }
 
+  // ── Reset Password ───────────────────────────────────
+
+  openResetPassword(u: any) {
+    this.resetEmail       = u.email;
+    this.resetUsername    = u.username || u.email;
+    this.newPassword      = '';
+    this.confirmPassword  = '';
+    this.resetError       = '';
+    this.showNewPassword  = false;
+    this.showConfirmPassword = false;
+    this.cdr.markForCheck();
+  }
+
+  closeResetPassword() {
+    this.resetEmail = null;
+    this.newPassword = '';
+    this.confirmPassword = '';
+    this.resetError = '';
+    this.cdr.markForCheck();
+  }
+
+  submitResetPassword() {
+    this.resetError = '';
+    if (!this.newPassword || this.newPassword.length < 6) {
+      this.resetError = 'Password must be at least 6 characters.';
+      return;
+    }
+    if (this.newPassword !== this.confirmPassword) {
+      this.resetError = 'Passwords do not match.';
+      return;
+    }
+    this.resetLoading = true;
+    const params = new HttpParams()
+      .set('email', this.resetEmail!)
+      .set('newPassword', this.newPassword);
+    this.http.patch(
+      `${environment.apiUrl}/api/users/reset-password`,
+      null,
+      { params, responseType: 'text' }
+    ).subscribe({
+      next: () => {
+        this.resetLoading = false;
+        this.closeResetPassword();
+        this.showToast(`✅ Password reset successfully for ${this.resetUsername}`);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.resetLoading = false;
+        this.resetError = err?.error || err?.message || `Error ${err?.status}: Failed to reset password.`;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   showToast(msg: string) {
     this.toast = msg;
-    setTimeout(() => this.toast = '', 3000);
+    setTimeout(() => {
+      this.toast = '';
+      this.cdr.markForCheck();
+    }, 3000);
   }
 
   refresh() {

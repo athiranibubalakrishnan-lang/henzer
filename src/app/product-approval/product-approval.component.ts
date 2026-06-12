@@ -61,7 +61,17 @@ export class ProductApprovalComponent implements OnInit {
   pagePending  = 1;
   pageApproved = 1;
   pageRejected = 1;
-  readonly PAGE_SIZE = 10;
+  pageSize = 10;
+
+  get PAGE_SIZE(): number { return this.pageSize; }
+
+  onPageSizeChange() {
+    const val = Number(this.pageSize);
+    this.pageSize = (!val || val < 1) ? 10 : val;
+    this.pagePending = 1;
+    this.pageApproved = 1;
+    this.pageRejected = 1;
+  }
 
   selectedItems: Set<string> = new Set();
   bulkProcessing = false;
@@ -76,26 +86,34 @@ export class ProductApprovalComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() { this.loadAll(); }
+  ngOnInit() {
+    // Load all brands into dropdown on page init
+    this.fetchBrands('');
+    this.loadAll();
+  }
+
+  private fetchBrands(category: string) {
+    const url = category
+      ? `${environment.apiUrl}/api/products/category?category=${encodeURIComponent(category)}`
+      : `${environment.apiUrl}/api/products/category`;
+    this.http.get<any[]>(url).subscribe({
+      next: (data) => {
+        if (!Array.isArray(data) || data.length === 0) { this.categoryBrands = []; return; }
+        this.categoryBrands = typeof data[0] === 'string'
+          ? [...new Set(data.filter(Boolean))].sort() as string[]
+          : [...new Set(data.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
+        this.cdr.markForCheck();
+      },
+      error: () => {}
+    });
+  }
 
   onCategoryChange() {
     this.brandFilter = '';
     this.pagePending  = 1;
     this.pageApproved = 1;
     this.pageRejected = 1;
-    this.categoryBrands = [];
-    if (this.categoryFilter) {
-      this.http.get<any[]>(`${environment.apiUrl}/api/products/category/${this.categoryFilter}`).subscribe({
-        next: (data) => {
-          if (!Array.isArray(data) || data.length === 0) { this.categoryBrands = []; return; }
-          this.categoryBrands = typeof data[0] === 'string'
-            ? [...new Set(data.filter(Boolean))].sort() as string[]
-            : [...new Set(data.map((p: any) => p.brand).filter(Boolean))].sort() as string[];
-          this.cdr.markForCheck();
-        },
-        error: () => {}
-      });
-    }
+    this.fetchBrands(this.categoryFilter);
   }
 
   showToast(msg: string, type: 'success' | 'error' = 'success') {

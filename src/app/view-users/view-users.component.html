@@ -54,6 +54,7 @@
                 <th>#</th>
                 <th>Username</th>
                 <th>Email</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +63,9 @@
                   <td class="row-num">{{ i + 1 }}</td>
                   <td class="name-cell">{{ u.username }}</td>
                   <td>{{ u.email }}</td>
+                  <td class="actions-cell">
+                    <button class="btn-reset-pw" (click)="openResetPassword(u)">🔑 Reset Password</button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -123,6 +127,7 @@
                       <button class="btn-cancel-edit" (click)="cancelEditGroup()">✕</button>
                     } @else {
                       <button class="btn-edit" (click)="startEditGroup(u)">✏️ Edit Group</button>
+                      <button class="btn-reset-pw" (click)="openResetPassword(u)">🔑 Reset Password</button>
                     }
                   </td>
                 </tr>
@@ -186,3 +191,61 @@
   }
 
 </div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- Reset Password Modal                       -->
+<!-- ══════════════════════════════════════════ -->
+@if (resetEmail) {
+  <div class="modal-overlay" (click)="closeResetPassword()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3>🔑 Reset Password</h3>
+        <button class="modal-close" (click)="closeResetPassword()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-subtitle">Set a new password for <strong>{{ resetUsername }}</strong></p>
+        <p class="modal-email">{{ resetEmail }}</p>
+
+        @if (resetError) {
+          <div class="reset-error">{{ resetError }}</div>
+        }
+
+        <div class="form-group">
+          <label>New Password</label>
+          <div class="pw-input-wrap">
+            <input [type]="showNewPassword ? 'text' : 'password'"
+              [(ngModel)]="newPassword"
+              placeholder="Min 6 characters"
+              class="pw-input" />
+            <button type="button" class="pw-toggle" (click)="showNewPassword = !showNewPassword">
+              {{ showNewPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <div class="pw-input-wrap">
+            <input [type]="showConfirmPassword ? 'text' : 'password'"
+              [(ngModel)]="confirmPassword"
+              placeholder="Repeat new password"
+              class="pw-input" />
+            <button type="button" class="pw-toggle" (click)="showConfirmPassword = !showConfirmPassword">
+              {{ showConfirmPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel-modal" (click)="closeResetPassword()">Cancel</button>
+        <button class="btn-confirm-reset" (click)="submitResetPassword()" [disabled]="resetLoading">
+          {{ resetLoading ? 'Resetting...' : 'Reset Password' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

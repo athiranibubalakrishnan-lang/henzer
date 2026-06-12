@@ -87,7 +87,10 @@ export class AddUserComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         console.error(err);
-        this.showToast('Failed to create user');
+        const e = err?.error;
+        const msg = typeof e === 'string' ? e
+          : (e?.message || e?.error || e?.detail || 'Failed to create user');
+        this.showToast(msg);
       }
     });
   }

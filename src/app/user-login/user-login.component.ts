@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +33,7 @@ export class UserLoginComponent {
   regError     = '';
   regSuccess   = '';
 
-  constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute, private cdr: ChangeDetectorRef) {}
 
   login() {
     const payload = { email: this.userEmail, password: this.userPassword };
@@ -43,8 +43,6 @@ export class UserLoginComponent {
         this.loading = false;
         if (res?.token) localStorage.setItem('token', res.token);
 
-        // role === 'USER' && createdByAdmin === true  → PRIVILEGE_USER
-        // role === 'USER' && createdByAdmin === false → USER
         let role: string;
         if (res?.role === 'USER' && res?.createdByAdmin === true) {
           role = 'PRIVILEGE_USER';
@@ -60,6 +58,7 @@ export class UserLoginComponent {
         this.loading = false;
         console.error(err);
         alert('Invalid credentials');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -100,12 +99,31 @@ export class UserLoginComponent {
         this.regEmail    = '';
         this.regPassword = '';
         this.regConfirm  = '';
-        setTimeout(() => { this.activeTab = 'login'; this.regSuccess = ''; }, 2000);
+        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.activeTab  = 'login';
+          this.regSuccess = '';
+          this.cdr.markForCheck();
+        }, 2000);
       },
       error: (err) => {
         this.regLoading = false;
-        this.regError   = err?.error?.message || err?.error || 'Registration failed. Please try again.';
+        if (err?.status === 409 || err?.error?.message?.toLowerCase().includes('exist') || err?.error?.toLowerCase?.()?.includes('exist')) {
+          this.regError = 'Email ID already exists. Please sign in or use a different email.';
+        } else {
+          this.regError = this.extractError(err, 'Registration failed. Please try again.');
+        }
+        this.cdr.markForCheck();
       }
     });
+  }
+
+  /** Safely extracts a readable string from an HTTP error response */
+  private extractError(err: any, fallback: string): string {
+    const e = err?.error;
+    if (!e) return fallback;
+    if (typeof e === 'string') return e;
+    if (typeof e === 'object') return e.message || e.error || e.detail || fallback;
+    return fallback;
   }
 }

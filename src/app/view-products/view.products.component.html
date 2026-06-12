@@ -18,6 +18,10 @@
     <div class="toast">{{ toast }}</div>
   }
 
+  @if (assignSuccessMsg) {
+    <div class="assign-success-banner">{{ assignSuccessMsg }}</div>
+  }
+
   @if (loading) {
     <div class="loading-wrap">
       <div class="spinner"></div>
@@ -55,7 +59,7 @@
           <option value="">All Categories</option>
           <option value="HENZER">HENZER</option>
           <option value="SILICA">SILICA</option>
-          <option value="SILICALITE">SILICALITE</option>
+          <option value="SILICA LITE">SILICA LITE</option>
         </select>
         <select [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageAssigned = 1" class="filter-input filter-select">
           <option value="">All Brands</option>
@@ -69,6 +73,7 @@
           <option value="asc">Price: Low to High</option>
           <option value="desc">Price: High to Low</option>
         </select>
+        <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerAssigned.length === 0) {
@@ -131,7 +136,7 @@
           <option value="">All Categories</option>
           <option value="HENZER">HENZER</option>
           <option value="SILICA">SILICA</option>
-          <option value="SILICALITE">SILICALITE</option>
+          <option value="SILICA LITE">SILICA LITE</option>
         </select>
         <select [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageApproved = 1" class="filter-input filter-select">
           <option value="">All Brands</option>
@@ -145,6 +150,7 @@
           <option value="asc">Price: Low to High</option>
           <option value="desc">Price: High to Low</option>
         </select>
+        <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerApproved.length === 0) {
@@ -207,7 +213,7 @@
           <option value="">All Categories</option>
           <option value="HENZER">HENZER</option>
           <option value="SILICA">SILICA</option>
-          <option value="SILICALITE">SILICALITE</option>
+          <option value="SILICA LITE">SILICA LITE</option>
         </select>
         <select [(ngModel)]="dealerBrandFilter" (ngModelChange)="dealerPageRejected = 1" class="filter-input filter-select">
           <option value="">All Brands</option>
@@ -221,6 +227,7 @@
           <option value="asc">Price: Low to High</option>
           <option value="desc">Price: High to Low</option>
         </select>
+        <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
         <button class="search-btn" (click)="refresh()">Refresh</button>
       </div>
       @if (dealerRejected.length === 0) {
@@ -271,7 +278,7 @@
         <option value="">All Categories</option>
         <option value="HENZER">HENZER</option>
         <option value="SILICA">SILICA</option>
-        <option value="SILICALITE">SILICALITE</option>
+        <option value="SILICA LITE">SILICA LITE</option>
       </select>
       <select [(ngModel)]="brandFilter" (ngModelChange)="adminPage = 1" class="filter-input filter-select">
         <option value="">All Brands</option>
@@ -285,6 +292,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
       <button class="search-btn" (click)="refresh()">Refresh</button>
     </div>
 
@@ -404,7 +412,7 @@
               <option value="">All Categories</option>
               <option value="HENZER">HENZER</option>
               <option value="SILICA">SILICA</option>
-              <option value="SILICALITE">SILICALITE</option>
+              <option value="SILICA LITE">SILICA LITE</option>
             </select>
             <select [(ngModel)]="assignBrandFilter" class="assign-filter-select">
               <option value="">All Brands</option>
@@ -457,4 +465,9 @@
     </div>
   </div>
 }
+
+
+
+
+
 

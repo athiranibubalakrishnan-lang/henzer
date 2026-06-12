@@ -47,7 +47,15 @@ export class OrderHistoryComponent implements OnInit {
   error   = '';
   searchText   = '';
   currentPage  = 1;
-  readonly PAGE_SIZE = 10;
+  pageSize = 10;
+
+  get PAGE_SIZE(): number { return this.pageSize; }
+
+  onPageSizeChange() {
+    const val = Number(this.pageSize);
+    this.pageSize = (!val || val < 1) ? 10 : val;
+    this.currentPage = 1;
+  }
   bulkApproving    = false;
   approveToast     = '';
   approveToastType: 'success' | 'error' = 'success';

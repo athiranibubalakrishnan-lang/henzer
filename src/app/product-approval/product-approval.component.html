@@ -46,7 +46,7 @@
         <option value="">All Categories</option>
         <option value="HENZER">HENZER</option>
         <option value="SILICA">SILICA</option>
-        <option value="SILICALITE">SILICALITE</option>
+        <option value="SILICA LITE">SILICA LITE</option>
       </select>
       <select [(ngModel)]="brandFilter" (ngModelChange)="pagePending = 1" class="filter-input filter-select">
         <option value="">All Brands</option>
@@ -61,6 +61,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -206,7 +207,7 @@
         <option value="">All Categories</option>
         <option value="HENZER">HENZER</option>
         <option value="SILICA">SILICA</option>
-        <option value="SILICALITE">SILICALITE</option>
+        <option value="SILICA LITE">SILICA LITE</option>
       </select>
       <select [(ngModel)]="brandFilter" (ngModelChange)="pageApproved = 1" class="filter-input filter-select">
         <option value="">All Brands</option>
@@ -221,6 +222,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -314,7 +316,7 @@
         <option value="">All Categories</option>
         <option value="HENZER">HENZER</option>
         <option value="SILICA">SILICA</option>
-        <option value="SILICALITE">SILICALITE</option>
+        <option value="SILICA LITE">SILICA LITE</option>
       </select>
       <select [(ngModel)]="brandFilter" (ngModelChange)="pageRejected = 1" class="filter-input filter-select">
         <option value="">All Brands</option>
@@ -329,6 +331,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -390,4 +393,7 @@
   }
 
 </div>
+
+
+
 
