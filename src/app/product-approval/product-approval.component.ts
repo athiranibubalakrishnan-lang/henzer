@@ -143,7 +143,7 @@ export class ProductApprovalComponent implements OnInit {
 
           const approvedDealers = dealers.filter((d: any) => d.status === 'APPROVED');
           const rejectedDealers = dealers.filter((d: any) => d.status === 'REJECTED');
-          const pendingDealers  = dealers.filter((d: any) => d.status == null);
+          const pendingDealers  = dealers.filter((d: any) => d.status == null || d.status === '' || d.status === 'PENDING');
 
           if (approvedDealers.length > 0) {
             approvedFromPending.push({ ...this.mapCard(p, approvedDealers), status: 'APPROVED' });

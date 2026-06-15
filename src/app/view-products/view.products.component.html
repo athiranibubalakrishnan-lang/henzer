@@ -303,7 +303,7 @@
           <thead>
             <tr>
               <th>Product Name</th><th>Brand</th><th>Category</th><th>SKU</th>
-              <th>Existing Price</th>
+              <th>{{ isAdmin ? 'Dealer Price' : 'Price' }}</th>
               @if (isAdmin) { <th>Status</th> }
               <th>Actions</th>
             </tr>

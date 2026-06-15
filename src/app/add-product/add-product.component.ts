@@ -62,7 +62,7 @@ export class AddProductComponent implements OnInit {
     if (!this.category)            { this.showToast('Category is required'); return; }
     if (!this.brand.trim())        { this.showToast('Brand is required'); return; }
     if (!this.sku.trim())          { this.showToast('SKU is required'); return; }
-    if (!this.supplierPrice || this.supplierPrice <= 0) { this.showToast('Supplier price must be greater than 0'); return; }
+    if (!this.supplierPrice && this.supplierPrice !== 0) { this.showToast('Supplier price is required'); return; }
     const payload = {
       productName: this.productName,
       category: this.category,
@@ -74,7 +74,8 @@ export class AddProductComponent implements OnInit {
       productDescription: this.productDescription,
       remarks: this.remarks,
       inStock: this.inStock,
-      visibility: this.visibility,
+      visibility: 'PUBLIC',
+      visibilityInCatalog: 'visible',
       publishedStatus: this.publishedStatus,
       active: this.active,
       status: this.status,
