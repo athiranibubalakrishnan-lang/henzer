@@ -19,6 +19,18 @@
     <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
   </div>
 
+  <!-- Status Tabs -->
+  @if (!loading && !error && orders.length > 0) {
+    <div class="tabs">
+      @for (tab of statusTabs; track tab) {
+        <button class="tab" [class.active]="activeTab === tab" (click)="switchTab(tab)">
+          {{ tab }}
+          <span class="tab-count">{{ getTabCount(tab) }}</span>
+        </button>
+      }
+    </div>
+  }
+
   @if (loading) {
     <div class="loading-wrap"><div class="spinner"></div><p>Loading orders...</p></div>
   } @else if (error) {
@@ -62,13 +74,8 @@
               }
               <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
               <div class="summary-info">
-                <span class="order-id">#{{ card.orderId }}</span>
-                @if (!isUser) {
-                  <span class="summary-meta">{{ card.userName }} · {{ card.dealerName }}</span>
-                }
-                @if (isUser) {
-                  <span class="summary-meta">{{ card.items.length }} item{{ card.items.length !== 1 ? 's' : '' }}</span>
-                }
+                <span class="order-id">{{ card.items[0]?.productName || 'Order #' + card.orderId }}</span>
+                <span class="summary-meta">Qty: {{ card.items[0]?.quantity || 0 }} · {{ card.dealerName }}</span>
               </div>
             </div>
             <div class="summary-right">
@@ -93,16 +100,6 @@
                   <h4>Customer</h4>
                   <p><strong>{{ card.userName }}</strong></p>
                   <p class="text-muted">{{ card.userEmail }}</p>
-                  @if (card.userAddress) {
-                    <p class="text-muted">
-                      {{ card.userAddress.addressLine1 }}
-                      @if (card.userAddress.addressLine2) { , {{ card.userAddress.addressLine2 }} }
-                    </p>
-                    <p class="text-muted">
-                      {{ card.userAddress.city }}, {{ card.userAddress.state }} - {{ card.userAddress.pinCode }}
-                    </p>
-                    <p class="text-muted">📞 {{ card.userAddress.mobile }}</p>
-                  }
                 </div>
                 @if (!isUser) {
                   <div class="detail-section">

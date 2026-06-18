@@ -269,16 +269,16 @@
 .toast.toast-error { background: #c0392b; }
 
 /* ── Order cards ─────────────────────────────────── */
-.card-list { display: flex; flex-direction: column; gap: 10px; }
+.card-list { display: flex; flex-direction: column; gap: 6px; }
 
 .order-card {
   border: 1.5px solid #e0e0e0;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   transition: box-shadow 0.15s;
 }
 
-.order-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+.order-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .order-card.expanded { border-color: #9c27b0; }
 .order-card.card-selected { border-color: #ce93d8; background: #fdf6ff; }
 
@@ -286,11 +286,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
+  padding: 8px 14px;
   background: #fff;
   cursor: pointer;
   user-select: none;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -313,7 +313,7 @@
   min-width: 0;
 }
 
-.order-id { font-size: 15px; font-weight: 700; color: #6a1b9a; }
+.order-id { font-size: 14px; font-weight: 700; color: #6a1b9a; }
 .summary-meta { font-size: 12px; color: #888; }
 
 .summary-right {
@@ -324,20 +324,20 @@
   flex-wrap: wrap;
 }
 
-.total-amount { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+.total-amount { font-size: 14px; font-weight: 700; color: #1a1a2e; }
 .order-date { font-size: 12px; color: #aaa; }
 
 /* ── Detail section ──────────────────────────────── */
 .card-detail {
   border-top: 1.5px solid #f0e6ff;
   background: #fdf6ff;
-  padding: 20px 18px;
+  padding: 12px 14px;
 }
 
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
@@ -404,3 +404,43 @@
   transition: border-color 0.2s;
 }
 .page-size-input:focus { border-color: #6a1b9a; background: #fff; }
+
+/* ── Status Tabs ─────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tab:hover { color: #6a1b9a; }
+.tab.active { color: #6a1b9a; border-bottom-color: #6a1b9a; }
+
+.tab-count {
+  background: #e0e0e0;
+  color: #555;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}

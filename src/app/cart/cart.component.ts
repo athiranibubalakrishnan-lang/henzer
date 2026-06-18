@@ -54,15 +54,22 @@ export class CartComponent implements OnInit {
   ngOnInit() {
     this.cartService.cart$.subscribe(cart => {
       this.cart = cart;
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
     });
-    setTimeout(() => this.cartService.loadCart(), 0);
+    this.cartService.loadCart();
   }
 
   remove(item: CartItem) {
     this.cartService.removeItem(item.id).subscribe({
-      next: () => this.cartService.loadCart(),
-      error: () => console.error('Failed to remove item')
+      next: () => {
+        location.href = '/cart';
+      },
+      error: (err) => {
+        console.error('Failed to remove item', err);
+        const msg = typeof err?.error === 'string' ? err.error
+          : (err?.error?.message || err?.statusText || 'Unknown error');
+        alert(`Failed to remove item (${err?.status}): ${msg}`);
+      }
     });
   }
 
@@ -156,11 +163,13 @@ export class CartComponent implements OnInit {
         this.orderLoading    = false;
         this.showAddressForm = false;
         this.showThankYou    = true;
+        // Clear cart on backend and locally
+        this.cartService.clearBackend().subscribe({ error: () => {} });
+        this.cartService.clear();
+        this.cartService.clearProductCodeMap();
+        this.cartService.clearSupplierPriceMap();
         setTimeout(() => {
           this.showThankYou = false;
-          this.cartService.clear();
-          this.cartService.clearProductCodeMap();
-          this.cartService.clearSupplierPriceMap();
           this.router.navigate(['/home']);
         }, 2500);
       },

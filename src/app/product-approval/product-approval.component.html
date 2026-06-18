@@ -90,102 +90,42 @@
         }
       </div>
 
-      <div class="card-list">
-        @for (card of pagedPending; track card.productCode) {
-          <div class="product-card" [class.card-selected]="card.dealerProducts.length === 0 && isItemSelected(card.id, 0)">
-            <div class="card-header" (click)="toggle(card)">
-              <div class="card-header-left">
-                <!-- Checkbox for products with no dealers -->
-                @if (card.dealerProducts.length === 0) {
-                  <input type="checkbox" class="card-checkbox"
-                    [checked]="isItemSelected(card.id, 0)"
-                    (click)="$event.stopPropagation()"
-                    (change)="toggleItem(card.id, 0)" />
-                }
-                <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
-                <div class="card-info">
-                  <span class="card-name">{{ card.productName }}</span>
-                  <span class="card-meta">{{ card.brand }} · {{ card.category }}@if (card.sku) { · SKU: {{ card.sku }} }</span>
-                </div>
-              </div>
-              <div class="card-header-right">
-                <span class="price-tag">¥{{ card.supplierPrice }}</span>
-                @if (card.dealerProducts.length > 0) {
-                  <span class="dealer-count">{{ card.dealerProducts.length }} dealer{{ card.dealerProducts.length !== 1 ? 's' : '' }}</span>
-                }
-                <span class="badge"
-                  [class.pending]="card.status === 'PENDING'"
-                  [class.assigned]="card.status === 'ASSIGNED'">
-                  {{ card.status }}
-                </span>
-                @if (card.dealerProducts.length === 0) {
-                  <button class="btn-approve sm" (click)="approveProduct(card); $event.stopPropagation()" [disabled]="card.processing">
-                    {{ card.processing ? '...' : '✓ Approve' }}
-                  </button>
-                  <button class="btn-reject sm" (click)="rejectProduct(card); $event.stopPropagation()" [disabled]="card.processing">
-                    {{ card.processing ? '...' : '✕ Reject' }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            @if (card.expanded && card.dealerProducts.length > 0) {
-              <div class="dealer-section">
-                <table class="dealer-table">
-                  <thead>
-                    <tr><th></th><th>Dealer Name</th><th>Email</th><th>Price</th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    @for (d of card.dealerProducts; track d.id) {
-                      <tr [class.row-selected]="isItemSelected(card.id, d.dealerId)">
-                        <td style="width:30px">
-                          @if (d.status !== 'APPROVED' && d.status !== 'REJECTED') {
-                            <input type="checkbox"
-                              [checked]="isItemSelected(card.id, d.dealerId)"
-                              (change)="toggleItem(card.id, d.dealerId)"
-                              style="accent-color:#6a1b9a;width:15px;height:15px;cursor:pointer;" />
-                          }
-                        </td>
-                        <td class="dealer-name-cell">{{ d.dealerName }}</td>
-                        <td class="dealer-email-cell">{{ d.dealerCode }}</td>
-                        <td>
-                          @if (d.editing) {
-                            <input class="price-edit-input" type="number" [(ngModel)]="d.editingPrice" min="0" />
-                          } @else {
-                            {{ d.dealerPrice !== null ? ('¥' + d.dealerPrice) : '—' }}
-                          }
-                        </td>
-                        <td class="dealer-actions">
-                          @if (d.status === 'APPROVED') {
-                            <span class="badge approved">Approved</span>
-                          } @else if (d.status === 'REJECTED') {
-                            <span class="badge rejected">Rejected</span>
-                          } @else if (d.editing) {
-                            <button class="btn-approve sm" (click)="savePendingPrice(card, d)" [disabled]="d.processing">
-                              {{ d.processing ? '...' : '💾 Save' }}
-                            </button>
-                            <button class="btn-cancel-edit sm" (click)="cancelEditPrice(d)">✕</button>
-                          } @else {
-                            <button class="btn-edit-price sm" (click)="startEditPrice(d)">✏️ Edit</button>
-                            <button class="btn-approve sm" (click)="approveDealer(card, d)" [disabled]="d.processing">
-                              {{ d.processing ? '...' : '✓ Approve' }}
-                            </button>
-                            <button class="btn-reject sm" (click)="rejectDealer(card, d)" [disabled]="d.processing">
-                              {{ d.processing ? '...' : '✕ Reject' }}
-                            </button>
-                          }
-                        </td>
-                      </tr>
+      <div class="table-wrapper">
+        <table class="approved-table">
+          <thead>
+            <tr>
+              <th class="col-product">Product Name</th>
+              @for (dealer of pendingDealerNames; track dealer) {
+                <th class="col-dealer">{{ dealer }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (card of pagedPending; track card.productCode) {
+              <tr>
+                <td class="col-product">
+                  <span class="product-name-cell">{{ card.productName }}</span>
+                  <span class="product-meta-cell">{{ card.brand }} · {{ card.category }}</span>
+                </td>
+                @for (dealer of pendingDealerNames; track dealer) {
+                  <td class="col-dealer">
+                    @if (hasDealerEntry(card, dealer)) {
+                      <div class="dealer-price-cell">
+                        <span>{{ getDealerPriceForPending(card, dealer) }}</span>
+                        <input type="checkbox"
+                          [checked]="isItemSelected(card.id, getDealerIdForPending(card, dealer))"
+                          (change)="toggleItem(card.id, getDealerIdForPending(card, dealer))"
+                          style="accent-color:#6a1b9a;width:14px;height:14px;cursor:pointer;" />
+                      </div>
+                    } @else {
+                      <span>—</span>
                     }
-                  </tbody>
-                </table>
-              </div>
+                  </td>
+                }
+              </tr>
             }
-            @if (card.expanded && card.dealerProducts.length === 0) {
-              <div class="no-dealers">No dealers assigned to this product.</div>
-            }
-          </div>
-        }
+          </tbody>
+        </table>
       </div>
       <div class="pagination">
         <button class="page-btn" (click)="pagePending = pagePending - 1" [disabled]="pagePending === 1">‹</button>
@@ -276,12 +216,6 @@
                             <button class="btn-cancel-edit sm" (click)="cancelEditPrice(d)">✕</button>
                           } @else {
                             <button class="btn-edit-price sm" (click)="startEditPrice(d)">✏️ Edit</button>
-                            <button class="btn-approve sm" (click)="approveDealer(card, d)" [disabled]="d.processing">
-                              {{ d.processing ? '...' : '✓ Approve' }}
-                            </button>
-                            <button class="btn-reject sm" (click)="rejectDealer(card, d)" [disabled]="d.processing">
-                              {{ d.processing ? '...' : '✕ Reject' }}
-                            </button>
                             <button class="btn-history sm" (click)="viewPriceHistory(card, d); $event.stopPropagation()">
                               📜 History
                             </button>

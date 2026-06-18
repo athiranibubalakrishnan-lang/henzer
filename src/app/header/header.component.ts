@@ -40,15 +40,18 @@ export class HeaderComponent {
   }
 
   get userInitial(): string {
+    const name = localStorage.getItem('userName');
+    if (name) return name.charAt(0).toUpperCase();
     const role = localStorage.getItem('role') || 'A';
     return role.charAt(0).toUpperCase();
   }
 
   get userName(): string {
+    const name = localStorage.getItem('userName');
+    if (name) return name;
     const role = localStorage.getItem('role') || '';
     if (role === 'ADMIN') return 'Admin';
     if (role === 'DEALER') return 'Dealer';
-    if (role === 'PRIVILEGE_USER') return 'User';
     return 'User';
   }
 
@@ -87,6 +90,9 @@ export class HeaderComponent {
     const role = localStorage.getItem('role');
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('email');
+    localStorage.removeItem('dealerId');
     if (role === 'ADMIN' || role === 'DEALER') {
       this.router.navigate(['/adminlogin']);
     } else {

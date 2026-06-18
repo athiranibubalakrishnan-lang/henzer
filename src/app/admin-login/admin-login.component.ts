@@ -32,30 +32,23 @@ export class AdminLoginComponent {
 
     const payload = { email: this.email, password: this.password };
 
-    // Try admin login first; if it fails, try dealer login
+    // Admin login only
     this.http.post<any>(`${environment.apiUrl}/api/auth/admin/login`, payload).subscribe({
       next: (res) => {
         this.loading = false;
         this.handleSuccess(res, 'ADMIN');
       },
       error: () => {
-        // Admin failed — try dealer
-        this.http.post<any>(`${environment.apiUrl}/api/auth/dealer/login`, payload).subscribe({
-          next: (res) => {
-            this.loading = false;
-            this.handleSuccess(res, 'DEALER');
-          },
-          error: () => {
-            this.loading  = false;
-            this.errorMsg = 'Invalid email or password.';
-          }
-        });
+        this.loading  = false;
+        this.errorMsg = 'Invalid email or password.';
       }
     });
   }
 
   private handleSuccess(res: any, fallbackRole: string) {
     if (res?.token) localStorage.setItem('token', res.token);
+    if (res?.email || this.email) localStorage.setItem('email', res?.email || this.email);
+    if (res?.userName || res?.username) localStorage.setItem('userName', res.userName || res.username);
 
     const role = res?.role || fallbackRole;
     localStorage.setItem('role', role);

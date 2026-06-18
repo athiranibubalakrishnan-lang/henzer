@@ -299,6 +299,88 @@ export class ProductApprovalComponent implements OnInit {
     return [...new Set(all.map(p => p.brand).filter(Boolean))].sort();
   }
 
+  /** All unique dealer names from approved products for table columns */
+  get approvedDealerNames(): string[] {
+    const names = new Set<string>();
+    this.filteredApproved.forEach(card => {
+      card.dealerProducts.forEach(d => {
+        if (d.dealerName) names.add(d.dealerName);
+      });
+    });
+    return [...names].sort();
+  }
+
+  /** All unique dealer names from pending products for table columns */
+  get pendingDealerNames(): string[] {
+    const names = new Set<string>();
+    this.filteredPending.forEach(card => {
+      card.dealerProducts.forEach(d => {
+        if (d.dealerName) names.add(d.dealerName);
+      });
+    });
+    return [...names].sort();
+  }
+
+  /** Get dealer price for a specific product and dealer name (approved tab) */
+  getDealerPriceForApproved(card: ProductCard, dealerName: string): string {
+    const dealer = card.dealerProducts.find(d => d.dealerName === dealerName);
+    if (!dealer) return '—';
+    return dealer.dealerPrice !== null ? '¥' + dealer.dealerPrice : '—';
+  }
+
+  /** Get dealer price for a specific product and dealer name (pending tab) */
+  getDealerPriceForPending(card: ProductCard, dealerName: string): string {
+    const dealer = card.dealerProducts.find(d => d.dealerName === dealerName);
+    if (!dealer) return '—';
+    return dealer.dealerPrice !== null ? '¥' + dealer.dealerPrice : '—';
+  }
+
+  /** Get the full dealer entry for pending tab (for checkbox binding) */
+  getDealerEntryForPending(card: ProductCard, dealerName: string): DealerProduct | null {
+    return card.dealerProducts.find(d => d.dealerName === dealerName) || null;
+  }
+
+  /** Check if a dealer entry exists for this product */
+  hasDealerEntry(card: ProductCard, dealerName: string): boolean {
+    return card.dealerProducts.some(d => d.dealerName === dealerName);
+  }
+
+  /** Get dealerId for a specific dealer name in a pending card */
+  getDealerIdForPending(card: ProductCard, dealerName: string): number {
+    const entry = card.dealerProducts.find(d => d.dealerName === dealerName);
+    return entry?.dealerId ?? 0;
+  }
+
+  // Approved tab selection
+  selectedApprovedIds: Set<string> = new Set();
+
+  isApprovedSelected(productCode: string): boolean {
+    return this.selectedApprovedIds.has(productCode);
+  }
+
+  toggleApprovedSelection(productCode: string) {
+    if (this.selectedApprovedIds.has(productCode)) {
+      this.selectedApprovedIds.delete(productCode);
+    } else {
+      this.selectedApprovedIds.add(productCode);
+    }
+  }
+
+  get isAllApprovedSelected(): boolean {
+    const list = this.pagedApproved;
+    return list.length > 0 && list.every(c => this.selectedApprovedIds.has(c.productCode));
+  }
+
+  toggleSelectAllApproved() {
+    if (this.isAllApprovedSelected) {
+      this.pagedApproved.forEach(c => this.selectedApprovedIds.delete(c.productCode));
+    } else {
+      this.pagedApproved.forEach(c => this.selectedApprovedIds.add(c.productCode));
+    }
+  }
+
+  get selectedApprovedCount(): number { return this.selectedApprovedIds.size; }
+
   // ── Pagination ────────────────────────────────────────────────────
 
   paginate<T>(list: T[], page: number): T[] {

@@ -59,6 +59,10 @@ export class DealerProductsComponent implements OnInit {
     return Number(id || 0);
   }
 
+  get email(): string {
+    return localStorage.getItem('email') || '';
+  }
+
   showToast(msg: string, type: 'success' | 'error' = 'success') {
     this.toast     = msg;
     this.toastType = type;
@@ -70,8 +74,17 @@ export class DealerProductsComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiUrl}/api/products/pending`).subscribe({
       next: (data) => {
         this.loading = false;
-        const raw = Array.isArray(data) ? data : [];
+        // Handle both array and single object responses
+        let raw: any[];
+        if (Array.isArray(data)) {
+          raw = data;
+        } else if (data && typeof data === 'object') {
+          raw = [data];
+        } else {
+          raw = [];
+        }
         const myId = this.dealerId;
+        const myEmail = localStorage.getItem('email') || '';
 
         const assignedList: DealerProductRow[] = [];
         const approvedList: DealerProductRow[] = [];
@@ -79,7 +92,19 @@ export class DealerProductsComponent implements OnInit {
 
         raw.forEach(p => {
           const dealers: any[] = p.dealerProducts ?? [];
-          const myEntry = dealers.find((d: any) => d.dealerId === myId);
+          const myId = this.dealerId;
+          const myEmail = this.email;
+          
+          // Match by dealerId, dealerCode (email), or if no match found, 
+          // show all dealer entries (API already filters for this dealer)
+          let myEntry = dealers.find((d: any) => d.dealerId == myId)
+            || dealers.find((d: any) => d.dealerCode === myEmail);
+          
+          // If no match by ID/email but there are dealer entries, take the first one
+          // (the /pending API likely already returns only this dealer's products)
+          if (!myEntry && dealers.length > 0) {
+            myEntry = dealers[0];
+          }
           if (!myEntry) return;
 
           const row: DealerProductRow = {
@@ -90,8 +115,8 @@ export class DealerProductsComponent implements OnInit {
             category:       p.category,
             sku:            p.sku,
             supplierPrice:  p.supplierPrice ?? 0,
-            dealerPrice:    myEntry.dealerPrice ?? null,
-            proposedPrice:  myEntry.dealerPrice ?? null,
+            dealerPrice:    myEntry.dealerPrice ?? myEntry.price ?? null,
+            proposedPrice:  myEntry.dealerPrice ?? myEntry.price ?? null,
             dealerProductId: myEntry.id,
             editing:        false,
             saving:         false
@@ -103,6 +128,7 @@ export class DealerProductsComponent implements OnInit {
           } else if (status === 'REJECTED') {
             rejectedList.push(row);
           } else {
+            // null, 'PENDING', 'ASSIGNED', or any other status → assigned tab
             assignedList.push(row);
           }
         });

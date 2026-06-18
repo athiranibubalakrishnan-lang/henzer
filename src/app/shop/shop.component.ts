@@ -35,7 +35,10 @@ export class ShopComponent implements OnInit {
     fetch$.subscribe({
       next: (data) => {
         this.loading = false;
-        this.products = Array.isArray(data) ? data : [];
+        let products = Array.isArray(data) ? data : [];
+        // Hide products with price 0 for non-privileged users
+        products = products.filter(p => (p.price ?? p.supplierPrice ?? 0) > 0);
+        this.products = products;
         this.products.forEach(p => this.quantities[p.productCode] = 1);
         this.cdr.markForCheck();
       },

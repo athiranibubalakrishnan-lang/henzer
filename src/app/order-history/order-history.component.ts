@@ -49,6 +49,10 @@ export class OrderHistoryComponent implements OnInit {
   currentPage  = 1;
   pageSize = 10;
 
+  // Status tabs
+  activeTab = 'PROCESSING';
+  statusTabs: string[] = [];
+
   get PAGE_SIZE(): number { return this.pageSize; }
 
   onPageSizeChange() {
@@ -56,6 +60,7 @@ export class OrderHistoryComponent implements OnInit {
     this.pageSize = (!val || val < 1) ? 10 : val;
     this.currentPage = 1;
   }
+
   bulkApproving    = false;
   approveToast     = '';
   approveToastType: 'success' | 'error' = 'success';
@@ -79,14 +84,18 @@ export class OrderHistoryComponent implements OnInit {
     let url: string;
     if (role === 'ADMIN') {
       url = `${environment.apiUrl}/api/orders/all`;
-    } else {
+    } else if (role === 'DEALER') {
       url = `${environment.apiUrl}/api/orders/status/CONFIRMED`;
+    } else {
+      // USER and PRIVILEGE_USER — fetch all their orders
+      url = `${environment.apiUrl}/api/orders`;
     }
 
     this.http.get<any[]>(url).subscribe({
       next: (data) => {
         this.loading = false;
         this.orders  = this.mapOrders(Array.isArray(data) ? data : []);
+        this.buildStatusTabs();
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -95,6 +104,23 @@ export class OrderHistoryComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private buildStatusTabs() {
+    const statuses = [...new Set(this.orders.map(o => o.status).filter(Boolean))];
+    this.statusTabs = statuses.sort();
+    if (!this.statusTabs.includes(this.activeTab)) {
+      this.activeTab = this.statusTabs[0] || 'PROCESSING';
+    }
+  }
+
+  switchTab(tab: string) {
+    this.activeTab = tab;
+    this.currentPage = 1;
+  }
+
+  getTabCount(tab: string): number {
+    return this.orders.filter(o => o.status === tab).length;
   }
 
   private mapOrders(data: any[]): OrderCard[] {
@@ -147,18 +173,24 @@ export class OrderHistoryComponent implements OnInit {
   toggle(card: OrderCard) { card.expanded = !card.expanded; }
 
   get filtered(): OrderCard[] {
+    let list = this.orders;
+    // Filter by active tab
+    list = list.filter(o => o.status === this.activeTab);
+    // Filter by search
     const q = this.searchText.toLowerCase();
-    if (!q) return this.orders;
-    return this.orders.filter(r =>
-      r.userName?.toLowerCase().includes(q) ||
-      r.dealerName?.toLowerCase().includes(q) ||
-      r.status?.toLowerCase().includes(q) ||
-      r.items.some(i =>
-        i.productName?.toLowerCase().includes(q) ||
-        i.brand?.toLowerCase().includes(q) ||
-        i.sku?.toLowerCase().includes(q)
-      )
-    );
+    if (q) {
+      list = list.filter(r =>
+        r.userName?.toLowerCase().includes(q) ||
+        r.dealerName?.toLowerCase().includes(q) ||
+        r.status?.toLowerCase().includes(q) ||
+        r.items.some(i =>
+          i.productName?.toLowerCase().includes(q) ||
+          i.brand?.toLowerCase().includes(q) ||
+          i.sku?.toLowerCase().includes(q)
+        )
+      );
+    }
+    return list;
   }
 
   get paged(): OrderCard[] {
@@ -190,7 +222,10 @@ export class OrderHistoryComponent implements OnInit {
   showApproveToast(msg: string, type: 'success' | 'error' = 'success') {
     this.approveToast     = msg;
     this.approveToastType = type;
-    setTimeout(() => this.approveToast = '', 3000);
+    setTimeout(() => {
+      this.approveToast = '';
+      this.cdr.markForCheck();
+    }, 3000);
   }
 
   bulkApprove() {
@@ -199,17 +234,19 @@ export class OrderHistoryComponent implements OnInit {
     this.bulkApproving = true;
     this.http.put(
       `${environment.apiUrl}/api/orders/bulk-status/CONFIRMED`, ids,
-      { responseType: 'text' as 'json' }
+      { responseType: 'text' }
     ).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.bulkApproving = false;
         this.selectedOrders.forEach(r => { r.status = 'CONFIRMED'; r.selected = false; });
+        this.buildStatusTabs();
         this.showApproveToast(res || `${ids.length} order(s) confirmed`, 'success');
         this.cdr.markForCheck();
       },
       error: (err) => {
         this.bulkApproving = false;
-        this.showApproveToast(err?.error || 'Failed to confirm orders', 'error');
+        const msg = typeof err?.error === 'string' ? err.error : 'Failed to confirm orders';
+        this.showApproveToast(msg, 'error');
         this.cdr.markForCheck();
       }
     });

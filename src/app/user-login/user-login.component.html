@@ -42,6 +42,8 @@
         {{ loading ? 'Signing in...' : 'Sign In' }}
       </button>
 
+      <p class="forgot-link" (click)="openForgotPassword()">Forgot Password?</p>
+
       <p class="switch-link">
         Don't have an account?
         <span (click)="activeTab = 'register'">Register</span>
@@ -113,3 +115,85 @@
   </div>
 
 </div>
+
+<!-- ══ Forgot Password Modal ══ -->
+@if (forgotStep !== 'hidden') {
+  <div class="modal-overlay" (click)="closeForgotPassword()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3>🔑 Forgot Password</h3>
+        <button class="modal-close" (click)="closeForgotPassword()">✕</button>
+      </div>
+
+      <div class="modal-body">
+
+        @if (forgotError) {
+          <div class="alert alert-error">{{ forgotError }}</div>
+        }
+        @if (forgotSuccess) {
+          <div class="alert alert-success">{{ forgotSuccess }}</div>
+        }
+
+        <!-- Step 1: Enter email -->
+        @if (forgotStep === 'email') {
+          <p class="modal-subtitle">Enter your email to receive a password reset OTP.</p>
+          <div class="form-group">
+            <label>Email Address</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉</span>
+              <input type="email" [(ngModel)]="forgotEmail" placeholder="Enter your email"
+                (keyup.enter)="sendOtp()" />
+            </div>
+          </div>
+          <button class="login-btn user-btn" (click)="sendOtp()" [disabled]="forgotLoading">
+            {{ forgotLoading ? 'Sending OTP...' : 'Send OTP' }}
+          </button>
+        }
+
+        <!-- Step 2: Enter OTP + New Password -->
+        @if (forgotStep === 'otp') {
+          <p class="modal-subtitle">Enter the OTP sent to <strong>{{ forgotEmail }}</strong> and set a new password.</p>
+
+          <div class="form-group">
+            <label>OTP</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔢</span>
+              <input type="text" [(ngModel)]="forgotOtp" placeholder="Enter OTP" maxlength="6" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>New Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input [type]="showForgotNew ? 'text' : 'password'" [(ngModel)]="forgotNewPass"
+                placeholder="Min. 6 characters" />
+              <span class="toggle-eye" (click)="showForgotNew = !showForgotNew">
+                {{ showForgotNew ? '🙈' : '👁' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input [type]="showForgotConf ? 'text' : 'password'" [(ngModel)]="forgotConfirm"
+                placeholder="Re-enter password" (keyup.enter)="submitResetWithOtp()" />
+              <span class="toggle-eye" (click)="showForgotConf = !showForgotConf">
+                {{ showForgotConf ? '🙈' : '👁' }}
+              </span>
+            </div>
+          </div>
+
+          <button class="login-btn user-btn" (click)="submitResetWithOtp()" [disabled]="forgotLoading">
+            {{ forgotLoading ? 'Resetting...' : 'Reset Password' }}
+          </button>
+        }
+
+      </div>
+
+    </div>
+  </div>
+}

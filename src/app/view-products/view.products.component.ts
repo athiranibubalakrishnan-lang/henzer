@@ -377,12 +377,19 @@ export class ViewProductsComponent implements OnInit {
     return localStorage.getItem('role') === 'USER';
   }
 
+  /** Returns true if any assigned dealer has already set a price */
+  hasDealerPriceSet(p: any): boolean {
+    const dealers: any[] = p.dealerProducts ?? [];
+    return dealers.some((d: any) => d.dealerPrice != null && d.dealerPrice > 0);
+  }
+
   /** Products eligible for dealer assignment — excludes approved, assigned and rejected ones */
   get assignableProducts(): any[] {
     let base = this.products.filter(p =>
       p.status !== 'APPROVED' &&
       p.status !== 'ASSIGNED' &&
-      p.status !== 'REJECTED'
+      p.status !== 'REJECTED' &&
+      !this.hasDealerPriceSet(p)
     );
     if (this.assignCategoryFilter) {
       const c = this.assignCategoryFilter.toLowerCase();
@@ -651,6 +658,11 @@ export class ViewProductsComponent implements OnInit {
       filtered = [...filtered].sort((a, b) => (a.supplierPrice ?? 0) - (b.supplierPrice ?? 0));
     } else if (this.priceSortAdmin === 'desc') {
       filtered = [...filtered].sort((a, b) => (b.supplierPrice ?? 0) - (a.supplierPrice ?? 0));
+    }
+
+    // Hide products with price 0 for non-privileged users
+    if (!this.isAdmin && !this.isDealer) {
+      filtered = filtered.filter(p => (p.supplierPrice ?? 0) > 0);
     }
 
     return filtered;

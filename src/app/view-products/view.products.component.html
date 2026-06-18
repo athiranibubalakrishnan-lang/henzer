@@ -347,7 +347,7 @@
                   } @else if (isAdmin && editingId === p.productCode) {
                     <button class="btn-save" (click)="saveEdit(p); $event.stopPropagation()">Save</button>
                     <button class="btn-cancel" (click)="cancelEdit(); $event.stopPropagation()">Cancel</button>
-                  } @else if (isAdmin && p.status !== 'APPROVED' && p.status !== 'REJECTED' && p.status !== 'ASSIGNED') {
+                  } @else if (isAdmin && p.status !== 'APPROVED' && p.status !== 'REJECTED' && p.status !== 'ASSIGNED' && !hasDealerPriceSet(p)) {
                     <button class="btn-edit" (click)="startEdit(p); $event.stopPropagation()">Edit</button>
                     <button class="btn-delete" (click)="deleteProduct(p); $event.stopPropagation()">Delete</button>
                   }
