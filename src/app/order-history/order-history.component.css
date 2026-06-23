@@ -1,6 +1,6 @@
 .container {
   width: 95%;
-  margin: 20px auto;
+  margin: 20px auto 10px;
   font-family: Arial, sans-serif;
 }
 
@@ -443,4 +443,74 @@
   border-radius: 10px;
   min-width: 20px;
   text-align: center;
+}
+
+/* ── All button ──────────────────────────────────── */
+.btn-all {
+  padding: 9px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-all:hover { border-color: #6a1b9a; color: #6a1b9a; }
+.btn-all.active { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+
+/* ── Orders summary table ────────────────────────── */
+.table-wrapper { overflow-x: auto; }
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table th {
+  background: #f5f5f5;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.orders-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.order-summary-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.order-summary-row:hover td { background: #fdf6ff; }
+.order-summary-row.row-selected td { background: #f3e5f5; }
+
+.order-number {
+  font-weight: 700;
+  color: #6a1b9a;
+}
+
+.center { text-align: center; }
+
+.detail-row td {
+  padding: 0;
+  background: #fdf6ff;
+  border-bottom: 2px solid #e0d0f0;
+}
+
+.detail-row .card-detail {
+  padding: 14px 18px;
 }

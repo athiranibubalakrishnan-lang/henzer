@@ -61,13 +61,24 @@ export class ProductApprovalComponent implements OnInit {
   pagePending  = 1;
   pageApproved = 1;
   pageRejected = 1;
-  pageSize = 10;
+  pageSize: any = 10;
+  showingAll = false;
 
-  get PAGE_SIZE(): number { return this.pageSize; }
+  get PAGE_SIZE(): number {
+    if (this.showingAll) return 999999;
+    const val = Number(this.pageSize);
+    return (!val || val < 1) ? 10 : val;
+  }
 
   onPageSizeChange() {
-    const val = Number(this.pageSize);
-    this.pageSize = (!val || val < 1) ? 10 : val;
+    this.showingAll = false;
+    this.pagePending = 1;
+    this.pageApproved = 1;
+    this.pageRejected = 1;
+  }
+
+  toggleShowAll() {
+    this.showingAll = !this.showingAll;
     this.pagePending = 1;
     this.pageApproved = 1;
     this.pageRejected = 1;
@@ -538,6 +549,12 @@ export class ProductApprovalComponent implements OnInit {
     if (this.selectedItems.has(key)) {
       this.selectedItems.delete(key);
     } else {
+      // Remove any other dealer selection for the same product
+      Array.from(this.selectedItems).forEach(k => {
+        if (k.startsWith(`${productId}:`)) {
+          this.selectedItems.delete(k);
+        }
+      });
       this.selectedItems.add(key);
     }
   }

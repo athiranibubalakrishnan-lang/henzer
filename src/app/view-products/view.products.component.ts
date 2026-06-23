@@ -44,13 +44,25 @@ export class ViewProductsComponent implements OnInit {
   dealerPageAssigned = 1;
   dealerPageApproved = 1;
   dealerPageRejected = 1;
-  pageSize = 10;
+  pageSize: any = 10;
+  showingAll = false;
 
-  get PAGE_SIZE(): number { return this.pageSize; }
+  get PAGE_SIZE(): number {
+    if (this.showingAll) return 999999;
+    const val = Number(this.pageSize);
+    return (!val || val < 1) ? 10 : val;
+  }
 
   onPageSizeChange() {
-    const val = Number(this.pageSize);
-    this.pageSize = (!val || val < 1) ? 10 : val;
+    this.showingAll = false;
+    this.adminPage = 1;
+    this.dealerPageAssigned = 1;
+    this.dealerPageApproved = 1;
+    this.dealerPageRejected = 1;
+  }
+
+  toggleShowAll() {
+    this.showingAll = !this.showingAll;
     this.adminPage = 1;
     this.dealerPageAssigned = 1;
     this.dealerPageApproved = 1;
@@ -383,13 +395,10 @@ export class ViewProductsComponent implements OnInit {
     return dealers.some((d: any) => d.dealerPrice != null && d.dealerPrice > 0);
   }
 
-  /** Products eligible for dealer assignment — excludes approved, assigned and rejected ones */
+  /** Products eligible for dealer assignment — only exclude rejected ones */
   get assignableProducts(): any[] {
     let base = this.products.filter(p =>
-      p.status !== 'APPROVED' &&
-      p.status !== 'ASSIGNED' &&
-      p.status !== 'REJECTED' &&
-      !this.hasDealerPriceSet(p)
+      p.status !== 'REJECTED'
     );
     if (this.assignCategoryFilter) {
       const c = this.assignCategoryFilter.toLowerCase();

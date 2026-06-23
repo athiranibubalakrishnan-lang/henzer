@@ -16,7 +16,7 @@
     <input type="text" [(ngModel)]="searchText" (ngModelChange)="currentPage = 1"
       placeholder="Search by User, Dealer, Product, Brand or SKU"
       class="search-input" />
-    <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
+    <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" /><button class="btn-all" [class.active]="showingAll" (click)="toggleShowAll()">All</button>
   </div>
 
   <!-- Status Tabs -->
@@ -59,99 +59,104 @@
       </div>
     }
 
-    <!-- Order cards -->
-    <div class="card-list">
-      @for (card of paged; track card.orderId) {
-        <div class="order-card" [class.card-selected]="card.selected" [class.expanded]="card.expanded">
-
-          <!-- Summary row — always visible -->
-          <div class="card-summary" (click)="toggle(card)">
-            <div class="summary-left">
+    <!-- Order summary table -->
+    <div class="table-wrapper">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            @if (isAdmin) {
+              <th style="width:30px"></th>
+            }
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Total Qty</th>
+            <th>Total Value</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (card of paged; track card.orderId) {
+            <tr class="order-summary-row" [class.row-selected]="card.selected" (click)="toggle(card)">
               @if (isAdmin) {
-                <input type="checkbox" [(ngModel)]="card.selected"
-                  (click)="$event.stopPropagation()"
-                  style="accent-color:#6a1b9a;width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
+                <td (click)="$event.stopPropagation()">
+                  <input type="checkbox" [(ngModel)]="card.selected"
+                    style="accent-color:#6a1b9a;width:15px;height:15px;cursor:pointer;" />
+                </td>
               }
-              <span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span>
-              <div class="summary-info">
-                <span class="order-id">{{ card.items[0]?.productName || 'Order #' + card.orderId }}</span>
-                <span class="summary-meta">Qty: {{ card.items[0]?.quantity || 0 }} · {{ card.dealerName }}</span>
-              </div>
-            </div>
-            <div class="summary-right">
-              <span class="total-amount">¥{{ card.totalAmount }}</span>
-              <span class="badge"
-                [class.processing]="card.status === 'PROCESSING'"
-                [class.completed]="card.status === 'COMPLETED' || card.status === 'CONFIRMED'"
-                [class.cancelled]="card.status === 'CANCELLED'">
-                {{ card.status }}
-              </span>
-              <span class="order-date">{{ card.createdAt | date:'dd MMM yyyy' }}</span>
-            </div>
-          </div>
+              <td class="order-number">{{ card.orderId }}</td>
+              <td>{{ card.userName }}</td>
+              <td class="center">{{ getTotalQty(card) }}</td>
+              <td class="center">¥{{ card.totalAmount }}</td>
+              <td>
+                <span class="badge"
+                  [class.processing]="card.status === 'PROCESSING'"
+                  [class.completed]="card.status === 'COMPLETED' || card.status === 'CONFIRMED'"
+                  [class.cancelled]="card.status === 'CANCELLED'">
+                  {{ card.status }}
+                </span>
+              </td>
+              <td>{{ card.createdAt | date:'dd MMM yyyy' }}</td>
+            </tr>
+            <!-- Detail row — shown when expanded -->
+            @if (card.expanded) {
+              <tr class="detail-row">
+                <td [attr.colspan]="isAdmin ? 7 : 6">
+                  <div class="card-detail">
+                    <div class="detail-grid">
+                      <div class="detail-section">
+                        <h4>Customer</h4>
+                        <p><strong>{{ card.userName }}</strong></p>
+                        <p class="text-muted">{{ card.userEmail }}</p>
+                      </div>
+                      @if (!isUser) {
+                        <div class="detail-section">
+                          <h4>Dealer</h4>
+                          <p><strong>{{ card.dealerName }}</strong></p>
+                          <p class="text-muted">{{ card.dealerEmail }}</p>
+                        </div>
+                      }
+                      <div class="detail-section">
+                        <h4>Order Info</h4>
+                        <p>Status: <span class="badge sm"
+                          [class.processing]="card.status === 'PROCESSING'"
+                          [class.completed]="card.status === 'COMPLETED' || card.status === 'CONFIRMED'"
+                          [class.cancelled]="card.status === 'CANCELLED'">{{ card.status }}</span></p>
+                        <p>Date: {{ card.createdAt | date:'dd MMM yyyy, HH:mm' }}</p>
+                        <p>Total: <strong>¥{{ card.totalAmount }}</strong></p>
+                      </div>
+                    </div>
 
-          <!-- Detail section — shown when expanded -->
-          @if (card.expanded) {
-            <div class="card-detail">
-
-              <!-- User & Dealer info -->
-              <div class="detail-grid">
-                <div class="detail-section">
-                  <h4>Customer</h4>
-                  <p><strong>{{ card.userName }}</strong></p>
-                  <p class="text-muted">{{ card.userEmail }}</p>
-                </div>
-                @if (!isUser) {
-                  <div class="detail-section">
-                    <h4>Dealer</h4>
-                    <p><strong>{{ card.dealerName }}</strong></p>
-                    <p class="text-muted">{{ card.dealerEmail }}</p>
+                    <h4 class="items-heading">Items</h4>
+                    <table class="items-table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>Brand</th>
+                          <th>SKU</th>
+                          <th>Category</th>
+                          <th>Qty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (item of card.items; track item.id) {
+                          <tr>
+                            <td class="product-name">{{ item.productName }}</td>
+                            <td>{{ item.brand }}</td>
+                            <td>{{ item.sku }}</td>
+                            <td>{{ item.category }}</td>
+                            <td>{{ item.quantity }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
                   </div>
-                }
-                <div class="detail-section">
-                  <h4>Order Info</h4>
-                  <p>Status: <span class="badge sm"
-                    [class.processing]="card.status === 'PROCESSING'"
-                    [class.completed]="card.status === 'COMPLETED' || card.status === 'CONFIRMED'"
-                    [class.cancelled]="card.status === 'CANCELLED'">{{ card.status }}</span></p>
-                  <p>Date: {{ card.createdAt | date:'dd MMM yyyy, HH:mm' }}</p>
-                  <p>Total: <strong>¥{{ card.totalAmount }}</strong></p>
-                  @if (card.packageFee !== null) {
-                    <p>Package Fee: ¥{{ card.packageFee }}</p>
-                  }
-                </div>
-              </div>
-
-              <!-- Items table -->
-              <h4 class="items-heading">Items</h4>
-              <table class="items-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Brand</th>
-                    <th>SKU</th>
-                    <th>Category</th>
-                    <th>Qty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of card.items; track item.id) {
-                    <tr>
-                      <td class="product-name">{{ item.productName }}</td>
-                      <td>{{ item.brand }}</td>
-                      <td>{{ item.sku }}</td>
-                      <td>{{ item.category }}</td>
-                      <td>{{ item.quantity }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-
-            </div>
+                </td>
+              </tr>
+            }
           }
-
-        </div>
-      }
+        </tbody>
+      </table>
     </div>
 
     <!-- Pagination -->
@@ -166,3 +171,4 @@
   }
 
 </div>
+

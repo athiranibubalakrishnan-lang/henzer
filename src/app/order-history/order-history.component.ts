@@ -47,17 +47,26 @@ export class OrderHistoryComponent implements OnInit {
   error   = '';
   searchText   = '';
   currentPage  = 1;
-  pageSize = 10;
+  pageSize: any = 10;
+  showingAll = false;
 
   // Status tabs
   activeTab = 'PROCESSING';
   statusTabs: string[] = [];
 
-  get PAGE_SIZE(): number { return this.pageSize; }
+  get PAGE_SIZE(): number {
+    if (this.showingAll) return 999999;
+    const val = Number(this.pageSize);
+    return (!val || val < 1) ? 10 : val;
+  }
 
   onPageSizeChange() {
-    const val = Number(this.pageSize);
-    this.pageSize = (!val || val < 1) ? 10 : val;
+    this.showingAll = false;
+    this.currentPage = 1;
+  }
+
+  toggleShowAll() {
+    this.showingAll = !this.showingAll;
     this.currentPage = 1;
   }
 
@@ -171,6 +180,10 @@ export class OrderHistoryComponent implements OnInit {
   }
 
   toggle(card: OrderCard) { card.expanded = !card.expanded; }
+
+  getTotalQty(card: OrderCard): number {
+    return card.items.reduce((sum, item) => sum + item.quantity, 0);
+  }
 
   get filtered(): OrderCard[] {
     let list = this.orders;

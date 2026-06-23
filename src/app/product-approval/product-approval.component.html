@@ -61,7 +61,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
-      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" /><button class="btn-all" [class.active]="showingAll" (click)="toggleShowAll()">All</button>
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -162,7 +162,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
-      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" /><button class="btn-all" [class.active]="showingAll" (click)="toggleShowAll()">All</button>
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -265,7 +265,7 @@
         <option value="asc">Price: Low to High</option>
         <option value="desc">Price: High to Low</option>
       </select>
-      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" />
+      <input type="number" [(ngModel)]="pageSize" (change)="onPageSizeChange()" min="1" class="page-size-input" placeholder="Rows" /><button class="btn-all" [class.active]="showingAll" (click)="toggleShowAll()">All</button>
       <button class="btn-refresh" (click)="loadAll()">↻ Refresh</button>
     </div>
 
@@ -327,6 +327,7 @@
   }
 
 </div>
+
 
 
 
