@@ -395,9 +395,11 @@ export class ViewProductsComponent implements OnInit {
     return dealers.some((d: any) => d.dealerPrice != null && d.dealerPrice > 0);
   }
 
-  /** Products eligible for dealer assignment — only exclude rejected ones */
+  /** Products eligible for dealer assignment — excludes approved, assigned and rejected ones */
   get assignableProducts(): any[] {
     let base = this.products.filter(p =>
+      p.status !== 'APPROVED' &&
+      p.status !== 'ASSIGNED' &&
       p.status !== 'REJECTED'
     );
     if (this.assignCategoryFilter) {

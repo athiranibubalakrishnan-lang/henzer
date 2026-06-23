@@ -84,7 +84,7 @@
                     style="accent-color:#6a1b9a;width:15px;height:15px;cursor:pointer;" />
                 </td>
               }
-              <td class="order-number">{{ card.orderId }}</td>
+              <td class="order-number"><span class="expand-icon">{{ card.expanded ? '▾' : '▸' }}</span> {{ card.orderId }}</td>
               <td>{{ card.userName }}</td>
               <td class="center">{{ getTotalQty(card) }}</td>
               <td class="center">¥{{ card.totalAmount }}</td>
